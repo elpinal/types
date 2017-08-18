@@ -23,6 +23,11 @@ impl Env {
         Env { vars: HashMap::new() }
     }
 
+    fn def(&mut self, name: &str, e: Expr) {
+        let t = self.ti(e).unwrap();
+        self.vars.insert(String::from(name), t);
+    }
+
     fn ti(&self, e: Expr) -> Option<Type> {
         match e {
             Expr::Var(s) => {
