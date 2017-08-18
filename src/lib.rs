@@ -1,3 +1,5 @@
+#![feature(box_patterns)]
+
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -24,9 +26,19 @@ impl Env {
                     Some(t) => Some(t.clone()),
                     None => None,
                 }
-            },
+            }
             Expr::Int(_) => Some(Type::Int),
-            Expr::App(_, _) => None,
+            Expr::App(box f, box x) => {
+                match self.ti(f) {
+                    Some(Type::Fun(box t1, box t2)) => {
+                        match self.ti(x) {
+                            Some(ref t) if t == &t1 => Some(t2),
+                            _ => None,
+                        }
+                    }
+                    _ => None,
+                }
+            }
         }
     }
 }
@@ -37,10 +49,25 @@ mod tests {
 
     #[test]
     fn test_ti() {
-        let env = Env{vars: HashMap::new()};
+        let env = Env { vars: HashMap::new() };
         assert_eq!(env.ti(Expr::Int(12)), Some(Type::Int));
-        let mut env = Env{vars: HashMap::new()};
-        env.vars.insert(String::from("f"), Type::Fun(Box::new(Type::Int), Box::new(Type::Int)));
-        assert_eq!(env.ti(Expr::Var(String::from("f"))), Some(Type::Fun(Box::new(Type::Int), Box::new(Type::Int))));
+
+        let mut env = Env { vars: HashMap::new() };
+        env.vars.insert(
+            String::from("f"),
+            Type::Fun(Box::new(Type::Int), Box::new(Type::Int)),
+        );
+        assert_eq!(
+            env.ti(Expr::Var(String::from("f"))),
+            Some(Type::Fun(Box::new(Type::Int), Box::new(Type::Int)))
+        );
+
+        assert_eq!(
+            env.ti(Expr::App(
+                Box::new(Expr::Var(String::from("f"))),
+                Box::new(Expr::Int(12)),
+            )),
+            Some(Type::Int)
+        );
     }
 }
