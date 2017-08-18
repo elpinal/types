@@ -1,18 +1,18 @@
 #[derive(Debug, PartialEq)]
 enum Type {
-    TInt,
-    TFun(Box<Type>, Box<Type>),
+    Int,
+    Fun(Box<Type>, Box<Type>),
 }
 
 enum Expr {
-    EInt,
-    EApp,
+    Int,
+    App,
 }
 
 fn ti(e: Expr) -> Option<Type> {
     match e {
-        Expr::EInt => Some(Type::TInt),
-        Expr::EApp => None,
+        Expr::Int => Some(Type::Int),
+        Expr::App => None,
     }
 }
 
@@ -22,6 +22,6 @@ mod tests {
 
     #[test]
     fn test_ti() {
-        assert_eq!(ti(Expr::EInt), Some(Type::TInt));
+        assert_eq!(ti(Expr::Int), Some(Type::Int));
     }
 }
