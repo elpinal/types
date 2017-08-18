@@ -5,14 +5,14 @@ enum Type {
 }
 
 enum Expr {
-    Int,
-    App,
+    Int(isize),
+    App(Box<Expr>, Box<Expr>),
 }
 
 fn ti(e: Expr) -> Option<Type> {
     match e {
-        Expr::Int => Some(Type::Int),
-        Expr::App => None,
+        Expr::Int(_) => Some(Type::Int),
+        Expr::App(_, _) => None,
     }
 }
 
@@ -22,6 +22,6 @@ mod tests {
 
     #[test]
     fn test_ti() {
-        assert_eq!(ti(Expr::Int), Some(Type::Int));
+        assert_eq!(ti(Expr::Int(12)), Some(Type::Int));
     }
 }
