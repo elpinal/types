@@ -19,6 +19,10 @@ struct Env {
 }
 
 impl Env {
+    fn new() -> Env {
+        Env { vars: HashMap::new() }
+    }
+
     fn ti(&self, e: Expr) -> Option<Type> {
         match e {
             Expr::Var(s) => {
@@ -49,10 +53,10 @@ mod tests {
 
     #[test]
     fn test_ti() {
-        let env = Env { vars: HashMap::new() };
+        let env = Env::new();
         assert_eq!(env.ti(Expr::Int(12)), Some(Type::Int));
 
-        let mut env = Env { vars: HashMap::new() };
+        let mut env = Env::new();
         env.vars.insert(
             String::from("f"),
             Type::Fun(Box::new(Type::Int), Box::new(Type::Int)),
