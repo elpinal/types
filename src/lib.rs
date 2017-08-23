@@ -67,6 +67,17 @@ enum Expr {
 
 type Subst = HashMap<String, Type>;
 
+fn composeSubst(s1: &Subst, s2: &Subst) -> Subst {
+    let mut m: Subst = s2.iter()
+        .map(|(k, v)| (k, v.apply(s1)))
+        .map(|(k, box v)| (k.clone(), v))
+        .collect();
+    for (k, v) in s1.iter() {
+        m.insert(k.clone(), v.clone());
+    }
+    m
+}
+
 #[derive(Debug, PartialEq)]
 struct Scheme {
     vars: Vec<String>,
