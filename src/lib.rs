@@ -48,6 +48,21 @@ enum Expr {
 
 type Subst = HashMap<String, Type>;
 
+struct Scheme {
+    vars: Vec<String>,
+    t: Type,
+}
+
+impl Scheme {
+    fn ftv(&self) -> HashSet<String> {
+        let mut s = self.t.ftv();
+        for v in self.vars.iter() {
+            s.remove(v);
+        }
+        s
+    }
+}
+
 struct Env {
     vars: HashMap<String, Type>,
 }
@@ -153,5 +168,24 @@ mod tests {
                 Box::new(Type::Var(String::from("b"))),
             ))
         );
+    }
+
+    #[test]
+    fn test_scheme_ftv() {
+        let singleton = |v| {
+            let mut s = HashSet::new();
+            s.insert(v);
+            s
+        };
+
+        let s = Scheme {
+            vars: vec![String::from("b")],
+            t: Type::Fun(
+                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::Var(String::from("b"))),
+            ),
+        };
+
+        assert_eq!(s.ftv(), singleton(String::from("a")));
     }
 }
