@@ -67,7 +67,7 @@ enum Expr {
 
 type Subst = HashMap<String, Type>;
 
-fn composeSubst(s1: &Subst, s2: &Subst) -> Subst {
+fn compose_subst(s1: &Subst, s2: &Subst) -> Subst {
     let mut m: Subst = s2.iter()
         .map(|(k, v)| (k, v.apply(s1)))
         .map(|(k, box v)| (k.clone(), v))
