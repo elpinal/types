@@ -45,6 +45,20 @@ trait Types {
     fn apply(&self, s: &Subst) -> Box<Self>;
 }
 
+impl<T: Types> Types for Vec<T> {
+    fn ftv(&self) -> HashSet<String> {
+        let mut s = HashSet::new();
+        for x in self.iter() {
+            s = s.union(&x.ftv()).map(|x| x.clone()).collect();
+        }
+        s
+    }
+
+    fn apply(&self, s: &Subst) -> Box<Vec<T>> {
+        Box::new(self.iter().map(|x| x.apply(s)).map(|box x| x).collect())
+    }
+}
+
 enum Expr {
     Var(String),
     Int(isize),
