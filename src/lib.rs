@@ -80,7 +80,7 @@ fn compose_subst(s1: &Subst, s2: &Subst) -> Subst {
     m
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Scheme {
     vars: Vec<String>,
     t: Box<Type>,
@@ -104,6 +104,34 @@ impl Types for Scheme {
             vars: self.vars.clone(),
             t: self.t.apply(&s),
         })
+    }
+}
+
+struct TypeEnv(HashMap<String, Scheme>);
+
+impl TypeEnv {
+    fn remove(&mut self, var: &str) {
+        self.0.remove(var);
+    }
+}
+
+impl Types for TypeEnv {
+    fn ftv(&self) -> HashSet<String> {
+        self.0
+            .values()
+            .map(|v| v.clone())
+            .collect::<Vec<Scheme>>()
+            .ftv()
+    }
+
+    fn apply(&self, s: &Subst) -> Box<TypeEnv> {
+        return Box::new(TypeEnv(
+            self.0
+                .iter()
+                .map(|(k, v)| (k, v.apply(s)))
+                .map(|(k, box v)| (k.clone(), v))
+                .collect(),
+        ));
     }
 }
 
