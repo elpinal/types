@@ -1,5 +1,7 @@
 #![feature(box_patterns)]
 
+#![allow(unused)]
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 
