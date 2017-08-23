@@ -129,4 +129,29 @@ mod tests {
         s.insert(String::from("a"));
         assert_eq!(t.ftv(), s);
     }
+
+    #[test]
+    fn test_apply() {
+        let t = Type::Var(String::from("a"));
+        let mut m = HashMap::new();
+        m.insert(String::from("a"), Type::Int);
+        assert_eq!(t.apply(&m), Box::new(Type::Int));
+
+        let t = Type::Int;
+        assert_eq!(t.apply(&HashMap::new()), Box::new(Type::Int));
+
+        let t = Type::Fun(
+            Box::new(Type::Var(String::from("c"))),
+            Box::new(Type::Var(String::from("b"))),
+        );
+        let mut m = HashMap::new();
+        m.insert(String::from("c"), Type::Var(String::from("a")));
+        assert_eq!(
+            t.apply(&m),
+            Box::new(Type::Fun(
+                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::Var(String::from("b"))),
+            ))
+        );
+    }
 }
