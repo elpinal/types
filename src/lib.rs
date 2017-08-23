@@ -73,7 +73,9 @@ fn compose_subst(s1: &Subst, s2: &Subst) -> Subst {
         .map(|(k, box v)| (k.clone(), v))
         .collect();
     for (k, v) in s1.iter() {
-        m.insert(k.clone(), v.clone());
+        if !m.contains_key(k) {
+            m.insert(k.clone(), v.clone());
+        }
     }
     m
 }
@@ -252,5 +254,30 @@ mod tests {
                 )),
             })
         );
+    }
+
+    #[test]
+    fn test_compose_subst() {
+        let mut s1 = HashMap::new();
+        s1.insert(String::from("a"), Type::Var(String::from("b")));
+        s1.insert(String::from("c"), Type::Var(String::from("d")));
+        let mut s2 = HashMap::new();
+        s2.insert(
+            String::from("a"),
+            Type::Fun(
+                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::Var(String::from("b"))),
+            ),
+        );
+        let mut want = HashMap::new();
+        want.insert(
+            String::from("a"),
+            Type::Fun(
+                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::Var(String::from("b"))),
+            ),
+        );
+        want.insert(String::from("c"), Type::Var(String::from("d")));
+        assert_eq!(compose_subst(&s1, &s2), want);
     }
 }
