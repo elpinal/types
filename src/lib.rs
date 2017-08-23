@@ -1,11 +1,33 @@
 #![feature(box_patterns)]
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[derive(Debug, PartialEq, Clone)]
 enum Type {
+    Var(String),
     Int,
     Fun(Box<Type>, Box<Type>),
+}
+
+impl Type {
+    fn ftv(&self) -> HashSet<String> {
+        match self {
+            &Type::Var(ref n) => {
+                let mut s = HashSet::new();
+                s.insert(n.clone());
+                s
+            }
+            &Type::Int => {
+                let s = HashSet::new();
+                s
+            }
+            &Type::Fun(box ref t1, box ref t2) => {
+                let s: HashSet<_> = t1.ftv().union(&t2.ftv()).map(|x| x.clone()).collect();
+                s
+            }
+        }
+    }
 }
 
 enum Expr {
@@ -78,5 +100,21 @@ mod tests {
             )),
             Some(Type::Int)
         );
+    }
+
+    #[test]
+    fn test_ftv() {
+        let t = Type::Var(String::from("a"));
+        let mut s = HashSet::new();
+        s.insert(String::from("a"));
+        assert_eq!(t.ftv(), s);
+
+        let t = Type::Int;
+        assert_eq!(t.ftv(), HashSet::new());
+
+        let t = Type::Fun(Box::new(Type::Int), Box::new(Type::Var(String::from("a"))));
+        let mut s = HashSet::new();
+        s.insert(String::from("a"));
+        assert_eq!(t.ftv(), s);
     }
 }
