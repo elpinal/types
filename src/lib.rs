@@ -308,4 +308,24 @@ mod tests {
         want.insert(String::from("c"), Type::Var(String::from("d")));
         assert_eq!(compose_subst(&s1, &s2), want);
     }
+
+    #[test]
+    fn test_type_env_ftv() {
+        let singleton = |v| {
+            let mut s = HashSet::new();
+            s.insert(v);
+            s
+        };
+        let s = Scheme {
+            vars: vec![String::from("a")],
+            t: Box::new(Type::Fun(
+                    Box::new(Type::Var(String::from("b"))),
+                    Box::new(Type::Var(String::from("a"))),
+                    )),
+        };
+        let mut m = HashMap::new();
+        m.insert(String::from("b"), s);
+        let t = TypeEnv(m);
+        assert_eq!(t.ftv(), singleton(String::from("b")));
+    }
 }
