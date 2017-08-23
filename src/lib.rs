@@ -114,6 +114,14 @@ impl TypeEnv {
     fn remove(&mut self, var: &str) {
         self.0.remove(var);
     }
+
+    fn generalize(&self, t: Type) -> Scheme {
+        let vars = t.ftv().difference(&self.ftv()).map(|x| x.clone()).collect();
+        Scheme {
+            vars,
+            t: Box::new(t),
+        }
+    }
 }
 
 impl Types for TypeEnv {
