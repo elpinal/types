@@ -50,7 +50,7 @@ type Subst = HashMap<String, Type>;
 
 struct Scheme {
     vars: Vec<String>,
-    t: Type,
+    t: Box<Type>,
 }
 
 impl Scheme {
@@ -60,6 +60,17 @@ impl Scheme {
             s.remove(v);
         }
         s
+    }
+
+    fn apply(&self, s: &Subst) -> Box<Scheme> {
+        let mut s = s.clone();
+        for v in self.vars.iter() {
+            s.remove(v);
+        }
+        Box::new(Scheme {
+            vars: self.vars.clone(),
+            t: self.t.apply(&s),
+        })
     }
 }
 
@@ -180,12 +191,11 @@ mod tests {
 
         let s = Scheme {
             vars: vec![String::from("b")],
-            t: Type::Fun(
+            t: Box::new(Type::Fun(
                 Box::new(Type::Var(String::from("a"))),
                 Box::new(Type::Var(String::from("b"))),
-            ),
+            )),
         };
-
         assert_eq!(s.ftv(), singleton(String::from("a")));
     }
 }
