@@ -10,7 +10,7 @@ enum Type {
     Fun(Box<Type>, Box<Type>),
 }
 
-impl Type {
+impl Types for Type {
     fn ftv(&self) -> HashSet<String> {
         match self {
             &Type::Var(ref n) => {
@@ -40,6 +40,11 @@ impl Type {
     }
 }
 
+trait Types {
+    fn ftv(&self) -> HashSet<String>;
+    fn apply(&self, s: &Subst) -> Box<Self>;
+}
+
 enum Expr {
     Var(String),
     Int(isize),
@@ -54,7 +59,7 @@ struct Scheme {
     t: Box<Type>,
 }
 
-impl Scheme {
+impl Types for Scheme {
     fn ftv(&self) -> HashSet<String> {
         let mut s = self.t.ftv();
         for v in self.vars.iter() {
