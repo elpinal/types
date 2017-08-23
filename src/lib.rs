@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ftv() {
+    fn test_type_ftv() {
         let t = Type::Var(String::from("a"));
         let mut s = HashSet::new();
         s.insert(String::from("a"));
@@ -131,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn test_apply() {
+    fn test_type_apply() {
         let t = Type::Var(String::from("a"));
         let mut m = HashMap::new();
         m.insert(String::from("a"), Type::Int);
