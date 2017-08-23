@@ -373,4 +373,39 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn test_type_env_remove() {
+        let singleton = |k, v| {
+            let mut s = HashMap::new();
+            s.insert(k, v);
+            s
+        };
+
+        let s = Scheme {
+            vars: vec![String::from("a")],
+            t: Box::new(Type::Fun(
+                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::Var(String::from("a"))),
+            )),
+        };
+        let mut m = HashMap::new();
+        m.insert(String::from("b"), s.clone());
+        m.insert(String::from("c"), s);
+        let mut t = TypeEnv(m);
+        t.remove("b");
+        assert_eq!(
+            t.0,
+            singleton(
+                String::from("c"),
+                Scheme {
+                    vars: vec![String::from("a")],
+                    t: Box::new(Type::Fun(
+                        Box::new(Type::Var(String::from("b"))),
+                        Box::new(Type::Var(String::from("a"))),
+                    )),
+                },
+            )
+        );
+    }
 }
