@@ -107,6 +107,7 @@ impl Types for Scheme {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct TypeEnv(HashMap<String, Scheme>);
 
 impl TypeEnv {
@@ -319,13 +320,49 @@ mod tests {
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
-                    Box::new(Type::Var(String::from("b"))),
-                    Box::new(Type::Var(String::from("a"))),
-                    )),
+                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::Var(String::from("a"))),
+            )),
         };
         let mut m = HashMap::new();
         m.insert(String::from("b"), s);
         let t = TypeEnv(m);
         assert_eq!(t.ftv(), singleton(String::from("b")));
+    }
+
+    #[test]
+    fn test_type_env_apply() {
+        let singleton = |k, v| {
+            let mut s = HashMap::new();
+            s.insert(k, v);
+            s
+        };
+
+        let s = Scheme {
+            vars: vec![String::from("a")],
+            t: Box::new(Type::Fun(
+                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::Var(String::from("c"))),
+            )),
+        };
+        let mut m = HashMap::new();
+        m.insert(String::from("c"), Type::Var(String::from("a")));
+        m.insert(String::from("a"), Type::Var(String::from("d")));
+
+        let mut t = TypeEnv(HashMap::new());
+        t.0.insert(String::from("b"), s);
+        assert_eq!(
+            t.apply(&m).0,
+            singleton(
+                String::from("b"),
+                Scheme {
+                    vars: vec![String::from("a")],
+                    t: Box::new(Type::Fun(
+                        Box::new(Type::Var(String::from("a"))),
+                        Box::new(Type::Var(String::from("a"))),
+                    )),
+                },
+            )
+        );
     }
 }
