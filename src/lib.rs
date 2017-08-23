@@ -48,6 +48,7 @@ enum Expr {
 
 type Subst = HashMap<String, Type>;
 
+#[derive(Debug, PartialEq)]
 struct Scheme {
     vars: Vec<String>,
     t: Box<Type>,
@@ -197,5 +198,29 @@ mod tests {
             )),
         };
         assert_eq!(s.ftv(), singleton(String::from("a")));
+    }
+
+    #[test]
+    fn test_scheme_apply() {
+        let s = Scheme {
+            vars: vec![String::from("a")],
+            t: Box::new(Type::Fun(
+                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::Var(String::from("c"))),
+            )),
+        };
+        let mut m = HashMap::new();
+        m.insert(String::from("c"), Type::Var(String::from("a")));
+        m.insert(String::from("a"), Type::Var(String::from("d")));
+        assert_eq!(
+            s.apply(&m),
+            Box::new(Scheme {
+                vars: vec![String::from("a")],
+                t: Box::new(Type::Fun(
+                    Box::new(Type::Var(String::from("a"))),
+                    Box::new(Type::Var(String::from("a"))),
+                )),
+            })
+        );
     }
 }
