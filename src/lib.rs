@@ -28,6 +28,16 @@ impl Type {
             }
         }
     }
+
+    fn apply(&self, s: &Subst) -> Box<Type> {
+        match self {
+            &Type::Var(ref n) => Box::new(
+                s.get(n).map(|t| t.clone()).unwrap_or(Type::Var(n.clone())),
+            ),
+            &Type::Fun(box ref t1, box ref t2) => Box::new(Type::Fun(t1.apply(s), t2.apply(s))),
+            t => Box::new(t.clone()),
+        }
+    }
 }
 
 enum Expr {
@@ -35,6 +45,8 @@ enum Expr {
     Int(isize),
     App(Box<Expr>, Box<Expr>),
 }
+
+type Subst = HashMap<String, Type>;
 
 struct Env {
     vars: HashMap<String, Type>,
