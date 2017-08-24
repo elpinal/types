@@ -146,6 +146,22 @@ impl Types for TypeEnv {
     }
 }
 
+struct TI {
+    supply: usize,
+}
+
+impl TI {
+    fn new() -> TI {
+        TI { supply: 0 }
+    }
+
+    fn new_type_var(&mut self, s: &str) -> Type {
+        let n = self.supply;
+        self.supply += 1;
+        Type::Var(String::from(format!("{}{}", s, n)))
+    }
+}
+
 struct Env {
     vars: HashMap<String, Type>,
 }
@@ -409,5 +425,13 @@ mod tests {
                 },
             )
         );
+    }
+
+    #[test]
+    fn test_ti_new_type_var() {
+        let mut ti = TI::new();
+        assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a0")));
+        assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a1")));
+        assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a2")));
     }
 }
