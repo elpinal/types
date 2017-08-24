@@ -67,6 +67,7 @@ enum Expr {
     Var(String),
     Int(isize),
     App(Box<Expr>, Box<Expr>),
+    Let(String, Box<Expr>, Box<Expr>),
 }
 
 type Subst = HashMap<String, Type>;
@@ -111,7 +112,7 @@ impl Types for Scheme {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct TypeEnv(HashMap<String, Scheme>);
 
 impl TypeEnv {
@@ -216,6 +217,15 @@ impl TI {
                 let s3 = self.mgu(te, Type::Fun(Box::new(t2), tv.clone()));
                 let box t = tv.apply(&s3);
                 (compose_subst(&compose_subst(&s3, &s2), &s1), t)
+            }
+            &Expr::Let(ref x, ref e1, ref e2) => {
+                let (s1, t1) = self.ti(env, e1);
+                let mut env1 = env.clone();
+                env1.remove(x);
+                let t = (env.apply(&s1)).generalize(t1);
+                env1.0.insert(x.clone(), t);
+                let (s2, t2) = self.ti(env1.apply(&s1).borrow(), e2);
+                (compose_subst(&s1, &s2), t2)
             }
         }
     }
