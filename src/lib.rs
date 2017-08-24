@@ -170,6 +170,18 @@ impl TI {
         let box t = s.t.apply(&m);
         t
     }
+
+    fn var_bind(&mut self, u: &str, t: Type) -> Subst {
+        if t != Type::Var(String::from(u)) {
+            return HashMap::new()
+        }
+        if t.ftv().contains(u) {
+            let mut s = HashMap::new();
+            s.insert(String::from(u), t);
+            return s;
+        }
+        panic!("occur check fails: {} vs. {:?}", u, t);
+    }
 }
 
 struct Env {
