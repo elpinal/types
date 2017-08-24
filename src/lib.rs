@@ -171,7 +171,7 @@ impl TI {
         t
     }
 
-    fn var_bind(&mut self, u: &str, t: Type) -> Subst {
+    fn var_bind(&self, u: &str, t: Type) -> Subst {
         if t != Type::Var(String::from(u)) {
             return HashMap::new()
         }
@@ -183,7 +183,7 @@ impl TI {
         panic!("occur check fails: {} vs. {:?}", u, t);
     }
 
-    fn mgu(&mut self, t1: Type, t2: Type) -> Subst {
+    fn mgu(&self, t1: Type, t2: Type) -> Subst {
         match (t1, t2) {
             (Type::Fun(box l1, box r1), Type::Fun(box l2, box r2)) => {
                 let s1 = self.mgu(l1, l2);
