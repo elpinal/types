@@ -67,6 +67,7 @@ enum Expr {
     Var(String),
     Int(isize),
     App(Box<Expr>, Box<Expr>),
+    Abs(String, Box<Expr>),
     Let(String, Box<Expr>, Box<Expr>),
 }
 
@@ -217,6 +218,24 @@ impl TI {
                 let s3 = self.mgu(te, Type::Fun(Box::new(t2), tv.clone()));
                 let box t = tv.apply(&s3);
                 (compose_subst(&compose_subst(&s3, &s2), &s1), t)
+            }
+            &Expr::Abs(ref n, ref e) => {
+                let tv = Box::new(self.new_type_var("a"));
+                let mut env1 = env.clone();
+                env1.remove(n);
+                let mut env2 = env1.0;
+                if !env2.contains_key(n) {
+                    env2.insert(
+                        n.clone(),
+                        Scheme {
+                            t: tv.clone(),
+                            vars: vec![],
+                        },
+                    );
+                }
+                let (s1, t1) = self.ti(&TypeEnv(env2), e);
+                let v = tv.apply(&s1);
+                (s1, Type::Fun(v, Box::new(t1)))
             }
             &Expr::Let(ref x, ref e1, ref e2) => {
                 let (s1, t1) = self.ti(env, e1);
