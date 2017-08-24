@@ -498,4 +498,11 @@ mod tests {
         assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a1")));
         assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a2")));
     }
+
+    #[test]
+    fn test_type_inference() {
+        let mut ti = TI::new();
+        let m = HashMap::new();
+        assert_eq!(ti.type_inference(TypeEnv(m), Expr::Int(12)), Type::Int)
+    }
 }
