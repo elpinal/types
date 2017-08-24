@@ -5,6 +5,8 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use std::borrow::Borrow;
+
 #[derive(Debug, PartialEq, Clone)]
 enum Type {
     Var(String),
@@ -173,7 +175,7 @@ impl TI {
 
     fn var_bind(&self, u: &str, t: Type) -> Subst {
         if t != Type::Var(String::from(u)) {
-            return HashMap::new()
+            return HashMap::new();
         }
         if t.ftv().contains(u) {
             let mut s = HashMap::new();
@@ -192,9 +194,29 @@ impl TI {
                 let s2 = self.mgu(p, q);
                 compose_subst(&s1, &s2)
             }
-            (Type::Var(u), t) | (t, Type::Var(u)) => self.var_bind(&u, t),
+            (Type::Var(u), t) |
+            (t, Type::Var(u)) => self.var_bind(&u, t),
             (Type::Int, Type::Int) => HashMap::new(),
             _ => HashMap::new(),
+        }
+    }
+
+    fn ti(&mut self, env: &TypeEnv, expr: &Expr) -> (Subst, Type) {
+        match expr {
+            &Expr::Var(ref n) => {
+                let sigma = env.0.get(n).expect(&format!("unbound variable: {}", n));
+                (HashMap::new(), self.instantiate(sigma))
+            }
+            &Expr::Int(_) => (HashMap::new(), Type::Int),
+            &Expr::App(ref e1, ref e2) => {
+                let tv = Box::new(self.new_type_var("a"));
+                let (s1, t1) = self.ti(env, e1.borrow());
+                let (s2, t2) = self.ti(env.apply(&s1).borrow(), &e2);
+                let box te = t1.apply(&s2);
+                let s3 = self.mgu(te, Type::Fun(Box::new(t2), tv.clone()));
+                let box t = tv.apply(&s3);
+                (compose_subst(&compose_subst(&s3, &s2), &s1), t)
+            }
         }
     }
 }
