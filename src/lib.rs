@@ -219,6 +219,11 @@ impl TI {
             }
         }
     }
+
+    fn type_inference(&mut self, env: TypeEnv, expr: Expr) -> Type {
+        let (s, t) = self.ti(&env, &expr);
+        *t.apply(&s)
+    }
 }
 
 struct Env {
