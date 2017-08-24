@@ -452,5 +452,16 @@ mod tests {
         let mut ti = TI::new();
         let m = TypeEnv(HashMap::new());
         assert_eq!(ti.type_inference(&m, Expr::Int(12)), Type::Int);
+        assert_eq!(
+            ti.type_inference(
+                &m,
+                Expr::Let(
+                    String::from("n"),
+                    Box::new(Expr::Int(12)),
+                    Box::new(Expr::Var(String::from("n"))),
+                ),
+            ),
+            Type::Int
+        );
     }
 }
