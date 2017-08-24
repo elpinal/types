@@ -220,8 +220,8 @@ impl TI {
         }
     }
 
-    fn type_inference(&mut self, env: TypeEnv, expr: Expr) -> Type {
-        let (s, t) = self.ti(&env, &expr);
+    fn type_inference(&mut self, env: &TypeEnv, expr: Expr) -> Type {
+        let (s, t) = self.ti(env, &expr);
         *t.apply(&s)
     }
 }
@@ -502,7 +502,7 @@ mod tests {
     #[test]
     fn test_type_inference() {
         let mut ti = TI::new();
-        let m = HashMap::new();
-        assert_eq!(ti.type_inference(TypeEnv(m), Expr::Int(12)), Type::Int)
+        let m = TypeEnv(HashMap::new());
+        assert_eq!(ti.type_inference(&m, Expr::Int(12)), Type::Int);
     }
 }
