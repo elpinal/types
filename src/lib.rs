@@ -482,5 +482,22 @@ mod tests {
             ),
             Type::Int
         );
+        assert_eq!(
+            ti.type_inference(
+                &m,
+                Expr::Let(
+                    String::from("f"),
+                    Box::new(Expr::Abs(
+                        String::from("x"),
+                        Box::new(Expr::Var(String::from("x"))),
+                    )),
+                    Box::new(Expr::Var(String::from("f"))),
+                ),
+            ),
+            Type::Fun(
+                Box::new(Type::Var(String::from("a1"))),
+                Box::new(Type::Var(String::from("a1"))),
+            )
+        );
     }
 }
