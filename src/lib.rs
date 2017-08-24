@@ -182,6 +182,21 @@ impl TI {
         }
         panic!("occur check fails: {} vs. {:?}", u, t);
     }
+
+    fn mgu(&mut self, t1: Type, t2: Type) -> Subst {
+        match (t1, t2) {
+            (Type::Fun(box l1, box r1), Type::Fun(box l2, box r2)) => {
+                let s1 = self.mgu(l1, l2);
+                let box p = r1.apply(&s1);
+                let box q = r2.apply(&s1);
+                let s2 = self.mgu(p, q);
+                compose_subst(&s1, &s2)
+            }
+            (Type::Var(u), t) | (t, Type::Var(u)) => self.var_bind(&u, t),
+            (Type::Int, Type::Int) => HashMap::new(),
+            _ => HashMap::new(),
+        }
+    }
 }
 
 struct Env {
