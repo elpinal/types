@@ -160,6 +160,16 @@ impl TI {
         self.supply += 1;
         Type::Var(String::from(format!("{}{}", s, n)))
     }
+
+    fn instantiate(&mut self, s: &Scheme) -> Type {
+        let nvars = s.vars.iter().map(|_| self.new_type_var("a"));
+        let mut m = HashMap::new();
+        for (k, v) in s.vars.iter().zip(nvars) {
+            m.insert(k.clone(), v);
+        }
+        let box t = s.t.apply(&m);
+        t
+    }
 }
 
 struct Env {
