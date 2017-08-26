@@ -269,7 +269,7 @@ impl<Q: Eq + Hash> Singleton for HashSet<Q> {
     type S = Q;
 
     fn singleton(s: Self::S) -> HashSet<Q> {
-        let mut xs: HashSet<Self::S> = HashSet::new();
+        let mut xs = HashSet::new();
         xs.insert(s);
         xs
     }
