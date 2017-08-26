@@ -22,9 +22,7 @@ impl Types for Type {
                 s.insert(n.clone());
                 s
             }
-            &Type::Int => {
-                HashSet::new()
-            }
+            &Type::Int => HashSet::new(),
             &Type::Fun(box ref t1, box ref t2) => {
                 t1.ftv().union(&t2.ftv()).map(|x| x.clone()).collect()
             }
