@@ -259,7 +259,7 @@ use std::hash::Hash;
 
 trait Singleton {
     type P;
-    type S: Eq + Hash;
+    type S;
 
     fn singleton(Self::S) -> Self::P;
 }
@@ -267,9 +267,21 @@ trait Singleton {
 impl<Q: Eq + Hash> Singleton for HashSet<Q> {
     type P = HashSet<Q>;
     type S = Q;
+
     fn singleton(s: Self::S) -> HashSet<Q> {
         let mut xs: HashSet<Self::S> = HashSet::new();
         xs.insert(s);
+        xs
+    }
+}
+
+impl<K: Eq + Hash, V> Singleton for HashMap<K, V> {
+    type P = HashMap<K, V>;
+    type S = (K, V);
+
+    fn singleton((k, v): Self::S) -> HashMap<K, V> {
+        let mut xs = HashMap::new();
+        xs.insert(k, v);
         xs
     }
 }
@@ -388,12 +400,6 @@ mod tests {
 
     #[test]
     fn test_type_env_apply() {
-        let singleton = |k, v| {
-            let mut s = HashMap::new();
-            s.insert(k, v);
-            s
-        };
-
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
@@ -409,7 +415,7 @@ mod tests {
         t.0.insert(String::from("b"), s);
         assert_eq!(
             t.apply(&m).0,
-            singleton(
+            HashMap::singleton((
                 String::from("b"),
                 Scheme {
                     vars: vec![String::from("a")],
@@ -418,18 +424,12 @@ mod tests {
                         Box::new(Type::var("a")),
                     )),
                 },
-            )
+            ))
         );
     }
 
     #[test]
     fn test_type_env_remove() {
-        let singleton = |k, v| {
-            let mut s = HashMap::new();
-            s.insert(k, v);
-            s
-        };
-
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
@@ -444,7 +444,7 @@ mod tests {
         t.remove("b");
         assert_eq!(
             t.0,
-            singleton(
+            HashMap::singleton((
                 String::from("c"),
                 Scheme {
                     vars: vec![String::from("a")],
@@ -453,7 +453,7 @@ mod tests {
                         Box::new(Type::var("a")),
                     )),
                 },
-            )
+            ))
         );
     }
 
