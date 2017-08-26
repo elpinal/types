@@ -56,9 +56,7 @@ impl Types for Type {
 
     fn apply(&self, s: &Subst) -> Box<Type> {
         match self {
-            &Type::Var(ref n) => Box::new(
-                s.get(n).map(|t| t.clone()).unwrap_or(Type::var(n)),
-            ),
+            &Type::Var(ref n) => Box::new(s.get(n).map(|t| t.clone()).unwrap_or(Type::var(n))),
             &Type::Fun(box ref t1, box ref t2) => Box::new(Type::Fun(t1.apply(s), t2.apply(s))),
             t => Box::new(t.clone()),
         }
@@ -257,6 +255,25 @@ impl TI {
     }
 }
 
+use std::hash::Hash;
+
+trait Singleton {
+    type P;
+    type S: Eq + Hash;
+
+    fn singleton(Self::S) -> Self::P;
+}
+
+impl<Q: Eq + Hash> Singleton for HashSet<Q> {
+    type P = HashSet<Q>;
+    type S = Q;
+    fn singleton(s: Self::S) -> HashSet<Q> {
+        let mut xs: HashSet<Self::S> = HashSet::new();
+        xs.insert(s);
+        xs
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -287,10 +304,7 @@ mod tests {
         let t = Type::Int;
         assert_eq!(t.apply(&HashMap::new()), Box::new(Type::Int));
 
-        let t = Type::Fun(
-            Box::new(Type::var("c")),
-            Box::new(Type::var("b")),
-        );
+        let t = Type::Fun(Box::new(Type::var("c")), Box::new(Type::var("b")));
         let mut m = HashMap::new();
         m.insert(String::from("c"), Type::var("a"));
         assert_eq!(
@@ -304,12 +318,6 @@ mod tests {
 
     #[test]
     fn test_scheme_ftv() {
-        let singleton = |v| {
-            let mut s = HashSet::new();
-            s.insert(v);
-            s
-        };
-
         let s = Scheme {
             vars: vec![String::from("b")],
             t: Box::new(Type::Fun(
@@ -317,7 +325,7 @@ mod tests {
                 Box::new(Type::var("b")),
             )),
         };
-        assert_eq!(s.ftv(), singleton(String::from("a")));
+        assert_eq!(s.ftv(), HashSet::singleton(String::from("a")));
     }
 
     #[test]
@@ -352,18 +360,12 @@ mod tests {
         let mut s2 = HashMap::new();
         s2.insert(
             String::from("a"),
-            Type::Fun(
-                Box::new(Type::var("a")),
-                Box::new(Type::var("b")),
-            ),
+            Type::Fun(Box::new(Type::var("a")), Box::new(Type::var("b"))),
         );
         let mut want = HashMap::new();
         want.insert(
             String::from("a"),
-            Type::Fun(
-                Box::new(Type::var("b")),
-                Box::new(Type::var("b")),
-            ),
+            Type::Fun(Box::new(Type::var("b")), Box::new(Type::var("b"))),
         );
         want.insert(String::from("c"), Type::var("d"));
         assert_eq!(compose_subst(&s1, &s2), want);
@@ -371,11 +373,6 @@ mod tests {
 
     #[test]
     fn test_type_env_ftv() {
-        let singleton = |v| {
-            let mut s = HashSet::new();
-            s.insert(v);
-            s
-        };
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
@@ -386,7 +383,7 @@ mod tests {
         let mut m = HashMap::new();
         m.insert(String::from("b"), s);
         let t = TypeEnv(m);
-        assert_eq!(t.ftv(), singleton(String::from("b")));
+        assert_eq!(t.ftv(), HashSet::singleton(String::from("b")));
     }
 
     #[test]
@@ -496,10 +493,7 @@ mod tests {
                     Box::new(Expr::Var(String::from("f"))),
                 ),
             ),
-            Type::Fun(
-                Box::new(Type::var("a1")),
-                Box::new(Type::var("a1")),
-            )
+            Type::Fun(Box::new(Type::var("a1")), Box::new(Type::var("a1")))
         );
     }
 }
