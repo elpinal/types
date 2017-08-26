@@ -293,32 +293,28 @@ mod tests {
     #[test]
     fn test_type_ftv() {
         let t = Type::var("a");
-        let mut s = HashSet::new();
-        s.insert(String::from("a"));
+        let s = HashSet::singleton(String::from("a"));
         assert_eq!(t.ftv(), s);
 
         let t = Type::Int;
         assert_eq!(t.ftv(), HashSet::new());
 
         let t = Type::Fun(Box::new(Type::Int), Box::new(Type::var("a")));
-        let mut s = HashSet::new();
-        s.insert(String::from("a"));
+        let s = HashSet::singleton(String::from("a"));
         assert_eq!(t.ftv(), s);
     }
 
     #[test]
     fn test_type_apply() {
         let t = Type::var("a");
-        let mut m = HashMap::new();
-        m.insert(String::from("a"), Type::Int);
+        let m = HashMap::singleton((String::from("a"), Type::Int));
         assert_eq!(t.apply(&m), Box::new(Type::Int));
 
         let t = Type::Int;
         assert_eq!(t.apply(&HashMap::new()), Box::new(Type::Int));
 
         let t = Type::Fun(Box::new(Type::var("c")), Box::new(Type::var("b")));
-        let mut m = HashMap::new();
-        m.insert(String::from("c"), Type::var("a"));
+        let m = HashMap::singleton((String::from("c"), Type::var("a")));
         assert_eq!(
             t.apply(&m),
             Box::new(Type::Fun(
@@ -392,8 +388,7 @@ mod tests {
                 Box::new(Type::var("a")),
             )),
         };
-        let mut m = HashMap::new();
-        m.insert(String::from("b"), s);
+        let m = HashMap::singleton((String::from("b"), s));
         let t = TypeEnv(m);
         assert_eq!(t.ftv(), HashSet::singleton(String::from("b")));
     }
@@ -411,8 +406,7 @@ mod tests {
         m.insert(String::from("c"), Type::var("a"));
         m.insert(String::from("a"), Type::var("d"));
 
-        let mut t = TypeEnv(HashMap::new());
-        t.0.insert(String::from("b"), s);
+        let t = TypeEnv(HashMap::singleton((String::from("b"), s)));
         assert_eq!(
             t.apply(&m).0,
             HashMap::singleton((
