@@ -63,6 +63,7 @@ impl Types for Type {
     }
 }
 
+#[derive(Debug)]
 enum Expr {
     Var(String),
     Int(isize),
@@ -176,10 +177,10 @@ impl TI {
     }
 
     fn var_bind(&self, u: &str, t: Type) -> Subst {
-        if t != Type::var(u) {
+        if t == Type::var(u) {
             return HashMap::new();
         }
-        if t.ftv().contains(u) {
+        if !t.ftv().contains(u) {
             let mut s = HashMap::new();
             s.insert(String::from(u), t);
             return s;
@@ -488,6 +489,42 @@ mod tests {
                 ),
             ),
             Type::Fun(Box::new(Type::var("a1")), Box::new(Type::var("a1")))
+        );
+
+        assert_eq!(
+            ti.type_inference(
+                &m,
+                &Expr::Let(
+                    String::from("x"),
+                    Box::new(Expr::Abs(
+                        String::from("x"),
+                        Box::new(Expr::Var(String::from("x"))),
+                    )),
+                    Box::new(Expr::App(
+                        Box::new(Expr::Var(String::from("x"))),
+                        Box::new(Expr::Var(String::from("x"))),
+                    )),
+                ),
+            ),
+            Type::Fun(Box::new(Type::var("a5")), Box::new(Type::var("a5")))
+        );
+
+        assert_eq!(
+            ti.type_inference(
+                &m,
+                &Expr::Let(
+                    String::from("length"),
+                    Box::new(Expr::Abs(
+                        String::from("xs"),
+                        Box::new(Expr::Int(12)),
+                    )),
+                    Box::new(Expr::App(
+                        Box::new(Expr::Var(String::from("length"))),
+                        Box::new(Expr::Var(String::from("length"))),
+                    )),
+                ),
+            ),
+            Type::Int
         );
     }
 }
