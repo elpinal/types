@@ -7,6 +7,25 @@ use std::collections::HashSet;
 
 use std::borrow::Borrow;
 
+trait Types {
+    fn ftv(&self) -> HashSet<String>;
+    fn apply(&self, s: &Subst) -> Box<Self>;
+}
+
+impl<T: Types> Types for Vec<T> {
+    fn ftv(&self) -> HashSet<String> {
+        let mut s = HashSet::new();
+        for x in self.iter() {
+            s = s.union(&x.ftv()).map(|x| x.clone()).collect();
+        }
+        s
+    }
+
+    fn apply(&self, s: &Subst) -> Box<Vec<T>> {
+        Box::new(self.iter().map(|x| x.apply(s)).map(|box x| x).collect())
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 enum Type {
     Var(String),
@@ -37,25 +56,6 @@ impl Types for Type {
             &Type::Fun(box ref t1, box ref t2) => Box::new(Type::Fun(t1.apply(s), t2.apply(s))),
             t => Box::new(t.clone()),
         }
-    }
-}
-
-trait Types {
-    fn ftv(&self) -> HashSet<String>;
-    fn apply(&self, s: &Subst) -> Box<Self>;
-}
-
-impl<T: Types> Types for Vec<T> {
-    fn ftv(&self) -> HashSet<String> {
-        let mut s = HashSet::new();
-        for x in self.iter() {
-            s = s.union(&x.ftv()).map(|x| x.clone()).collect();
-        }
-        s
-    }
-
-    fn apply(&self, s: &Subst) -> Box<Vec<T>> {
-        Box::new(self.iter().map(|x| x.apply(s)).map(|box x| x).collect())
     }
 }
 
