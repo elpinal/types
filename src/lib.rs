@@ -181,9 +181,7 @@ impl TI {
             return HashMap::new();
         }
         if !t.ftv().contains(u) {
-            let mut s = HashMap::new();
-            s.insert(String::from(u), t);
-            return s;
+            return HashMap::singleton((String::from(u), t));
         }
         panic!("occur check fails: {} vs. {:?}", u, t);
     }
@@ -514,10 +512,7 @@ mod tests {
                 &m,
                 &Expr::Let(
                     String::from("length"),
-                    Box::new(Expr::Abs(
-                        String::from("xs"),
-                        Box::new(Expr::Int(12)),
-                    )),
+                    Box::new(Expr::Abs(String::from("xs"), Box::new(Expr::Int(12)))),
                     Box::new(Expr::App(
                         Box::new(Expr::Var(String::from("length"))),
                         Box::new(Expr::Var(String::from("length"))),
