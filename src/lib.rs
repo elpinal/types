@@ -33,6 +33,12 @@ enum Type {
     Fun(Box<Type>, Box<Type>),
 }
 
+impl Type {
+    fn var(s: &str) -> Type {
+        Type::Var(String::from(s))
+    }
+}
+
 impl Types for Type {
     fn ftv(&self) -> HashSet<String> {
         match self {
@@ -51,7 +57,7 @@ impl Types for Type {
     fn apply(&self, s: &Subst) -> Box<Type> {
         match self {
             &Type::Var(ref n) => Box::new(
-                s.get(n).map(|t| t.clone()).unwrap_or(Type::Var(n.clone())),
+                s.get(n).map(|t| t.clone()).unwrap_or(Type::var(n)),
             ),
             &Type::Fun(box ref t1, box ref t2) => Box::new(Type::Fun(t1.apply(s), t2.apply(s))),
             t => Box::new(t.clone()),
@@ -158,7 +164,7 @@ impl TI {
     fn new_type_var(&mut self, s: &str) -> Type {
         let n = self.supply;
         self.supply += 1;
-        Type::Var(String::from(format!("{}{}", s, n)))
+        Type::Var(format!("{}{}", s, n))
     }
 
     fn instantiate(&mut self, s: &Scheme) -> Type {
@@ -172,7 +178,7 @@ impl TI {
     }
 
     fn var_bind(&self, u: &str, t: Type) -> Subst {
-        if t != Type::Var(String::from(u)) {
+        if t != Type::var(u) {
             return HashMap::new();
         }
         if t.ftv().contains(u) {
@@ -257,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_type_ftv() {
-        let t = Type::Var(String::from("a"));
+        let t = Type::var("a");
         let mut s = HashSet::new();
         s.insert(String::from("a"));
         assert_eq!(t.ftv(), s);
@@ -265,7 +271,7 @@ mod tests {
         let t = Type::Int;
         assert_eq!(t.ftv(), HashSet::new());
 
-        let t = Type::Fun(Box::new(Type::Int), Box::new(Type::Var(String::from("a"))));
+        let t = Type::Fun(Box::new(Type::Int), Box::new(Type::var("a")));
         let mut s = HashSet::new();
         s.insert(String::from("a"));
         assert_eq!(t.ftv(), s);
@@ -273,7 +279,7 @@ mod tests {
 
     #[test]
     fn test_type_apply() {
-        let t = Type::Var(String::from("a"));
+        let t = Type::var("a");
         let mut m = HashMap::new();
         m.insert(String::from("a"), Type::Int);
         assert_eq!(t.apply(&m), Box::new(Type::Int));
@@ -282,16 +288,16 @@ mod tests {
         assert_eq!(t.apply(&HashMap::new()), Box::new(Type::Int));
 
         let t = Type::Fun(
-            Box::new(Type::Var(String::from("c"))),
-            Box::new(Type::Var(String::from("b"))),
+            Box::new(Type::var("c")),
+            Box::new(Type::var("b")),
         );
         let mut m = HashMap::new();
-        m.insert(String::from("c"), Type::Var(String::from("a")));
+        m.insert(String::from("c"), Type::var("a"));
         assert_eq!(
             t.apply(&m),
             Box::new(Type::Fun(
-                Box::new(Type::Var(String::from("a"))),
-                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::var("a")),
+                Box::new(Type::var("b")),
             ))
         );
     }
@@ -307,8 +313,8 @@ mod tests {
         let s = Scheme {
             vars: vec![String::from("b")],
             t: Box::new(Type::Fun(
-                Box::new(Type::Var(String::from("a"))),
-                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::var("a")),
+                Box::new(Type::var("b")),
             )),
         };
         assert_eq!(s.ftv(), singleton(String::from("a")));
@@ -319,20 +325,20 @@ mod tests {
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
-                Box::new(Type::Var(String::from("a"))),
-                Box::new(Type::Var(String::from("c"))),
+                Box::new(Type::var("a")),
+                Box::new(Type::var("c")),
             )),
         };
         let mut m = HashMap::new();
-        m.insert(String::from("c"), Type::Var(String::from("a")));
-        m.insert(String::from("a"), Type::Var(String::from("d")));
+        m.insert(String::from("c"), Type::var("a"));
+        m.insert(String::from("a"), Type::var("d"));
         assert_eq!(
             s.apply(&m),
             Box::new(Scheme {
                 vars: vec![String::from("a")],
                 t: Box::new(Type::Fun(
-                    Box::new(Type::Var(String::from("a"))),
-                    Box::new(Type::Var(String::from("a"))),
+                    Box::new(Type::var("a")),
+                    Box::new(Type::var("a")),
                 )),
             })
         );
@@ -341,25 +347,25 @@ mod tests {
     #[test]
     fn test_compose_subst() {
         let mut s1 = HashMap::new();
-        s1.insert(String::from("a"), Type::Var(String::from("b")));
-        s1.insert(String::from("c"), Type::Var(String::from("d")));
+        s1.insert(String::from("a"), Type::var("b"));
+        s1.insert(String::from("c"), Type::var("d"));
         let mut s2 = HashMap::new();
         s2.insert(
             String::from("a"),
             Type::Fun(
-                Box::new(Type::Var(String::from("a"))),
-                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::var("a")),
+                Box::new(Type::var("b")),
             ),
         );
         let mut want = HashMap::new();
         want.insert(
             String::from("a"),
             Type::Fun(
-                Box::new(Type::Var(String::from("b"))),
-                Box::new(Type::Var(String::from("b"))),
+                Box::new(Type::var("b")),
+                Box::new(Type::var("b")),
             ),
         );
-        want.insert(String::from("c"), Type::Var(String::from("d")));
+        want.insert(String::from("c"), Type::var("d"));
         assert_eq!(compose_subst(&s1, &s2), want);
     }
 
@@ -373,8 +379,8 @@ mod tests {
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
-                Box::new(Type::Var(String::from("b"))),
-                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::var("b")),
+                Box::new(Type::var("a")),
             )),
         };
         let mut m = HashMap::new();
@@ -394,13 +400,13 @@ mod tests {
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
-                Box::new(Type::Var(String::from("a"))),
-                Box::new(Type::Var(String::from("c"))),
+                Box::new(Type::var("a")),
+                Box::new(Type::var("c")),
             )),
         };
         let mut m = HashMap::new();
-        m.insert(String::from("c"), Type::Var(String::from("a")));
-        m.insert(String::from("a"), Type::Var(String::from("d")));
+        m.insert(String::from("c"), Type::var("a"));
+        m.insert(String::from("a"), Type::var("d"));
 
         let mut t = TypeEnv(HashMap::new());
         t.0.insert(String::from("b"), s);
@@ -411,8 +417,8 @@ mod tests {
                 Scheme {
                     vars: vec![String::from("a")],
                     t: Box::new(Type::Fun(
-                        Box::new(Type::Var(String::from("a"))),
-                        Box::new(Type::Var(String::from("a"))),
+                        Box::new(Type::var("a")),
+                        Box::new(Type::var("a")),
                     )),
                 },
             )
@@ -430,8 +436,8 @@ mod tests {
         let s = Scheme {
             vars: vec![String::from("a")],
             t: Box::new(Type::Fun(
-                Box::new(Type::Var(String::from("b"))),
-                Box::new(Type::Var(String::from("a"))),
+                Box::new(Type::var("b")),
+                Box::new(Type::var("a")),
             )),
         };
         let mut m = HashMap::new();
@@ -446,8 +452,8 @@ mod tests {
                 Scheme {
                     vars: vec![String::from("a")],
                     t: Box::new(Type::Fun(
-                        Box::new(Type::Var(String::from("b"))),
-                        Box::new(Type::Var(String::from("a"))),
+                        Box::new(Type::var("b")),
+                        Box::new(Type::var("a")),
                     )),
                 },
             )
@@ -457,9 +463,9 @@ mod tests {
     #[test]
     fn test_ti_new_type_var() {
         let mut ti = TI::new();
-        assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a0")));
-        assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a1")));
-        assert_eq!(ti.new_type_var("a"), Type::Var(String::from("a2")));
+        assert_eq!(ti.new_type_var("a"), Type::var("a0"));
+        assert_eq!(ti.new_type_var("a"), Type::var("a1"));
+        assert_eq!(ti.new_type_var("a"), Type::var("a2"));
     }
 
     #[test]
@@ -491,8 +497,8 @@ mod tests {
                 ),
             ),
             Type::Fun(
-                Box::new(Type::Var(String::from("a1"))),
-                Box::new(Type::Var(String::from("a1"))),
+                Box::new(Type::var("a1")),
+                Box::new(Type::var("a1")),
             )
         );
     }
