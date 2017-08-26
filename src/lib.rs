@@ -23,12 +23,10 @@ impl Types for Type {
                 s
             }
             &Type::Int => {
-                let s = HashSet::new();
-                s
+                HashSet::new()
             }
             &Type::Fun(box ref t1, box ref t2) => {
-                let s: HashSet<_> = t1.ftv().union(&t2.ftv()).map(|x| x.clone()).collect();
-                s
+                t1.ftv().union(&t2.ftv()).map(|x| x.clone()).collect()
             }
         }
     }
