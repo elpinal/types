@@ -30,6 +30,7 @@ impl<T: Types> Types for Vec<T> {
 enum Type {
     Var(String),
     Int,
+    Bool,
     Fun(Box<Type>, Box<Type>),
 }
 
@@ -47,7 +48,7 @@ impl Types for Type {
                 s.insert(n.clone());
                 s
             }
-            &Type::Int => HashSet::new(),
+            &Type::Int | &Type::Bool => HashSet::new(),
             &Type::Fun(box ref t1, box ref t2) => {
                 t1.ftv().union(&t2.ftv()).map(|x| x.clone()).collect()
             }
@@ -67,6 +68,7 @@ impl Types for Type {
 enum Expr {
     Var(String),
     Int(isize),
+    Bool(bool),
     App(Box<Expr>, Box<Expr>),
     Abs(String, Box<Expr>),
     Let(String, Box<Expr>, Box<Expr>),
@@ -198,6 +200,7 @@ impl TI {
             (Type::Var(u), t) |
             (t, Type::Var(u)) => self.var_bind(&u, t),
             (Type::Int, Type::Int) => HashMap::new(),
+            (Type::Bool, Type::Bool) => HashMap::new(),
             _ => HashMap::new(),
         }
     }
@@ -209,6 +212,7 @@ impl TI {
                 (HashMap::new(), self.instantiate(sigma))
             }
             &Expr::Int(_) => (HashMap::new(), Type::Int),
+            &Expr::Bool(_) => (HashMap::new(), Type::Bool),
             &Expr::App(ref e1, ref e2) => {
                 let tv = Box::new(self.new_type_var("a"));
                 let (s1, t1) = self.ti(env, e1.borrow());
