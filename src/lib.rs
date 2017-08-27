@@ -261,17 +261,17 @@ impl TI {
 use std::hash::Hash;
 
 trait Singleton {
-    type P;
-    type S;
+    type Collection;
+    type Item;
 
-    fn singleton(Self::S) -> Self::P;
+    fn singleton(Self::Item) -> Self::Collection;
 }
 
 impl<Q: Eq + Hash> Singleton for HashSet<Q> {
-    type P = HashSet<Q>;
-    type S = Q;
+    type Collection = HashSet<Q>;
+    type Item = Q;
 
-    fn singleton(s: Self::S) -> HashSet<Q> {
+    fn singleton(s: Self::Item) -> HashSet<Q> {
         let mut xs = HashSet::new();
         xs.insert(s);
         xs
@@ -279,10 +279,10 @@ impl<Q: Eq + Hash> Singleton for HashSet<Q> {
 }
 
 impl<K: Eq + Hash, V> Singleton for HashMap<K, V> {
-    type P = HashMap<K, V>;
-    type S = (K, V);
+    type Collection = HashMap<K, V>;
+    type Item = (K, V);
 
-    fn singleton((k, v): Self::S) -> HashMap<K, V> {
+    fn singleton((k, v): Self::Item) -> HashMap<K, V> {
         let mut xs = HashMap::new();
         xs.insert(k, v);
         xs
