@@ -225,18 +225,14 @@ impl TI {
             &Expr::Abs(ref n, ref e) => {
                 let tv = Box::new(self.new_type_var("a"));
                 let mut env1 = env.clone();
-                env1.remove(n);
-                let mut env2 = env1.0;
-                if !env2.contains_key(n) {
-                    env2.insert(
-                        n.clone(),
-                        Scheme {
-                            t: tv.clone(),
-                            vars: vec![],
-                        },
-                    );
-                }
-                let (s1, t1) = self.ti(&TypeEnv(env2), e);
+                env1.0.insert(
+                    n.clone(),
+                    Scheme {
+                        t: tv.clone(),
+                        vars: vec![],
+                    },
+                );
+                let (s1, t1) = self.ti(&env1, e);
                 let v = tv.apply(&s1);
                 (s1, Type::Fun(v, Box::new(t1)))
             }
