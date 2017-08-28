@@ -201,7 +201,7 @@ impl TI {
             (t, Type::Var(u)) => self.var_bind(&u, t),
             (Type::Int, Type::Int) => HashMap::new(),
             (Type::Bool, Type::Bool) => HashMap::new(),
-            _ => HashMap::new(),
+            (t1, t2) => panic!("types do not unify: {:?} vs. {:?}", t1, t2),
         }
     }
 
