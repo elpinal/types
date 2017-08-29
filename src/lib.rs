@@ -598,4 +598,12 @@ mod tests {
         let m = TypeEnv(HashMap::new());
         ti.type_inference(&m, &expr!(If, [Int, 10], [Int, 12], [Int, 34]));
     }
+
+    #[test]
+    #[should_panic]
+    fn test_type_inference_fails_unbound() {
+        let mut ti = TI::new();
+        let m = TypeEnv(HashMap::new());
+        ti.type_inference(&m, &expr!(Var, none));
+    }
 }
