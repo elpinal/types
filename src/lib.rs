@@ -475,17 +475,23 @@ mod tests {
     }
 
     macro_rules! expr {
-        ( Let, $name:expr, $e1:expr, $e2:expr ) => {
-            Expr::Let( String::from($name), Box::new($e1), Box::new($e2) )
+        ( Let, $name:ident,
+          ( $( $e1:tt ),* ),
+          ( $( $e2:tt ),* ) ) => {
+            Expr::Let(
+                String::from(stringify!($name)),
+                Box::new(expr!($( $e1 ),*)),
+                Box::new(expr!($( $e2 ),*)),
+            )
         };
-        ( Abs, $name:expr, $e:expr ) => {
-            Expr::Abs( String::from($name), Box::new($e) )
+        ( Abs, $name:ident, ( $( $e:tt ),* ) ) => {
+            Expr::Abs( String::from(stringify!($name)), Box::new(expr!($( $e ),*)) )
         };
-        ( App, $e1:expr, $e2:expr ) => {
-            Expr::App( Box::new($e1), Box::new($e2) )
+        ( App, ( $( $e1:tt ),* ), ( $($e2:tt),* ) ) => {
+            Expr::App( Box::new(expr!($( $e1 ),*)), Box::new(expr!($( $e2 ),*)) )
         };
-        ( Var, $name:expr ) => {
-            Expr::Var( String::from($name) )
+        ( Var, $name:ident ) => {
+            Expr::Var( String::from(stringify!($name)) )
         };
         ( Int, $n:expr ) => {
             Expr::Int( $n )
@@ -493,8 +499,12 @@ mod tests {
         ( Bool, $b:expr ) => {
             Expr::Bool( $b )
         };
-        ( If, $cond:expr, $e1:expr, $e2:expr ) => {
-            Expr::If( Box::new($cond), Box::new($e1), Box::new($e2) )
+        ( If, ( $( $cond:tt ),* ), ( $( $e1:tt ),* ), ( $( $e2:tt ),* ) ) => {
+            Expr::If(
+                Box::new(expr!($( $cond ),*)),
+                Box::new(expr!($( $e1 ),*)),
+                Box::new(expr!($( $e2 ),*)),
+            )
         };
     }
 
@@ -502,8 +512,8 @@ mod tests {
         ( Fun, $e1:expr, $e2:expr ) => {
             Type::Fun( Box::new($e1), Box::new($e2) )
         };
-        ( Var, $name:expr ) => {
-            Type::Var( String::from($name) )
+        ( Var, $name:ident ) => {
+            Type::Var( String::from(stringify!($name)) )
         };
         ( Int ) => {
             Type::Int
@@ -525,39 +535,27 @@ mod tests {
     fn test_type_inference() {
         expr_type!(expr!(Int, 12), types!(Int));
 
+        expr_type!(expr!(Let, n, (Int, 12), (Var, n)), types!(Int));
+
         expr_type!(
-            expr!(Let, "n", expr!(Int, 12), expr!(Var, "n")),
+            expr!(Let, f, (Abs, x, (Var, x)), (Var, f)),
+            types!(Fun, types!(Var, a1), types!(Var, a1))
+        );
+
+        expr_type!(
+            expr!(Let, x, (Abs, x, (Var, x)), (App, (Var, x), (Var, x))),
+            types!(Fun, types!(Var, a3), types!(Var, a3))
+        );
+
+        expr_type!(
+            expr!(Let, length, (Abs, xs, (Int, 12)), (
+                App,
+                (Var, length),
+                (Var, length) // Rustfmt mistakenly adds a comma here.
+            )),
             types!(Int)
         );
 
-        expr_type!(
-            expr!(Let, "f", expr!(Abs, "x", expr!(Var, "x")), expr!(Var, "f")),
-            types!(Fun, types!(Var, "a1"), types!(Var, "a1"))
-        );
-
-        expr_type!(
-            expr!(
-                Let,
-                "x",
-                expr!(Abs, "x", expr!(Var, "x")),
-                expr!(App, expr!(Var, "x"), expr!(Var, "x"))
-            ),
-            types!(Fun, types!(Var, "a3"), types!(Var, "a3"))
-        );
-
-        expr_type!(
-            expr!(
-                Let,
-                "length",
-                expr!(Abs, "xs", expr!(Int, 12)),
-                expr!(App, expr!(Var, "length"), expr!(Var, "length"))
-            ),
-            types!(Int)
-        );
-
-        expr_type!(
-            expr!(If, expr!(Bool, true), expr!(Int, 12), expr!(Int, 61)),
-            types!(Int)
-        );
+        expr_type!(expr!(If, (Bool, true), (Int, 12), (Int, 61)), types!(Int));
     }
 }
