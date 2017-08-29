@@ -5,6 +5,8 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use std::fmt;
+
 use std::borrow::Borrow;
 
 trait Types {
@@ -32,6 +34,18 @@ enum Type {
     Int,
     Bool,
     Fun(Box<Type>, Box<Type>),
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Type::Int => write!(f, "Int"),
+            Type::Bool => write!(f, "Bool"),
+            Type::Var(ref s) => write!(f, "{}", s),
+            Type::Fun(ref e1 @ box Type::Fun(..), ref e2) => write!(f, "({}) -> {}", e1, e2),
+            Type::Fun(ref e1, ref e2) => write!(f, "{} -> {}", e1, e2),
+        }
+    }
 }
 
 impl Type {
