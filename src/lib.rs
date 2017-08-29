@@ -305,37 +305,49 @@ impl<K: Eq + Hash, V> Singleton for HashMap<K, V> {
 mod tests {
     use super::*;
 
+    macro_rules! types {
+        ( Fun, $e1:expr, $e2:expr ) => {
+            Type::Fun( Box::new($e1), Box::new($e2) )
+        };
+        ( Var, $name:ident ) => {
+            Type::Var( String::from(stringify!($name)) )
+        };
+        ( Int ) => {
+            Type::Int
+        };
+        ( Bool ) => {
+            Type::Bool
+        };
+    }
+
     #[test]
     fn test_type_ftv() {
-        let t = Type::var("a");
+        let t = types!(Var, a);
         let s = HashSet::singleton(String::from("a"));
         assert_eq!(t.ftv(), s);
 
         let t = Type::Int;
         assert_eq!(t.ftv(), HashSet::new());
 
-        let t = Type::Fun(Box::new(Type::Int), Box::new(Type::var("a")));
+        let t = types!(Fun, Type::Int, types!(Var, a));
         let s = HashSet::singleton(String::from("a"));
         assert_eq!(t.ftv(), s);
     }
 
     #[test]
     fn test_type_apply() {
-        let t = Type::var("a");
+        let t = types!(Var, a);
         let m = HashMap::singleton((String::from("a"), Type::Int));
         assert_eq!(t.apply(&m), Box::new(Type::Int));
 
         let t = Type::Int;
         assert_eq!(t.apply(&HashMap::new()), Box::new(Type::Int));
 
-        let t = Type::Fun(Box::new(Type::var("c")), Box::new(Type::var("b")));
-        let m = HashMap::singleton((String::from("c"), Type::var("a")));
+        let t = types!(Fun, types!(Var, c), types!(Var, b));
+        let m = HashMap::singleton((String::from("c"), types!(Var, a)));
         assert_eq!(
             t.apply(&m),
-            Box::new(Type::Fun(
-                Box::new(Type::var("a")),
-                Box::new(Type::var("b")),
-            ))
+            Box::new(types!(Fun, types!(Var, a), types!(Var, b)))
         );
     }
 
@@ -505,21 +517,6 @@ mod tests {
                 Box::new(expr!($( $e1 ),*)),
                 Box::new(expr!($( $e2 ),*)),
             )
-        };
-    }
-
-    macro_rules! types {
-        ( Fun, $e1:expr, $e2:expr ) => {
-            Type::Fun( Box::new($e1), Box::new($e2) )
-        };
-        ( Var, $name:ident ) => {
-            Type::Var( String::from(stringify!($name)) )
-        };
-        ( Int ) => {
-            Type::Int
-        };
-        ( Bool ) => {
-            Type::Bool
         };
     }
 
