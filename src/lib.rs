@@ -89,6 +89,13 @@ fn compose_subst(s1: &Subst, s2: &Subst) -> Subst {
     m
 }
 
+macro_rules! compose {
+    ( $x:expr ) => ( $x );
+    ( $first:expr, $( $x:expr ),+ ) => {
+        compose_subst($first, &compose!( $( $x ),+ ))
+    };
+}
+
 #[derive(Debug, PartialEq, Clone)]
 struct Scheme {
     vars: Vec<String>,
@@ -220,7 +227,7 @@ impl TI {
                 let box te = t1.apply(&s2);
                 let s3 = self.mgu(te, Type::Fun(Box::new(t2), tv.clone()));
                 let box t = tv.apply(&s3);
-                (compose_subst(&compose_subst(&s3, &s2), &s1), t)
+                (compose!(&s3, &s2, &s1), t)
             }
             &Expr::Abs(ref n, ref e) => {
                 let tv = Box::new(self.new_type_var("a"));
