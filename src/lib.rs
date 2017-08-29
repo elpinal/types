@@ -72,6 +72,7 @@ enum Expr {
     App(Box<Expr>, Box<Expr>),
     Abs(String, Box<Expr>),
     Let(String, Box<Expr>, Box<Expr>),
+    If(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
 type Subst = HashMap<String, Type>;
@@ -251,6 +252,14 @@ impl TI {
                 env1.0.insert(x.clone(), t);
                 let (s2, t2) = self.ti(env1.apply(&s1).borrow(), e2);
                 (compose_subst(&s1, &s2), t2)
+            }
+            &Expr::If(ref cond, ref e1, ref e2) => {
+                let (s1, t1) = self.ti(env, cond);
+                let s2 = self.mgu(*t1.apply(&s1), Type::Bool);
+                let (s3, t2) = self.ti(env.apply(&s2).borrow(), e1);
+                let (s4, t3) = self.ti(env.apply(&s3).borrow(), e2);
+                let s5 = self.mgu(*t2.apply(&s4), *t3.apply(&s4));
+                (compose!(&s5, &s4, &s3, &s2, &s1), *t3.apply(&s5))
             }
         }
     }
@@ -484,6 +493,9 @@ mod tests {
         ( Bool, $b:expr ) => {
             Expr::Bool( $b )
         };
+        ( If, $cond:expr, $e1:expr, $e2:expr ) => {
+            Expr::If( Box::new($cond), Box::new($e1), Box::new($e2) )
+        };
     }
 
     macro_rules! types {
@@ -540,6 +552,11 @@ mod tests {
                 expr!(Abs, "xs", expr!(Int, 12)),
                 expr!(App, expr!(Var, "length"), expr!(Var, "length"))
             ),
+            types!(Int)
+        );
+
+        expr_type!(
+            expr!(If, expr!(Bool, true), expr!(Int, 12), expr!(Int, 61)),
             types!(Int)
         );
     }
