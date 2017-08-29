@@ -582,4 +582,12 @@ mod tests {
             types!(Fun, types!(Var, a1), types!(Int))
         );
     }
+
+    #[test]
+    #[should_panic]
+    fn test_type_inference_fails() {
+        let mut ti = TI::new();
+        let m = TypeEnv(HashMap::new());
+        ti.type_inference(&m, &expr!(Let, n, [Int, 12], [App, [Var, n], [Int, 34]]));
+    }
 }
