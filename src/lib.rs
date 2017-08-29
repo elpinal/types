@@ -251,7 +251,7 @@ impl TI {
                 let t = (env.apply(&s1)).generalize(t1);
                 env1.0.insert(x.clone(), t);
                 let (s2, t2) = self.ti(env1.apply(&s1).borrow(), e2);
-                (compose_subst(&s1, &s2), t2)
+                (compose!(&s1, &s2), t2)
             }
             &Expr::If(ref cond, ref e1, ref e2) => {
                 let (s1, t1) = self.ti(env, cond);
