@@ -476,18 +476,18 @@ mod tests {
 
     macro_rules! expr {
         ( Let, $name:ident,
-          ( $( $e1:tt ),* ),
-          ( $( $e2:tt ),* ) ) => {
+          [ $( $e1:tt ),* ],
+          [ $( $e2:tt ),* ] ) => {
             Expr::Let(
                 String::from(stringify!($name)),
                 Box::new(expr!($( $e1 ),*)),
                 Box::new(expr!($( $e2 ),*)),
             )
         };
-        ( Abs, $name:ident, ( $( $e:tt ),* ) ) => {
+        ( Abs, $name:ident, [ $( $e:tt ),* ] ) => {
             Expr::Abs( String::from(stringify!($name)), Box::new(expr!($( $e ),*)) )
         };
-        ( App, ( $( $e1:tt ),* ), ( $($e2:tt),* ) ) => {
+        ( App, [ $( $e1:tt ),* ], [ $($e2:tt),* ] ) => {
             Expr::App( Box::new(expr!($( $e1 ),*)), Box::new(expr!($( $e2 ),*)) )
         };
         ( Var, $name:ident ) => {
@@ -499,7 +499,7 @@ mod tests {
         ( Bool, $b:expr ) => {
             Expr::Bool( $b )
         };
-        ( If, ( $( $cond:tt ),* ), ( $( $e1:tt ),* ), ( $( $e2:tt ),* ) ) => {
+        ( If, [ $( $cond:tt ),* ], [ $( $e1:tt ),* ], [ $( $e2:tt ),* ] ) => {
             Expr::If(
                 Box::new(expr!($( $cond ),*)),
                 Box::new(expr!($( $e1 ),*)),
@@ -535,49 +535,50 @@ mod tests {
     fn test_type_inference() {
         expr_type!(expr!(Int, 12), types!(Int));
 
-        expr_type!(expr!(Let, n, (Int, 12), (Var, n)), types!(Int));
+        expr_type!(expr!(Let, n, [Int, 12], [Var, n]), types!(Int));
 
         expr_type!(
-            expr!(Let, f, (Abs, x, (Var, x)), (Var, f)),
+            expr!(Let, f, [Abs, x, [Var, x]], [Var, f]),
             types!(Fun, types!(Var, a1), types!(Var, a1))
         );
 
         expr_type!(
-            expr!(Let, x, (Abs, x, (Var, x)), (App, (Var, x), (Var, x))),
+            expr!(Let, x, [Abs, x, [Var, x]], [App, [Var, x], [Var, x]]),
             types!(Fun, types!(Var, a3), types!(Var, a3))
         );
 
         expr_type!(
-            expr!(Let, length, (Abs, xs, (Int, 12)), (
-                App,
-                (Var, length),
-                (Var, length) // Rustfmt mistakenly adds a comma here.
-            )),
+            expr!(
+                Let,
+                length,
+                [Abs, xs, [Int, 12]],
+                [App, [Var, length], [Var, length]]
+            ),
             types!(Int)
         );
 
-        expr_type!(expr!(If, (Bool, true), (Int, 12), (Int, 61)), types!(Int));
-        expr_type!(expr!(If, (Bool, false), (Int, 12), (Int, 61)), types!(Int));
+        expr_type!(expr!(If, [Bool, true], [Int, 12], [Int, 61]), types!(Int));
+        expr_type!(expr!(If, [Bool, false], [Int, 12], [Int, 61]), types!(Int));
         expr_type!(
-            expr!(If, (Let, b, (Bool, true), (Var, b)), (Int, 12), (Int, 61)),
+            expr!(If, [Let, b, [Bool, true], [Var, b]], [Int, 12], [Int, 61]),
             types!(Int)
         );
         expr_type!(
             expr!(
                 Let,
                 f,
-                (
+                [
                     If,
-                    (Bool, true),
-                    (Abs, n, (Bool, false)),
-                    (Abs, n, (Bool, true))
-                ),
-                (App, (Var, f), (Int, 61))
+                    [Bool, true],
+                    [Abs, n, [Bool, false]],
+                    [Abs, n, [Bool, true]]// Prevent a comma from rustfmt.
+                ],
+                [App, [Var, f], [Int, 61]]
             ),
             types!(Bool)
         );
         expr_type!(
-            expr!(If, (Bool, true), (Abs, n, (Int, 42)), (Abs, q, (Int, 21))),
+            expr!(If, [Bool, true], [Abs, n, [Int, 42]], [Abs, q, [Int, 21]]),
             types!(Fun, types!(Var, a1), types!(Int))
         );
     }
