@@ -89,6 +89,20 @@ enum Expr {
     If(Box<Expr>, Box<Expr>, Box<Expr>),
 }
 
+impl fmt::Display for Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Expr::Int(n) => write!(f, "{}", n),
+            Expr::Bool(b) => write!(f, "{}", b),
+            Expr::Var(ref s) => write!(f, "{}", s),
+            Expr::Let(ref name, ref e1, ref e2) => write!(f, "let {} = {} in {}", name, e1, e2),
+            Expr::If(ref cond, ref e1, ref e2) => write!(f, "if {} then {} else {}", cond, e1, e2),
+            Expr::Abs(ref name, ref e) => write!(f, "\\{} -> {}", name, e),
+            Expr::App(ref e1, ref e2) => write!(f, "{} {}", e1, e2),
+        }
+    }
+}
+
 type Subst = HashMap<String, Type>;
 
 fn compose_subst(s1: &Subst, s2: &Subst) -> Subst {
