@@ -557,5 +557,28 @@ mod tests {
         );
 
         expr_type!(expr!(If, (Bool, true), (Int, 12), (Int, 61)), types!(Int));
+        expr_type!(expr!(If, (Bool, false), (Int, 12), (Int, 61)), types!(Int));
+        expr_type!(
+            expr!(If, (Let, b, (Bool, true), (Var, b)), (Int, 12), (Int, 61)),
+            types!(Int)
+        );
+        expr_type!(
+            expr!(
+                Let,
+                f,
+                (
+                    If,
+                    (Bool, true),
+                    (Abs, n, (Bool, false)),
+                    (Abs, n, (Bool, true))
+                ),
+                (App, (Var, f), (Int, 61))
+            ),
+            types!(Bool)
+        );
+        expr_type!(
+            expr!(If, (Bool, true), (Abs, n, (Int, 42)), (Abs, q, (Int, 21))),
+            types!(Fun, types!(Var, a1), types!(Int))
+        );
     }
 }
