@@ -465,68 +465,82 @@ mod tests {
         assert_eq!(ti.new_type_var("a"), Type::var("a2"));
     }
 
+    macro_rules! expr {
+        ( Let, $name:expr, $e1:expr, $e2:expr ) => {
+            Expr::Let( String::from($name), Box::new($e1), Box::new($e2) )
+        };
+        ( Abs, $name:expr, $e:expr ) => {
+            Expr::Abs( String::from($name), Box::new($e) )
+        };
+        ( App, $e1:expr, $e2:expr ) => {
+            Expr::App( Box::new($e1), Box::new($e2) )
+        };
+        ( Var, $name:expr ) => {
+            Expr::Var( String::from($name) )
+        };
+        ( Int, $n:expr ) => {
+            Expr::Int( $n )
+        };
+        ( Bool, $b:expr ) => {
+            Expr::Bool( $b )
+        };
+    }
+
+    macro_rules! types {
+        ( Fun, $e1:expr, $e2:expr ) => {
+            Type::Fun( Box::new($e1), Box::new($e2) )
+        };
+        ( Var, $name:expr ) => {
+            Type::Var( String::from($name) )
+        };
+        ( Int ) => {
+            Type::Int
+        };
+        ( Bool ) => {
+            Type::Bool
+        };
+    }
+
+    macro_rules! expr_type {
+        ( $e:expr, $t:expr ) => {
+            let mut ti = TI::new();
+            let m = TypeEnv(HashMap::new());
+            assert_eq!(ti.type_inference(&m, &$e), $t);
+        }
+    }
+
     #[test]
     fn test_type_inference() {
-        let mut ti = TI::new();
-        let m = TypeEnv(HashMap::new());
-        assert_eq!(ti.type_inference(&m, &Expr::Int(12)), Type::Int);
-        assert_eq!(
-            ti.type_inference(
-                &m,
-                &Expr::Let(
-                    String::from("n"),
-                    Box::new(Expr::Int(12)),
-                    Box::new(Expr::Var(String::from("n"))),
-                ),
-            ),
-            Type::Int
-        );
-        assert_eq!(
-            ti.type_inference(
-                &m,
-                &Expr::Let(
-                    String::from("f"),
-                    Box::new(Expr::Abs(
-                        String::from("x"),
-                        Box::new(Expr::Var(String::from("x"))),
-                    )),
-                    Box::new(Expr::Var(String::from("f"))),
-                ),
-            ),
-            Type::Fun(Box::new(Type::var("a1")), Box::new(Type::var("a1")))
+        expr_type!(expr!(Int, 12), types!(Int));
+
+        expr_type!(
+            expr!(Let, "n", expr!(Int, 12), expr!(Var, "n")),
+            types!(Int)
         );
 
-        assert_eq!(
-            ti.type_inference(
-                &m,
-                &Expr::Let(
-                    String::from("x"),
-                    Box::new(Expr::Abs(
-                        String::from("x"),
-                        Box::new(Expr::Var(String::from("x"))),
-                    )),
-                    Box::new(Expr::App(
-                        Box::new(Expr::Var(String::from("x"))),
-                        Box::new(Expr::Var(String::from("x"))),
-                    )),
-                ),
-            ),
-            Type::Fun(Box::new(Type::var("a5")), Box::new(Type::var("a5")))
+        expr_type!(
+            expr!(Let, "f", expr!(Abs, "x", expr!(Var, "x")), expr!(Var, "f")),
+            types!(Fun, types!(Var, "a1"), types!(Var, "a1"))
         );
 
-        assert_eq!(
-            ti.type_inference(
-                &m,
-                &Expr::Let(
-                    String::from("length"),
-                    Box::new(Expr::Abs(String::from("xs"), Box::new(Expr::Int(12)))),
-                    Box::new(Expr::App(
-                        Box::new(Expr::Var(String::from("length"))),
-                        Box::new(Expr::Var(String::from("length"))),
-                    )),
-                ),
+        expr_type!(
+            expr!(
+                Let,
+                "x",
+                expr!(Abs, "x", expr!(Var, "x")),
+                expr!(App, expr!(Var, "x"), expr!(Var, "x"))
             ),
-            Type::Int
+            types!(Fun, types!(Var, "a3"), types!(Var, "a3"))
+        );
+
+        expr_type!(
+            expr!(
+                Let,
+                "length",
+                expr!(Abs, "xs", expr!(Int, 12)),
+                expr!(App, expr!(Var, "length"), expr!(Var, "length"))
+            ),
+            types!(Int)
         );
     }
 }
