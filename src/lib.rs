@@ -34,6 +34,7 @@ enum Type {
     Int,
     Bool,
     Fun(Box<Type>, Box<Type>),
+    List(Box<Type>),
 }
 
 impl fmt::Display for Type {
@@ -44,6 +45,7 @@ impl fmt::Display for Type {
             Type::Var(ref s) => write!(f, "{}", s),
             Type::Fun(ref e1 @ box Type::Fun(..), ref e2) => write!(f, "({}) -> {}", e1, e2),
             Type::Fun(ref e1, ref e2) => write!(f, "{} -> {}", e1, e2),
+            Type::List(ref e) => write!(f, "[{}]", e),
         }
     }
 }
@@ -66,6 +68,7 @@ impl Types for Type {
             &Type::Fun(box ref t1, box ref t2) => {
                 t1.ftv().union(&t2.ftv()).map(|x| x.clone()).collect()
             }
+            &Type::List(ref t) => t.ftv(),
         }
     }
 
@@ -73,6 +76,7 @@ impl Types for Type {
         match self {
             &Type::Var(ref n) => Box::new(s.get(n).map(|t| t.clone()).unwrap_or(Type::var(n))),
             &Type::Fun(box ref t1, box ref t2) => Box::new(Type::Fun(t1.apply(s), t2.apply(s))),
+            &Type::List(ref t) => Box::new(Type::List(t.apply(s))),
             t => Box::new(t.clone()),
         }
     }
@@ -87,6 +91,7 @@ enum Expr {
     Abs(String, Box<Expr>),
     Let(String, Box<Expr>, Box<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
+    List(Box<Expr>, Box<Expr>),
 }
 
 impl fmt::Display for Expr {
@@ -99,6 +104,7 @@ impl fmt::Display for Expr {
             Expr::If(ref cond, ref e1, ref e2) => write!(f, "if {} then {} else {}", cond, e1, e2),
             Expr::Abs(ref name, ref e) => write!(f, "\\{} -> {}", name, e),
             Expr::App(ref e1, ref e2) => write!(f, "{} {}", e1, e2),
+            Expr::List(ref head, ref tail) => write!(f, "{} : {}", head, tail),
         }
     }
 }
@@ -288,6 +294,12 @@ impl TI {
                 let (s4, t3) = self.ti(env.apply(&s3).borrow(), e2);
                 let s5 = self.mgu(*t2.apply(&s4), *t3.apply(&s4));
                 (compose!(&s5, &s4, &s3, &s2, &s1), *t3.apply(&s5))
+            }
+            &Expr::List(ref head, ref tail) => {
+                let (s1, t1) = self.ti(env, head);
+                let (s2, t2) = self.ti(env.apply(&s1).borrow(), tail);
+                let s3 = self.mgu(Type::List(t1.apply(&s2)), *t2.apply(&s2));
+                (compose!(&s3, &s2, &s1), *t1.apply(&s3))
             }
         }
     }
