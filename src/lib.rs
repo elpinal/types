@@ -670,43 +670,37 @@ mod tests {
         );
     }
 
-    #[test]
-    #[should_panic]
-    fn test_type_inference_fails_app() {
-        let mut ti = TI::new();
-        let m = TypeEnv(HashMap::new());
-        ti.type_inference(&m, &expr!(Let n [Int 12] [App [Var n] [Int 34]]));
+    macro_rules! type_inference_panic {
+        ( $name:ident, $e:expr ) => {
+            #[test]
+            #[should_panic]
+            fn $name() {
+                let mut ti = TI::new();
+                let m = TypeEnv(HashMap::new());
+                ti.type_inference(&m, $e);
+            }
+        }
     }
 
-    #[test]
-    #[should_panic]
-    fn test_type_inference_fails_if() {
-        let mut ti = TI::new();
-        let m = TypeEnv(HashMap::new());
-        ti.type_inference(&m, &expr!(If [Int 10] [Int 12] [Int 34]));
-    }
+    type_inference_panic!(
+        test_type_inference_fails_app,
+        &expr!(Let n [Int 12] [App [Var n] [Int 34]])
+    );
 
-    #[test]
-    #[should_panic]
-    fn test_type_inference_fails_unbound() {
-        let mut ti = TI::new();
-        let m = TypeEnv(HashMap::new());
-        ti.type_inference(&m, &expr!(Var none));
-    }
+    type_inference_panic!(
+        test_type_inference_fails_if,
+        &expr!(If [Int 10] [Int 12] [Int 34])
+    );
 
-    #[test]
-    #[should_panic]
-    fn test_type_inference_list_unmatched1() {
-        let mut ti = TI::new();
-        let m = TypeEnv(HashMap::new());
-        ti.type_inference(&m, &expr!(List [Int 12] [Int 12]));
-    }
+    type_inference_panic!(test_type_inference_fails_unbound, &expr!(Var none));
 
-    #[test]
-    #[should_panic]
-    fn test_type_inference_list_unmatched2() {
-        let mut ti = TI::new();
-        let m = TypeEnv(HashMap::new());
-        ti.type_inference(&m, &expr!(List [Int 12] [List [Bool true] [Nil]]));
-    }
+    type_inference_panic!(
+        test_type_inference_list_unmatched1,
+        &expr!(List [Int 12] [Int 12])
+    );
+
+    type_inference_panic!(
+        test_type_inference_list_unmatched2,
+        &expr!(List [Int 12] [List [Bool true] [Nil]])
+    );
 }
