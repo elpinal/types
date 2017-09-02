@@ -693,4 +693,20 @@ mod tests {
         let m = TypeEnv(HashMap::new());
         ti.type_inference(&m, &expr!(Var none));
     }
+
+    #[test]
+    #[should_panic]
+    fn test_type_inference_list_unmatched1() {
+        let mut ti = TI::new();
+        let m = TypeEnv(HashMap::new());
+        ti.type_inference(&m, &expr!(List [Int 12] [Int 12]));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_type_inference_list_unmatched2() {
+        let mut ti = TI::new();
+        let m = TypeEnv(HashMap::new());
+        ti.type_inference(&m, &expr!(List [Int 12] [List [Bool true] [Nil]]));
+    }
 }
