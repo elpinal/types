@@ -638,7 +638,36 @@ mod tests {
             types!(Fun, types!(Var, a1), types!(Int))
         );
 
-        expr_type!(expr!(List [Int 12] [List [Int 24] [Nil]]), types!(List, types!(Int)));
+        expr_type!(
+            expr!(List [Int 12] [List [Int 24] [Nil]]),
+            types!(List, types!(Int))
+        );
+        expr_type!(
+            expr!(List [Bool true] [List [Bool false] [Nil]]),
+            types!(List, types!(Bool))
+        );
+        expr_type!(
+            expr!(
+                Let
+                b
+                [
+                    If
+                    [Bool false]
+                    [Bool true]
+                    [
+                        App
+                        [
+                            Abs
+                            n
+                            [Bool false]
+                        ]
+                        [Int 42]
+                    ]
+                ]
+                [List [Bool true] [List [Var b] [Nil]]]
+            ),
+            types!(List, types!(Bool))
+        );
     }
 
     #[test]
