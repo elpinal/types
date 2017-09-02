@@ -92,6 +92,7 @@ enum Expr {
     Let(String, Box<Expr>, Box<Expr>),
     If(Box<Expr>, Box<Expr>, Box<Expr>),
     List(Box<Expr>, Box<Expr>),
+    Nil,
 }
 
 impl fmt::Display for Expr {
@@ -105,6 +106,7 @@ impl fmt::Display for Expr {
             Expr::Abs(ref name, ref e) => write!(f, "\\{} -> {}", name, e),
             Expr::App(ref e1, ref e2) => write!(f, "{} {}", e1, e2),
             Expr::List(ref head, ref tail) => write!(f, "{} : {}", head, tail),
+            Expr::Nil => write!(f, "nil"),
         }
     }
 }
@@ -243,6 +245,7 @@ impl TI {
             (t, Type::Var(u)) => self.var_bind(&u, t),
             (Type::Int, Type::Int) => HashMap::new(),
             (Type::Bool, Type::Bool) => HashMap::new(),
+            (Type::List(t1), Type::List(t2)) => self.mgu(*t1, *t2),
             (t1, t2) => panic!("types do not unify: {:?} vs. {:?}", t1, t2),
         }
     }
@@ -299,7 +302,11 @@ impl TI {
                 let (s1, t1) = self.ti(env, head);
                 let (s2, t2) = self.ti(env.apply(&s1).borrow(), tail);
                 let s3 = self.mgu(Type::List(t1.apply(&s2)), *t2.apply(&s2));
-                (compose!(&s3, &s2, &s1), *t1.apply(&s3))
+                (compose!(&s3, &s2, &s1), *t2.apply(&s3))
+            }
+            &Expr::Nil => {
+                let tv = self.new_type_var("a");
+                (HashMap::new(), tv)
             }
         }
     }
@@ -357,6 +364,9 @@ mod tests {
         };
         ( Bool ) => {
             Type::Bool
+        };
+        ( List, $e:expr ) => {
+            Type::List( Box::new($e) )
         };
     }
 
@@ -558,6 +568,15 @@ mod tests {
                 Box::new(expr!($( $e2 )*)),
             )
         };
+        ( List [ $( $e1:tt )* ] [ $( $e2:tt )* ] ) => {
+            Expr::List(
+                Box::new(expr!($( $e1 )*)),
+                Box::new(expr!($( $e2 )*)),
+            )
+        };
+        ( Nil ) => {
+            Expr::Nil
+        };
     }
 
     macro_rules! expr_type {
@@ -618,6 +637,8 @@ mod tests {
             expr!(If [Bool true] [Abs n [Int 42]] [Abs q [Int 21]]),
             types!(Fun, types!(Var, a1), types!(Int))
         );
+
+        expr_type!(expr!(List [Int 12] [List [Int 24] [Nil]]), types!(List, types!(Int)));
     }
 
     #[test]
