@@ -25,8 +25,8 @@ impl Type {
             Type::Arr(ty1, ty2) => {
                 Type::Arr(Box::new(ty1.map(onvar, c)), Box::new(ty2.map(onvar, c)))
             }
-            Type::All(i, ty) => Type::All(i, Box::new(ty.map(onvar, c))),
-            Type::Some(i, ty) => Type::Some(i, Box::new(ty.map(onvar, c))),
+            Type::All(i, ty) => Type::All(i, Box::new(ty.map(onvar, c + 1))),
+            Type::Some(i, ty) => Type::Some(i, Box::new(ty.map(onvar, c + 1))),
         }
     }
 
