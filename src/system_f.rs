@@ -1,6 +1,8 @@
 //! System F
 #![warn(missing_docs)]
 
+use std::result;
+
 /// Represents a type.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
@@ -143,7 +145,7 @@ impl Term {
         self.subst_type(ty.shift(1), 0).shift(-1)
     }
 
-    fn type_of(self, ctx: Context) -> Result<Type, TypeError> {
+    fn type_of(self, ctx: Context) -> Result<Type> {
         match self {
             Term::Var(i, _) => ctx.get(i),
             Term::Abs(x, ty, t) => Ok(t.type_of(ctx.add(x, Binding::Term(ty)))?.shift(-1)),
@@ -204,6 +206,8 @@ enum TypeError {
     Existential(Type),
 }
 
+type Result<T> = result::Result<T, TypeError>;
+
 #[derive(Clone)]
 struct Context(Vec<(String, Binding)>);
 
@@ -220,7 +224,7 @@ impl Context {
         Context(v)
     }
 
-    fn get(&self, i: isize) -> Result<Type, TypeError> {
+    fn get(&self, i: isize) -> Result<Type> {
         let x: &(String, Binding) = self.0.get(i as usize).ok_or_else(
             || TypeError::Unbound(i, self.clone()),
         )?;
