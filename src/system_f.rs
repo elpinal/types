@@ -151,6 +151,24 @@ enum Binding {
     Term(Type),
     Type,
 }
+
+impl Context {
+    fn add(&self, i: String, b: Binding) -> Context {
+        let mut v = self.0.clone();
+        v.push((i, b));
+        Context(v)
+    }
+
+    fn get(&self, i: isize) -> Result<Type, TypeError> {
+        let x: &(String, Binding) = self.0.get(i as usize).ok_or_else(
+            || TypeError::Unbound(i, self.clone()),
+        )?;
+        let b: Binding = x.1;
+        match b {
+            Binding::Term(ty) => Ok(ty),
+            _ => Err(TypeError::NotTermBinding(i)),
+        }
+    }
 }
 
 enum Eval {
