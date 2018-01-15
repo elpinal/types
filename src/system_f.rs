@@ -149,6 +149,17 @@ enum Eval {
     Stuck(Term),
 }
 
+fn eval(t: Term) -> Term {
+    let mut t = t;
+    loop {
+        match eval1(t) {
+            Eval::Next(t1) => t = t1,
+            Eval::Stuck(t1) => return t1,
+        }
+    }
+}
+
+// TODO: not readable.
 fn eval1(tm: Term) -> Eval {
     match tm {
         Term::App(t1, t2) => {
@@ -207,5 +218,20 @@ mod tests {
         subst_test!(t, Var(0, 2), t);
         subst_test!(t, Var(1, 2), t);
         subst_test!(t, all!("X", Var(0, 3)), all!("X", Var(0, 1)));
+    }
+
+    #[test]
+    fn test_eval() {
+        use self::Term::*;
+
+        let t = Var(0, 1);
+        assert_eq!(eval(t.clone()), t);
+
+        let t = Abs(
+            "x".to_string(),
+            all!("X", Type::Var(0, 1)),
+            Box::new(Var(0, 1)),
+        );
+        assert_eq!(eval(t.clone()), t);
     }
 }
