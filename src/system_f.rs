@@ -166,7 +166,7 @@ impl Term {
             }
             Term::Pack(ty1, t, ty2) => {
                 match ty2 {
-                    Type::Some(i, ty21) => {
+                    Type::Some(_, ty21) => {
                         let ty_u1 = t.type_of(ctx)?;
                         let ty_u2 = ty21.subst_top(ty1);
                         if ty_u1 == ty_u2 {
@@ -180,7 +180,7 @@ impl Term {
             }
             Term::Unpack(tyi, ti, t1, t2) => {
                 match t1.type_of(ctx)? {
-                    Type::Some(i, ty) => {
+                    Type::Some(_, ty) => {
                         let ctx = ctx.add(tyi, Binding::Type);
                         let ctx = ctx.add(ti, Binding::Term(*ty));
                         Ok(t2.type_of(ctx)?.shift(-2))
@@ -288,7 +288,7 @@ fn eval1(tm: Term) -> Eval {
                 Eval::Next(t11) => Eval::Next(Term::Unpack(tyi, ti, Box::new(t11), t2)),
                 Eval::Stuck(t11) => {
                     match t11 {
-                        Term::Pack(ty1, t, ty2) => Eval::Next(
+                        Term::Pack(ty1, t, _) => Eval::Next(
                             t2.subst_top(t.shift(1)).subst_type_top(ty1),
                         ),
                         _ => Eval::Stuck(Term::Unpack(tyi, ti, Box::new(t11), t2)),
