@@ -143,6 +143,18 @@ impl Term {
         self.subst_type(ty.shift(1), 0).shift(-1)
     }
 
+
+enum TypeError {
+    Unbound(isize, Context),
+    Unexpected(Type, Type),
+    NotTermBinding(isize),
+    /// `App(ty1, ty2)` represents `t1 t2` cannot be typed where `t1 : ty1`, `t2 : ty2`.
+    App(Type, Type),
+    /// Expected an universal type, but a given type is not.
+    Universal(Type),
+    /// Expected an existential type, but a given type is not.
+    Existential(Type),
+}
 #[derive(Clone)]
 struct Context(Vec<(String, Binding)>);
 
