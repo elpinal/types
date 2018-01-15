@@ -313,10 +313,11 @@ fn eval1(tm: Term) -> Result<Eval> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::option::Option;
 
     macro_rules! subst_test {
         ( $t1:expr, $t2:expr, $t3:expr ) => {
-            assert_eq!($t2.clone().subst_top($t1.clone()), $t3.clone());
+            assert_eq!($t2.clone().subst_top($t1.clone()).ok(), Option::Some($t3.clone()));
         };
     }
 
@@ -342,13 +343,13 @@ mod tests {
         use self::Term::*;
 
         let t = Var(0, 1);
-        assert_eq!(eval(t.clone()), t);
+        assert_eq!(eval(t.clone()).ok(), Option::Some(t));
 
         let t = Abs(
             "x".to_string(),
             all!("X", Type::Var(0, 1)),
             Box::new(Var(0, 1)),
         );
-        assert_eq!(eval(t.clone()), t);
+        assert_eq!(eval(t.clone()).ok(), Option::Some(t));
     }
 }
