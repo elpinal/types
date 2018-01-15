@@ -144,6 +144,44 @@ impl Term {
     }
 }
 
+enum Eval {
+    Next(Term),
+    Stuck(Term),
+}
+
+fn eval1(tm: Term) -> Eval {
+    match tm {
+        Term::App(t1, t2) => {
+            match eval1(*t1) {
+                Eval::Next(t11) => Eval::Next(Term::App(Box::new(t11), t2)),
+                Eval::Stuck(t1) => {
+                    match eval1(*t2) {
+                        Eval::Next(t21) => Eval::Next(Term::App(Box::new(t1), Box::new(t21))),
+                        Eval::Stuck(t2) => {
+                            match t1 {
+                                Term::Abs(_, _, t) => Eval::Next(t.subst_top(t2)),
+                                _ => Eval::Stuck(Term::App(Box::new(t1), Box::new(t2))),
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Term::TApp(t, ty) => {
+            match eval1(*t) {
+                Eval::Next(t1) => Eval::Next(Term::TApp(Box::new(t1), ty)),
+                Eval::Stuck(t) => {
+                    match t {
+                        Term::TAbs(_, t2) => Eval::Next(t2.subst_type_top(ty)),
+                        _ => Eval::Stuck(Term::TApp(Box::new(t), ty)),
+                    }
+                }
+            }
+        }
+        _ => Eval::Stuck(tm),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
