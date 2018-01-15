@@ -143,19 +143,19 @@ impl Term {
         self.subst_type(ty.shift(1), 0).shift(-1)
     }
 
-    fn type_of(&self, ctx: Context) -> Result<Type, TypeError> {
-        match *self {
+    fn type_of(self, ctx: Context) -> Result<Type, TypeError> {
+        match self {
             Term::Var(i, _) => ctx.get(i),
             Term::Abs(x, ty, t) => Ok(t.type_of(ctx.add(x, Binding::Term(ty)))?.shift(-1)),
             Term::App(t1, t2) => {
                 let ty2 = t2.type_of(ctx.clone())?;
                 match t1.type_of(ctx)? {
-                    Type::Arr(ref ty11, ref ty12) if **ty11 == ty2 => Ok(**ty12),
+                    Type::Arr(ref ty11, ref ty12) if **ty11 == ty2 => Ok(*ty12.clone()),
                     ty1 => Err(TypeError::App(ty1, ty2)),
                 }
             }
             Term::TAbs(i, t) => Ok(Type::All(
-                i,
+                i.clone(),
                 Box::new(t.type_of(ctx.add(i, Binding::Type))?),
             )),
             Term::TApp(t, ty1) => {
@@ -166,11 +166,11 @@ impl Term {
             }
             Term::Pack(ty1, t, ty2) => {
                 match ty2 {
-                    Type::Some(_, ty21) => {
+                    Type::Some(i, ty21) => {
                         let ty_u1 = t.type_of(ctx)?;
-                        let ty_u2 = ty21.subst_top(ty1);
+                        let ty_u2 = ty21.clone().subst_top(ty1);
                         if ty_u1 == ty_u2 {
-                            Ok(ty2)
+                            Ok(Type::Some(i, ty21))
                         } else {
                             Err(TypeError::Unexpected(ty_u1, ty_u2))
                         }
