@@ -2,6 +2,7 @@
 #![warn(missing_docs)]
 
 /// Represents a type.
+#[derive(Clone)]
 pub enum Type {
     /// A type variable. As given `Var(x, n)`, `x` represents de Bruijn index; `n` represents the
     /// size of the context.
@@ -28,5 +29,32 @@ impl Type {
             Type::All(_, ref mut ty) => ty.map(onvar, c),
             Type::Some(_, ref mut ty) => ty.map(onvar, c),
         }
+    }
+
+    fn shift_above(&mut self, d: isize, c: isize) {
+        let f = |c, &x: &isize, &n: &isize| if x >= c {
+            x + d;
+            n + d;
+        } else {
+            n + d;
+        };
+        self.map(&f, c)
+    }
+
+    fn shift(&mut self, d: isize) {
+        self.shift_above(d, 0)
+    }
+
+    fn subst(&mut self, ty: &mut Type, j: isize) {
+        let f = |j, &x: &isize, _: &isize| if x == j {
+            ty.clone().shift(j)
+        };
+        self.map(&f, j)
+    }
+
+    fn subst_top(&mut self, ty: &mut Type) {
+        ty.shift(1);
+        self.subst(ty, 0);
+        self.shift(-1);
     }
 }
