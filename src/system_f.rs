@@ -179,7 +179,7 @@ impl Term {
                 }
             }
             Term::Unpack(tyi, ti, t1, t2) => {
-                match t1.type_of(ctx)? {
+                match t1.type_of(ctx.clone())? {
                     Type::Some(_, ty) => {
                         let ctx = ctx.add(tyi, Binding::Type);
                         let ctx = ctx.add(ti, Binding::Term(*ty));
@@ -224,7 +224,7 @@ impl Context {
         let x: &(String, Binding) = self.0.get(i as usize).ok_or_else(
             || TypeError::Unbound(i, self.clone()),
         )?;
-        let b: Binding = x.1;
+        let b: Binding = x.1.clone();
         match b {
             Binding::Term(ty) => Ok(ty),
             _ => Err(TypeError::NotTermBinding(i)),
