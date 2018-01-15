@@ -189,6 +189,25 @@ fn eval1(tm: Term) -> Eval {
                 }
             }
         }
+        Term::Pack(ty1, t, ty2) => {
+            match eval1(*t) {
+                Eval::Next(t1) => Eval::Next(Term::Pack(ty1, Box::new(t1), ty2)),
+                Eval::Stuck(t1) => Eval::Stuck(Term::Pack(ty1, Box::new(t1), ty2)),
+            }
+        }
+        Term::Unpack(tyi, ti, t1, t2) => {
+            match eval1(*t1) {
+                Eval::Next(t11) => Eval::Next(Term::Unpack(tyi, ti, Box::new(t11), t2)),
+                Eval::Stuck(t11) => {
+                    match t11 {
+                        Term::Pack(ty1, t, ty2) => Eval::Next(
+                            t2.subst_top(t.shift(1)).subst_type_top(ty1),
+                        ),
+                        _ => Eval::Stuck(Term::Unpack(tyi, ti, Box::new(t11), t2)),
+                    }
+                }
+            }
+        }
         _ => Eval::Stuck(tm),
     }
 }
