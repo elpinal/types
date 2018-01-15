@@ -217,7 +217,7 @@ mod tests {
         subst_test!(t, t, t);
         subst_test!(t, Var(0, 2), t);
         subst_test!(t, Var(1, 2), t);
-        subst_test!(t, all!("X", Var(0, 3)), all!("X", Var(0, 1)));
+        subst_test!(t, all!("X", Var(0, 3)), all!("X", Var(0, 2)));
     }
 
     #[test]
