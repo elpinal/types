@@ -142,6 +142,15 @@ impl Term {
     fn subst_type_top(self, ty: Type) -> Term {
         self.subst_type(ty.shift(1), 0).shift(-1)
     }
+
+#[derive(Clone)]
+struct Context(Vec<(String, Binding)>);
+
+#[derive(Clone)]
+enum Binding {
+    Term(Type),
+    Type,
+}
 }
 
 enum Eval {
