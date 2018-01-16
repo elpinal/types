@@ -72,12 +72,26 @@ impl Term {
 }
 
 impl Context {
-    fn get(&self, x: usize) -> Option<Type> {
+    fn get(&self, x: usize) -> Option<Binding> {
         self.0.get(x).map(|t| t.1.clone())
     }
 
-    fn add(mut self, i: String, ty: Type) -> Context {
-        self.0.push((i, ty));
+    fn get_kind(&self, x: usize) -> Option<Kind> {
+        self.get(x).and_then(|y| match y {
+            Binding::Type(k) => Some(k),
+            _ => None,
+        })
+    }
+
+    fn get_type(&self, x: usize) -> Option<Type> {
+        self.get(x).and_then(|y| match y {
+            Binding::Term(t) => Some(t),
+            _ => None,
+        })
+    }
+
+    fn add(mut self, i: String, b: Binding) -> Context {
+        self.0.push((i, b));
         self
     }
 }
