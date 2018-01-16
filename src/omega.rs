@@ -98,9 +98,7 @@ impl Term {
             App(ref t1, ref t2) => {
                 let ty1 = t1.type_of(ctx.clone())?;
                 match ty1 {
-                    Type::Arr(ty11, ty12) => {
-                        unimplemented!()
-                    }
+                    Type::Arr(ty11, ty12) => unimplemented!(),
                     _ => Err(NotArr(ty1)),
                 }
             }
