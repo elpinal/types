@@ -34,12 +34,20 @@ enum Term {
 enum TypeError {
     Unbound(usize, Context),
     NotArr(Type),
+    Kind(KindError),
+    NotStar(Kind),
 }
 
 enum KindError {
     Unbound(usize, Context),
     Unexpected(Kind, Kind),
     NotArr(Kind),
+}
+
+impl From<KindError> for TypeError {
+    fn from(e: KindError) -> TypeError {
+        TypeError::Kind(e)
+    }
 }
 
 impl Type {
@@ -87,9 +95,14 @@ impl Term {
     fn type_of(&self, ctx: Context) -> Result<Type, TypeError> {
         use self::Term::*;
         use self::TypeError::*;
+        use self::Kind;
         match *self {
             Var(x, n) => ctx.get_type(x).ok_or_else(|| Unbound(x, ctx)),
             Abs(ref i, ref ty1, ref t) => {
+                match ty1.kind_of(ctx.clone())? {
+                    Kind::Star => (),
+                    k => return Err(NotStar(k)),
+                }
                 let ctx1 = ctx.clone().add(i.clone(), Binding::Term(ty1.clone()));
                 let ty2 = t.type_of(ctx1)?;
                 let x = Type::Arr(Box::new(ty1.clone()), Box::new(ty2));
