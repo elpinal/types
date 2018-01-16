@@ -134,6 +134,10 @@ impl Term {
             Arr(..) => self,
         }
     }
+
+    fn subst_top(self, t: Type) -> Type {
+        unimplemented!()
+    }
 }
 
 impl Context {
