@@ -38,6 +38,8 @@ enum TypeError {
 
 enum KindError {
     Unbound(usize, Context),
+    Unexpected(Kind, Kind),
+    NotArr(Kind),
 }
 
 impl Type {
@@ -51,6 +53,20 @@ impl Type {
                 let k2 = t.kind_of(ctx1)?;
                 let x = Kind::Arr(Box::new(k1.clone()), Box::new(k2));
                 Ok(x)
+            }
+            App(ref t1, ref t2) => {
+                let k1 = t1.kind_of(ctx.clone())?;
+                match k1 {
+                    Kind::Arr(k11, k12) => {
+                        let k2 = t2.kind_of(ctx.clone())?;
+                        if *k11 == k2 {
+                            Ok(*k12)
+                        } else {
+                            Err(Unexpected(k2, *k11))
+                        }
+                    }
+                    _ => Err(NotArr(k1)),
+                }
             }
         }
     }
