@@ -96,7 +96,11 @@ impl Type {
         match self {
             Abs(..) => self,
             Var(x, _) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx)),
-            App(Abs(i, k, t), t2) => (*t).subst_top(t2),
+            App(t1, t2) => {
+                match *t1 {
+                    Abs(i, k, t) => t.subst_top(*t2),
+                }
+            }
             Arr(..) => self,
         }
     }
