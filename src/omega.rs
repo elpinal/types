@@ -36,6 +36,7 @@ enum TypeError {
     NotArr(Type),
     Kind(KindError),
     NotStar(Kind),
+    Unexpected(Type, Type),
 }
 
 enum KindError {
@@ -109,10 +110,16 @@ impl Term {
                 Ok(x)
             }
             App(ref t1, ref t2) => {
-                let ty1 = t1.type_of(ctx.clone())?;
-                match ty1 {
-                    Type::Arr(ty11, ty12) => unimplemented!(),
-                    _ => Err(NotArr(ty1)),
+                let ty2 = t2.type_of(ctx.clone())?;
+                match t1.type_of(ctx)? {
+                    Type::Arr(ty11, ty12) => {
+                        if *ty11 == ty2 {
+                            Ok(*ty12)
+                        } else {
+                            Err(Unexpected(ty2, *ty11))
+                        }
+                    }
+                    ty1 => Err(NotArr(ty1)),
                 }
             }
         }
