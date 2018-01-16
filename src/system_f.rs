@@ -25,7 +25,10 @@ impl Type {
         match self {
             Type::Var(x, n) => onvar(c, x, n),
             Type::Arr(ty1, ty2) => {
-                Ok(Type::Arr(Box::new(ty1.map(onvar, c)?), Box::new(ty2.map(onvar, c)?)))
+                Ok(Type::Arr(
+                    Box::new(ty1.map(onvar, c)?),
+                    Box::new(ty2.map(onvar, c)?),
+                ))
             }
             Type::All(i, ty) => Ok(Type::All(i, Box::new(ty.map(onvar, c + 1)?))),
             Type::Some(i, ty) => Ok(Type::Some(i, Box::new(ty.map(onvar, c + 1)?))),
@@ -84,7 +87,11 @@ impl Term {
         match self {
             Term::Var(x, n) => onvar(c, x, n),
             Term::Abs(x, ty, t) => {
-                Ok(Term::Abs(x, ontype(c, ty)?, Box::new(t.map(onvar, ontype, c + 1)?)))
+                Ok(Term::Abs(
+                    x,
+                    ontype(c, ty)?,
+                    Box::new(t.map(onvar, ontype, c + 1)?),
+                ))
             }
             Term::App(t1, t2) => {
                 Ok(Term::App(
@@ -93,7 +100,10 @@ impl Term {
                 ))
             }
             Term::TAbs(i, t) => Ok(Term::TAbs(i, Box::new(t.map(onvar, ontype, c + 1)?))),
-            Term::TApp(t, ty) => Ok(Term::TApp(Box::new(t.map(onvar, ontype, c)?), ontype(c, ty)?)),
+            Term::TApp(t, ty) => Ok(Term::TApp(
+                Box::new(t.map(onvar, ontype, c)?),
+                ontype(c, ty)?,
+            )),
             Term::Pack(ty1, t, ty2) => {
                 Ok(Term::Pack(
                     ontype(c, ty1)?,
