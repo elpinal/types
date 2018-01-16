@@ -41,7 +41,12 @@ enum KindError {
 }
 
 impl Type {
-    fn kind_of(&self, ctx: Context) -> Result<Type, KindError> {
+    fn kind_of(&self, ctx: Context) -> Result<Kind, KindError> {
+        use self::Type::*;
+        use self::KindError::*;
+        match *self {
+            Var(x, n) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx)),
+        }
     }
 }
 
