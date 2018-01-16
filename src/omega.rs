@@ -4,7 +4,7 @@
 #[derive(Clone, Debug, PartialEq)]
 enum Type {
     Var(usize, usize),
-    Abs(String, Box<Type>),
+    Abs(String, Kind, Box<Type>),
     App(Box<Type>, Box<Type>),
     Arr(Box<Type>, Box<Type>),
 }
@@ -46,6 +46,12 @@ impl Type {
         use self::KindError::*;
         match *self {
             Var(x, n) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx)),
+            Abs(ref i, ref k1, ref t) => {
+                let ctx1 = ctx.clone().add(i.clone(), Binding::Type(k1.clone()));
+                let k2 = t.kind_of(ctx1)?;
+                let x = Kind::Arr(Box::new(k1.clone()), Box::new(k2));
+                Ok(x)
+            }
         }
     }
 }
