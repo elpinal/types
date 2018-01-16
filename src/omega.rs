@@ -90,6 +90,20 @@ impl Type {
             }
         }
     }
+
+    fn eval_to_abs(self, ctx: Context) -> Type {
+        use self::Type::*;
+        match self {
+            Abs(..) => self,
+            Var(x, _) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx)),
+            App(Abs(i, k, t), t2) => (*t).subst_top(t2),
+            Arr(..) => self,
+        }
+    }
+
+    fn subst_top(self, t: Type) -> Type {
+        unimplemented!()
+    }
 }
 
 impl Term {
@@ -123,20 +137,6 @@ impl Term {
                 }
             }
         }
-    }
-
-    fn eval_to_abs(self, ctx: Context) -> Type {
-        use self::Type::*;
-        match self {
-            Abs(..) => self,
-            Var(x, _) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx)),
-            App(Abs(i, k, t), t2) => t.subst_top(t2),
-            Arr(..) => self,
-        }
-    }
-
-    fn subst_top(self, t: Type) -> Type {
-        unimplemented!()
     }
 }
 
