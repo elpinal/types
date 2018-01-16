@@ -68,6 +68,17 @@ impl Type {
                     _ => Err(NotArr(k1)),
                 }
             }
+            Arr(ref t1, ref t2) => {
+                match t1.kind_of(ctx.clone())? {
+                    Kind::Star => {
+                        match t2.kind_of(ctx)? {
+                            Kind::Star => Ok(Kind::Star),
+                            k => Err(Unexpected(k, Kind::Star)),
+                        }
+                    }
+                    k => Err(Unexpected(k, Kind::Star)),
+                }
+            }
         }
     }
 }
