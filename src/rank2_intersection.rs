@@ -6,20 +6,25 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 
 #[derive(Clone, Eq, Hash, PartialEq)]
-enum SimpleType {
+enum Type<S, T> {
     Var(usize, usize),
-    Arr(Box<SimpleType>, Box<SimpleType>),
+    Arr(S, Box<T>),
+}
+
+#[derive(Clone, Eq, Hash, PartialEq)]
+enum SimpleType {
+    Type(Type<Box<SimpleType>, SimpleType>),
 }
 
 #[derive(Clone, PartialEq)]
 enum Rank1 {
-    Simple(SimpleType),
+    Type(SimpleType),
     Intersection(Box<Rank1>, Box<Rank1>),
 }
 
+#[derive(Clone, PartialEq)]
 enum Rank2 {
-    Var(usize, usize),
-    Arr(Rank1, Box<Rank2>),
+    Type(Type<Rank1, Rank2>),
     Intersection(Box<Rank2>, Box<Rank2>),
 }
 
@@ -42,7 +47,7 @@ impl Rank1 {
         use self::Rank1::*;
         let mut types = HashSet::new();
         match self {
-            Simple(t) => {
+            Type(t) => {
                 types.insert(t);
             }
             Intersection(t1, t2) => {
@@ -80,7 +85,7 @@ mod tests {
 
     macro_rules! var {
         ($x:expr, $n:expr) => {
-            Rank1::Simple(SimpleType::Var($x, $n))
+            Rank1::Type(SimpleType::Type(Type::Var($x, $n)))
         }
     }
 
