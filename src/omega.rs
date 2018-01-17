@@ -262,7 +262,7 @@ impl Context {
 
 macro_rules! context {
     ( $($i:expr , $b:expr),* ) => {
-        Context(vec![ $( ($i, $b) ),* ])
+        Context(vec![ $( ($i.to_string(), $b) ),* ])
     }
 }
 
@@ -279,7 +279,7 @@ mod tests {
     #[test]
     fn test_kind_of() {
         use self::Type::*;
-        let ctx = context!("X".to_string(), Binding::Type(Kind::Star));
+        let ctx = context!("X", Binding::Type(Kind::Star));
         assert_kind_of!(Var(0, 1), ctx, Ok(Kind::Star));
     }
 }
