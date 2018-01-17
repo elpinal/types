@@ -110,13 +110,13 @@ impl Type {
         }
     }
 
-    fn eval_to_arr(self, ctx: Context) -> Type {
+    fn eval_to_arr(self) -> Type {
         use self::Type::*;
         match self {
             Abs(..) => self,
             Var(..) => self,
             App(t1, t2) => {
-                match t1.eval(ctx) {
+                match t1.eval() {
                     Abs(_, _, t) => t.subst_top(*t2),
                     t1 => App(Box::new(t1), t2),
                 }
@@ -126,17 +126,17 @@ impl Type {
     }
 
     /// Evaluates a type to its normal form.
-    pub fn eval(self, ctx: Context) -> Type {
+    pub fn eval(self) -> Type {
         let mut t0 = self;
         loop {
-            match t0.eval1(ctx.clone()) {
+            match t0.eval1() {
                 (t, true) => t0 = t,
                 (t, false) => return t,
             }
         }
     }
 
-    fn eval1(self, ctx: Context) -> (Type, bool) {
+    fn eval1(self) -> (Type, bool) {
         use self::Type::*;
         let unchanged = |t| (t, false);
         let changed = |t| (t, true);
@@ -147,18 +147,18 @@ impl Type {
                 macro_rules! app {
                     ($t:expr) => {App(Box::new($t), t2)}
                 }
-                match t1.eval1(ctx) {
+                match t1.eval1() {
                     (t, true) => changed(app!(t)),
                     (Abs(i, k, t), false) => changed(t.subst_top(*t2)),
                     (t, false) => unchanged(app!(t)), // What should happen?
                 }
             }
             Arr(t1, t2) => {
-                match t1.eval1(ctx.clone()) {
+                match t1.eval1() {
                     (t, true) => changed(Arr(Box::new(t), t2)),
                     (t1, false) => {
                         let arr = |t| Arr(Box::new(t1), Box::new(t));
-                        match t2.eval1(ctx) {
+                        match t2.eval1() {
                             (t, true) => changed(arr(t)),
                             (t, false) => unchanged(arr(t)),
                         }
@@ -237,10 +237,10 @@ impl Term {
             }
             App(ref t1, ref t2) => {
                 let ty2 = t2.type_of(ctx.clone())?;
-                match t1.type_of(ctx.clone())?.eval_to_arr(ctx.clone()) {
+                match t1.type_of(ctx)?.eval_to_arr() {
                     Type::Arr(ty11, ty12) => {
-                        let ty11 = ty11.eval(ctx.clone());
-                        let ty2 = ty2.eval(ctx);
+                        let ty11 = ty11.eval();
+                        let ty2 = ty2.eval();
                         if ty11 == ty2 {
                             Ok(*ty12)
                         } else {
