@@ -2,37 +2,49 @@
 #![warn(missing_docs)]
 #![warn(unused)]
 
+/// A type.
 #[derive(Clone, Debug, PartialEq)]
-enum Type {
+pub enum Type {
+    /// A type variable with the index and the size of context.
     Var(usize, usize),
+    /// A type-level abstraction.
     Abs(String, Kind, Box<Type>),
+    /// An application of types.
     App(Box<Type>, Box<Type>),
+    /// An arrow type.
     Arr(Box<Type>, Box<Type>),
 }
 
+/// A kind.
 #[derive(Clone, Debug, PartialEq)]
-enum Kind {
+pub enum Kind {
+    /// A kind for a proper type.
     Star,
+    /// A kind for a type operator.
     Arr(Box<Kind>, Box<Kind>),
 }
 
+/// A context.
 #[derive(Clone, Debug, PartialEq)]
-struct Context(Vec<(String, Binding)>);
+pub struct Context(Vec<(String, Binding)>);
 
+/// A binding.
 #[derive(Clone, Debug, PartialEq)]
-enum Binding {
+pub enum Binding {
+    /// Denotes that a term have a type.
     Term(Type),
+    /// Denotes that a type have a kind.
     Type(Kind),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Term {
+pub enum Term {
     Var(usize, usize),
     Abs(String, Type, Box<Term>),
     App(Box<Term>, Box<Term>),
 }
 
-enum TypeError {
+pub enum TypeError {
     Unbound(usize, Context),
     NotArr(Type),
     Kind(KindError),
@@ -40,10 +52,14 @@ enum TypeError {
     Unexpected(Type, Type),
 }
 
+/// Represents an error while kinding a type.
 #[derive(Clone, Debug, PartialEq)]
-enum KindError {
+pub enum KindError {
+    /// A type variable is unbound so that the kind is undefined.
     Unbound(usize, Context),
+    /// `Unexpected(k1, k2)` denotes that given `k1`, but want `k2`.
     Unexpected(Kind, Kind),
+    /// Expected an arrow kind, but got `k` where `NotArr(k)`.
     NotArr(Kind),
 }
 
@@ -54,7 +70,8 @@ impl From<KindError> for TypeError {
 }
 
 impl Type {
-    fn kind_of(&self, ctx: Context) -> Result<Kind, KindError> {
+    /// Obtains the kind of a type. Returns an error if the type does not hold its kind.
+    pub fn kind_of(&self, ctx: Context) -> Result<Kind, KindError> {
         use self::Type::*;
         use self::KindError::*;
         match *self {
@@ -108,7 +125,8 @@ impl Type {
         }
     }
 
-    fn eval(self, ctx: Context) -> Type {
+    /// Evaluates a type to its normal form.
+    pub fn eval(self, ctx: Context) -> Type {
         let mut t0 = self;
         loop {
             match t0.eval1(ctx.clone()) {
@@ -132,7 +150,7 @@ impl Type {
                 match t1.eval1(ctx) {
                     (t, true) => changed(app!(t)),
                     (Abs(i, k, t), false) => changed(t.subst_top(*t2)),
-                    (t, false) => unchanged(app!(t)),
+                    (t, false) => unchanged(app!(t)), // What should happen?
                 }
             }
             Arr(t1, t2) => {
@@ -201,7 +219,7 @@ impl Type {
 }
 
 impl Term {
-    fn type_of(&self, ctx: Context) -> Result<Type, TypeError> {
+    pub fn type_of(&self, ctx: Context) -> Result<Type, TypeError> {
         use self::Term::*;
         use self::TypeError::*;
         use self::Kind;
@@ -237,7 +255,8 @@ impl Term {
 }
 
 impl Context {
-    fn get(&self, x: usize) -> Option<Binding> {
+    /// Gets the binding corresponding to the index `x`.
+    pub fn get(&self, x: usize) -> Option<Binding> {
         self.0.get(x).map(|t| t.1.clone())
     }
 
@@ -255,7 +274,8 @@ impl Context {
         })
     }
 
-    fn add(mut self, i: String, b: Binding) -> Context {
+    /// Adds a binding.
+    pub fn add(mut self, i: String, b: Binding) -> Context {
         self.0.push((i, b));
         self
     }
