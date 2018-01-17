@@ -105,6 +105,36 @@ impl Type {
         }
     }
 
+    fn eval1(self, ctx: Context) -> (Type, bool) {
+        use self::Type::*;
+        let unchanged = |t| (t, false);
+        let changed = |t| (t, true);
+        match self {
+            Abs(..) => unchanged(self),
+            Var(..) => unchanged(self),
+            App(t1, t2) => {
+                let app = |t| App(Box::new(t), t2);
+                match t1.eval1(ctx.clone()) {
+                    (t, true) => changed(app(t)),
+                    (Abs(i, k, t), false) => changed(t.subst_top(*t2)),
+                    (t, false) => unchanged(app(t)),
+                }
+            }
+            Arr(t1, t2) => {
+                match t1.eval1(ctx.clone()) {
+                    (t, true) => changed(Arr(Box::new(t), t2)),
+                    (t1, false) => {
+                        let arr = |t| Arr(Box::new(t1), Box::new(t));
+                        match t2.eval1(ctx) {
+                            (t, true) => changed(arr(t)),
+                            (t, false) => unchanged(arr(t)),
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn map<F>(self, onvar: &F, c: usize) -> Type
     where
         F: Fn(usize, usize, usize) -> Type,
