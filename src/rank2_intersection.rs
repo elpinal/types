@@ -8,15 +8,17 @@ enum SimpleType {
     Arr(Box<SimpleType>, Box<SimpleType>),
 }
 
-enum RankN<T> {
+enum Rank1 {
     Var(usize, usize),
-    Arr(T, Box<RankN<T>>),
-    Intersection(Box<RankN<T>>, Box<RankN<T>>),
+    Arr(SimpleType, SimpleType),
+    Intersection(Box<Rank1>, Box<Rank1>),
 }
 
-type Rank1 = RankN<SimpleType>;
-
-type Rank2 = RankN<Rank1>;
+enum Rank2 {
+    Var(usize, usize),
+    Arr(Rank1, Box<Rank2>),
+    Intersection(Box<Rank2>, Box<Rank2>),
+}
 
 struct Subst(HashMap<usize, SimpleType>);
 
