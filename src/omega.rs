@@ -71,22 +71,22 @@ impl From<KindError> for TypeError {
 
 impl Type {
     /// Obtains the kind of a type. Returns an error if the type does not hold its kind.
-    pub fn kind_of(&self, ctx: Context) -> Result<Kind, KindError> {
+    pub fn kind_of(&self, ctx: &Context) -> Result<Kind, KindError> {
         use self::Type::*;
         use self::KindError::*;
         match *self {
-            Var(x, n) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx)),
+            Var(x, n) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx.clone())),
             Abs(ref i, ref k1, ref t) => {
-                let ctx1 = ctx.clone().add(i.clone(), Binding::Type(k1.clone()));
-                let k2 = t.kind_of(ctx1)?;
+                let ctx1 = ctx.add(i.clone(), Binding::Type(k1.clone()));
+                let k2 = t.kind_of(&ctx1)?;
                 let x = Kind::Arr(Box::new(k1.clone()), Box::new(k2));
                 Ok(x)
             }
             App(ref t1, ref t2) => {
-                let k1 = t1.kind_of(ctx.clone())?;
+                let k1 = t1.kind_of(ctx)?;
                 match k1 {
                     Kind::Arr(k11, k12) => {
-                        let k2 = t2.kind_of(ctx.clone())?;
+                        let k2 = t2.kind_of(ctx)?;
                         if *k11 == k2 {
                             Ok(*k12)
                         } else {
@@ -97,7 +97,7 @@ impl Type {
                 }
             }
             Arr(ref t1, ref t2) => {
-                match t1.kind_of(ctx.clone())? {
+                match t1.kind_of(ctx)? {
                     Kind::Star => {
                         match t2.kind_of(ctx)? {
                             Kind::Star => Ok(Kind::Star),
@@ -219,24 +219,24 @@ impl Type {
 }
 
 impl Term {
-    pub fn type_of(&self, ctx: Context) -> Result<Type, TypeError> {
+    pub fn type_of(&self, ctx: &Context) -> Result<Type, TypeError> {
         use self::Term::*;
         use self::TypeError::*;
         use self::Kind;
         match *self {
-            Var(x, n) => ctx.get_type(x).ok_or_else(|| Unbound(x, ctx)),
+            Var(x, n) => ctx.get_type(x).ok_or_else(|| Unbound(x, ctx.clone())),
             Abs(ref i, ref ty1, ref t) => {
-                match ty1.kind_of(ctx.clone())? {
+                match ty1.kind_of(ctx)? {
                     Kind::Star => (),
                     k => return Err(NotStar(k)),
                 }
-                let ctx1 = ctx.clone().add(i.clone(), Binding::Term(ty1.clone()));
-                let ty2 = t.type_of(ctx1)?;
+                let ctx1 = ctx.add(i.clone(), Binding::Term(ty1.clone()));
+                let ty2 = t.type_of(&ctx1)?;
                 let x = Type::Arr(Box::new(ty1.clone()), Box::new(ty2));
                 Ok(x)
             }
             App(ref t1, ref t2) => {
-                let ty2 = t2.type_of(ctx.clone())?;
+                let ty2 = t2.type_of(ctx)?;
                 match t1.type_of(ctx)?.eval_to_arr() {
                     Type::Arr(ty11, ty12) => {
                         let ty11 = ty11.eval();
@@ -275,9 +275,10 @@ impl Context {
     }
 
     /// Adds a binding.
-    pub fn add(mut self, i: String, b: Binding) -> Context {
-        self.0.push((i, b));
-        self
+    pub fn add(&self, i: String, b: Binding) -> Context {
+        let mut ctx = self.clone();
+        ctx.0.push((i, b));
+        ctx
     }
 }
 
@@ -293,7 +294,7 @@ mod tests {
 
     macro_rules! assert_kind_of {
         ( $t:expr , $ctx:expr, $k:expr ) => {
-            assert_eq!($t.kind_of($ctx), $k)
+            assert_eq!($t.kind_of(&$ctx), $k)
         }
     }
 
