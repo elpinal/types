@@ -214,6 +214,18 @@ impl Type {
     fn subst_top(self, t: Type) -> Type {
         self.subst(0, &t.shift(1)).shift(-1)
     }
+
+    fn eq_without_names(&self, t: &Type) -> bool {
+        match *self {
+            Type::Abs(_, ref k1, ref t1) => {
+                match *t {
+                    Type::Abs(_, ref k2, ref t2) => k1 == k2 && t1.eq_without_names(t2),
+                    _ => false,
+                }
+            }
+            _ => self == t,
+        }
+    }
 }
 
 impl Term {
@@ -239,7 +251,7 @@ impl Term {
                     Type::Arr(ty11, ty12) => {
                         let ty11 = ty11.eval();
                         let ty2 = ty2.eval();
-                        if ty11 == ty2 {
+                        if ty11.eq_without_names(&ty2) {
                             Ok(*ty12)
                         } else {
                             Err(Unexpected(ty2, ty11))
