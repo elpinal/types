@@ -105,8 +105,53 @@ impl Type {
         }
     }
 
+    fn map<F>(self, onvar: &F, c: usize) -> Type
+    where
+        F: Fn(usize, usize, usize) -> Type,
+    {
+        use self::Type::*;
+        macro_rules! map {
+            ($t:expr, $c:expr) => {
+                Box::new($t.map(onvar, $c))
+            }
+        }
+        match self {
+            Var(x, n) => onvar(c, x, n),
+            Abs(i, k, t) => Abs(i, k, map!(t, c + 1)),
+            App(t1, t2) => App(map!(t1, c), map!(t2, c)),
+            Arr(t1, t2) => Arr(map!(t1, c), map!(t2, c)),
+        }
+    }
+
+    fn shift_above(self, d: isize, c: usize) -> Type {
+        use self::Type::*;
+        let f = |c, x, n| {
+            let nn = (n as isize + d) as usize;
+            if x >= c {
+                let xx = x as isize + d;
+                Var(xx as usize, nn)
+            } else {
+                Var(x, nn)
+            }
+        };
+        self.map(&f, c)
+    }
+
+    fn shift(self, d: isize) -> Type {
+        self.shift_above(d, 0)
+    }
+
+    fn subst(self, j: usize, t: &Type) -> Type {
+        let f = |j, x, n| if x == j {
+            t.clone().shift(j as isize)
+        } else {
+            Type::Var(x, n)
+        };
+        self.map(&f, j)
+    }
+
     fn subst_top(self, t: Type) -> Type {
-        unimplemented!()
+        self.subst(0, &t.shift(1)).shift(-1)
     }
 }
 
