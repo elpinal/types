@@ -62,12 +62,52 @@ impl PartialOrd for Rank1 {
         let s1 = t1.simple_types();
         let s2 = t2.simple_types();
 
-        if s1.is_subset(&s2) {
+        if s1 == s2 {
+            Some(Ordering::Equal)
+        } else if s1.is_subset(&s2) {
             Some(Ordering::Less)
         } else if s1.is_superset(&s2) {
             Some(Ordering::Greater)
         } else {
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! var {
+        ($x:expr, $n:expr) => {
+            Rank1::Simple(SimpleType::Var($x, $n))
+        }
+    }
+
+    macro_rules! arr {
+        ($t1:expr, $t2:expr) => {
+            Rank1::Simple(SimpleType::Arr(Box::new($t1), Box::new($t2)))
+        }
+    }
+
+    macro_rules! inter {
+        ($t1:expr, $t2:expr) => {
+            Rank1::Intersection(Box::new($t1), Box::new($t2))
+        }
+    }
+
+    #[test]
+    fn test_rank1_partial_order() {
+        assert!(var!(0, 1) <= var!(0, 1));
+        assert!(var!(0, 1) >= var!(0, 1));
+        assert!(!(var!(0, 1) < var!(0, 1)));
+        assert!(!(var!(0, 1) > var!(0, 1)));
+
+        assert!(inter!(var!(0, 1), var!(0, 1)) <= inter!(var!(0, 1), var!(0, 1)));
+        assert!(inter!(var!(0, 1), var!(0, 1)) >= inter!(var!(0, 1), var!(0, 1)));
+        assert!(var!(0, 1) <= inter!(var!(0, 1), var!(0, 1)));
+        assert!(var!(0, 1) >= inter!(var!(0, 1), var!(0, 1)));
+
+        assert!(var!(0, 1) < inter!(var!(0, 1), var!(1, 2)));
     }
 }
