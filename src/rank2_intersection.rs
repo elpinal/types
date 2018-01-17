@@ -1,6 +1,7 @@
 //! A system of rank 2 intersection types.
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 enum SimpleType {
     Var(usize, usize),
@@ -23,4 +24,10 @@ enum Term {
     Var(usize, usize),
     Abs(Box<Term>),
     App(Box<Term>, Box<Term>),
+}
+
+struct Env<T>(Vec<T>);
+
+trait Types {
+    fn ftv(&Self) -> HashSet<usize>;
 }
