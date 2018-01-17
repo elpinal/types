@@ -1,5 +1,6 @@
 //! Lambda calculus with kinds.
 #![warn(missing_docs)]
+#![warn(unused)]
 
 #[derive(Clone, Debug, PartialEq)]
 enum Type {
