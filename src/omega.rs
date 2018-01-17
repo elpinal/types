@@ -91,17 +91,28 @@ impl Type {
         }
     }
 
-    fn eval_to_abs(self, ctx: Context) -> Type {
+    fn eval_to_arr(self, ctx: Context) -> Type {
         use self::Type::*;
         match self {
             Abs(..) => self,
-            Var(x, _) => self,
+            Var(..) => self,
             App(t1, t2) => {
-                match *t1 {
-                    Abs(i, k, t) => t.subst_top(*t2),
+                match t1.eval(ctx) {
+                    Abs(_, _, t) => t.subst_top(*t2),
+                    t1 => App(Box::new(t1), t2),
                 }
             }
             Arr(..) => self,
+        }
+    }
+
+    fn eval(self, ctx: Context) -> Type {
+        let mut t0 = self;
+        loop {
+            match t0.eval1(ctx.clone()) {
+                (t, true) => t0 = t,
+                (t, false) => return t,
+            }
         }
     }
 
@@ -113,11 +124,13 @@ impl Type {
             Abs(..) => unchanged(self),
             Var(..) => unchanged(self),
             App(t1, t2) => {
-                let app = |t| App(Box::new(t), t2);
-                match t1.eval1(ctx.clone()) {
-                    (t, true) => changed(app(t)),
+                macro_rules! app {
+                    ($t:expr) => {App(Box::new($t), t2)}
+                }
+                match t1.eval1(ctx) {
+                    (t, true) => changed(app!(t)),
                     (Abs(i, k, t), false) => changed(t.subst_top(*t2)),
-                    (t, false) => unchanged(app(t)),
+                    (t, false) => unchanged(app!(t)),
                 }
             }
             Arr(t1, t2) => {
@@ -204,12 +217,14 @@ impl Term {
             }
             App(ref t1, ref t2) => {
                 let ty2 = t2.type_of(ctx.clone())?;
-                match t1.type_of(ctx)? {
+                match t1.type_of(ctx.clone())?.eval_to_arr(ctx.clone()) {
                     Type::Arr(ty11, ty12) => {
-                        if *ty11 == ty2 {
+                        let ty11 = ty11.eval(ctx.clone());
+                        let ty2 = ty2.eval(ctx);
+                        if ty11 == ty2 {
                             Ok(*ty12)
                         } else {
-                            Err(Unexpected(ty2, *ty11))
+                            Err(Unexpected(ty2, ty11))
                         }
                     }
                     ty1 => Err(NotArr(ty1)),
