@@ -5,13 +5,13 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-#[derive(Eq, Hash, PartialEq)]
+#[derive(Clone, Eq, Hash, PartialEq)]
 enum SimpleType {
     Var(usize, usize),
     Arr(Box<SimpleType>, Box<SimpleType>),
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 enum Rank1 {
     Simple(SimpleType),
     Intersection(Box<Rank1>, Box<Rank1>),
@@ -51,5 +51,23 @@ impl Rank1 {
             }
         }
         types
+    }
+}
+
+impl PartialOrd for Rank1 {
+    fn partial_cmp(&self, t: &Rank1) -> Option<Ordering> {
+        let t1: Rank1 = self.clone();
+        let t2: Rank1 = t.clone();
+
+        let s1 = t1.simple_types();
+        let s2 = t2.simple_types();
+
+        if s1.is_subset(&s2) {
+            Some(Ordering::Less)
+        } else if s1.is_superset(&s2) {
+            Some(Ordering::Greater)
+        } else {
+            None
+        }
     }
 }
