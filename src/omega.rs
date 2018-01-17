@@ -1,6 +1,4 @@
 //! Lambda calculus with kinds.
-#![warn(missing_docs)]
-#![warn(unused)]
 
 /// A type.
 #[derive(Clone, Debug, PartialEq)]
