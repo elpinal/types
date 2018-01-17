@@ -39,6 +39,7 @@ enum TypeError {
     Unexpected(Type, Type),
 }
 
+#[derive(Clone, Debug, PartialEq)]
 enum KindError {
     Unbound(usize, Context),
     Unexpected(Kind, Kind),
@@ -256,5 +257,29 @@ impl Context {
     fn add(mut self, i: String, b: Binding) -> Context {
         self.0.push((i, b));
         self
+    }
+}
+
+macro_rules! context {
+    ( $($i:expr , $b:expr),* ) => {
+        Context(vec![ $( ($i, $b) ),* ])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! assert_kind_of {
+        ( $t:expr , $ctx:expr, $k:expr ) => {
+            assert_eq!($t.kind_of($ctx), $k)
+        }
+    }
+
+    #[test]
+    fn test_kind_of() {
+        use self::Type::*;
+        let ctx = context!("X".to_string(), Binding::Type(Kind::Star));
+        assert_kind_of!(Var(0, 1), ctx, Ok(Kind::Star));
     }
 }
