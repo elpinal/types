@@ -38,6 +38,9 @@ impl Inference {
             Var(x, _) => {
                 Rank2::Simple(self.fresh_var())
             }
+            Abs(t) => {
+                self.type_of(t, ctx)
+            }
         }
     }
 }
