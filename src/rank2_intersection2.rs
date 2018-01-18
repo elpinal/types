@@ -45,7 +45,15 @@ impl Inference {
             App(t1, t2) => {
                 let t1 = self.type_of(&*t1, ctx);
                 let t2 = self.type_of(&*t2, ctx);
-                Rank2::Arr(t1, t2)
+                match t1 {
+                    Rank2::Arr(t11, t12) => {
+                        if t11 == t2 {
+                            t12
+                        } else {
+                            unimplemented!()
+                        }
+                    }
+                }
             }
         }
     }
