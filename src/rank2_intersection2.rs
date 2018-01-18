@@ -39,7 +39,8 @@ impl Inference {
                 Rank2::Simple(self.fresh_var())
             }
             Abs(t) => {
-                self.type_of(&*t, ctx)
+                let t0 = Rank1::Simple(self.fresh_var());
+                Rank2::Arr(t0, self.type_of(&*t, ctx))
             }
             App(t1, t2) => {
                 let t1 = self.type_of(&*t1, ctx);
