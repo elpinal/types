@@ -31,4 +31,13 @@ impl Inference {
     fn fresh_var(&mut self) -> SimpleType {
         SimpleType::Var(format!("{}", self.n))
     }
+
+    fn type_of(&mut self, t: &Term, ctx: &Context) -> Rank2 {
+        use self::Term::*;
+        match *t {
+            Var(x, _) => {
+                Rank2::Simple(self.fresh_var())
+            }
+        }
+    }
 }
