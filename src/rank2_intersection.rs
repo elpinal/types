@@ -31,11 +31,15 @@ enum Term {
     App(Box<Term>, Box<Term>),
 }
 
-type Env<T> = HashMap<String, T>;
+#[derive(Clone, PartialEq)]
+struct Env<T>(HashMap<String, T>);
 
 trait Types {
     fn ftv(&Self) -> HashSet<String>;
 }
+
+#[derive(Clone, PartialEq)]
+struct Pair(Env<Rank1>, Rank2);
 
 impl PartialOrd for Rank1 {
     fn partial_cmp(&self, t: &Rank1) -> Option<Ordering> {
@@ -94,6 +98,32 @@ impl PartialOrd for Rank2 {
                 }
             }
         }
+    }
+}
+
+impl PartialOrd for Env<Rank1> {
+    fn partial_cmp(&self, e: &Env<Rank1>) -> Option<Ordering> {
+        use std::cmp::Ordering::*;
+        for (x, t2) in e.0.iter() {
+            match self.0.get(x) {
+                Some(t1) => {
+                    if !(t1 <= &t2) {
+                        return None;
+                    }
+                }
+                _ => return None,
+            }
+        }
+        Some(Less)
+    }
+}
+
+impl PartialOrd for Pair {
+    fn partial_cmp(&self, p: &Pair) -> Option<Ordering> {
+        use std::cmp::Ordering::*;
+        let o1 = p.0.partial_cmp(&self.0);
+        let o2 = self.1.partial_cmp(&p.1);
+        if o1 == o2 { o1 } else { None }
     }
 }
 
