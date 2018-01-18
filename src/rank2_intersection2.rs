@@ -22,3 +22,7 @@ enum Term {
 }
 
 type Context = Vec<Rank1>;
+
+struct Inference {
+    n: usize,
+}
