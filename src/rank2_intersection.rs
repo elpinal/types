@@ -79,6 +79,66 @@ impl PartialOrd for Rank1 {
     }
 }
 
+impl Rank1 {
+    fn to_simple_type(&self) -> Option<SimpleType> {
+        match *self {
+            Rank1::Type(ref t) => Some(t.clone()),
+            Rank1::Intersection(..) => None,
+        }
+    }
+}
+
+impl Rank2 {
+    fn to_simple_type(&self) -> Option<SimpleType> {
+        match *self {
+            Rank2::Type(ref t) => {
+                match *t {
+                    Type::Var(x, n) => Some(SimpleType::Type(Type::Var(x, n))),
+                    Type::Arr(ref t1, ref t2) => {
+                        if let Some(t1s) = t1.to_simple_type() {
+                            if let Some(t2s) = t2.to_simple_type() {
+                                return Some(
+                                    SimpleType::Type(Type::Arr(Box::new(t1s), Box::new(t2s))),
+                                );
+                            }
+                        }
+                        None
+                    }
+                }
+            }
+            Rank2::Intersection(..) => None,
+        }
+    }
+
+    fn to_rank1(&self) -> Option<Rank1> {
+        match *self {
+            Rank2::Type(ref t) => {
+                match *t {
+                    Type::Var(x, n) => Some(Rank1::Type(SimpleType::Type(Type::Var(x, n)))),
+                    Type::Arr(ref t1, ref t2) => {
+                        if let Some(t1s) = t1.to_simple_type() {
+                            if let Some(t2s) = t2.to_simple_type() {
+                                return Some(Rank1::Type(
+                                    SimpleType::Type(Type::Arr(Box::new(t1s), Box::new(t2s))),
+                                ));
+                            }
+                        }
+                        None
+                    }
+                }
+            }
+            Rank2::Intersection(ref t1, ref t2) => {
+                if let Some(t11) = t1.to_rank1() {
+                    if let Some(t21) = t2.to_rank1() {
+                        return Some(Rank1::Intersection(Box::new(t11), Box::new(t21)));
+                    }
+                }
+                None
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
