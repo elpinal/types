@@ -150,6 +150,73 @@ impl PartialOrd for Pair {
     }
 }
 
+impl Relation {
+    fn to_equality(mut self) -> HashSet<Relation> {
+        use self::Relation::*;
+        macro_rules! set {
+            ( $($e:expr),* ) => {
+                {
+                    let mut ss = HashSet::new();
+                    $(
+                        ss.insert($e);
+                    )*
+                    ss
+                }
+            }
+        }
+        macro_rules! arr {
+            ($t11:expr, $t12:expr, $t2:expr, $s:expr) => {
+                match $t2 {
+                    Rank1::Simple(SimpleType::Var(..)) => unimplemented!(),
+                    Rank1::Simple(SimpleType::Arr(t21, t22)) => {
+                        set!(
+                            Ne(Rank2::Simple(*t21), $t11),
+                            Ne($t12, Rank1::Simple(*t22))
+                        )
+                    }
+                    Rank1::Intersection(t21, t22) => {
+                        set!(
+                            Ne($s.clone(), *t21),
+                            Ne($s, *t22)
+                        )
+                    }
+                }
+            }
+        }
+        match self {
+            Eq(..) => set!(self),
+            Ne(t1, t2) => {
+                match t1 {
+                    Rank2::Simple(s) => {
+                        match s {
+                            SimpleType::Var(..) => {
+                                match t2 {
+                                    Rank1::Simple(st) => set!(Eq(s, st)),
+                                    Rank1::Intersection(t21, t22) => {
+                                        set!(
+                                            Ne(Rank2::Simple(s.clone()), *t21),
+                                            Ne(Rank2::Simple(s), *t22)
+                                        )
+                                    }
+                                }
+                            }
+                            SimpleType::Arr(t11, t12) => {
+                                arr!(
+                                    Rank1::Simple(*t11),
+                                    Rank2::Simple(*t12),
+                                    t2,
+                                    Rank2::Simple(SimpleType::Arr(t11.clone(), t12.clone()))
+                                )
+                            }
+                        }
+                    }
+                    Rank2::Arr(t11, t12) => arr!(t11, *t12, t2, Rank2::Arr(t11.clone(), t12.clone())),
+                }
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
