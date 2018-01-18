@@ -32,15 +32,15 @@ impl Inference {
         SimpleType::Var(format!("{}", self.n))
     }
 
-    fn type_of(&mut self, t: &Term, ctx: &Context) -> Rank2 {
+    fn type_of(&mut self, t: &Term, ctx: &Context) -> Option<Rank2> {
         use self::Term::*;
         match *t {
             Var(x, _) => {
-                Rank2::Simple(self.fresh_var())
+                Some(Rank2::Simple(self.fresh_var()))
             }
             Abs(t) => {
                 let t0 = Rank1::Simple(self.fresh_var());
-                Rank2::Arr(t0, self.type_of(&*t, ctx))
+                Some(Rank2::Arr(t0, self.type_of(&*t, ctx)))
             }
             App(t1, t2) => {
                 let t1 = self.type_of(&*t1, ctx);
@@ -48,9 +48,9 @@ impl Inference {
                 match t1 {
                     Rank2::Arr(t11, t12) => {
                         if t11 == t2 {
-                            t12
+                            Some(t12)
                         } else {
-                            unimplemented!()
+                            None
                         }
                     }
                 }
