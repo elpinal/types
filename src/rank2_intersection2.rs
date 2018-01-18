@@ -29,7 +29,7 @@ struct Inference {
 
 impl Inference {
     fn fresh_var(&mut self) -> SimpleType {
-        SimpleType::Var(format!("{}", self.n))
+        SimpleType::Var(format!("v{}", self.n))
     }
 
     fn type_of(&mut self, t: &Term, ctx: &Context) -> Option<Rank2> {
