@@ -26,3 +26,9 @@ type Context = Vec<Rank1>;
 struct Inference {
     n: usize,
 }
+
+impl Inference {
+    fn fresh_var(&mut self) -> SimpleType {
+        SimpleType::Var(format!("{}", self.n))
+    }
+}
