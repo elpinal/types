@@ -20,3 +20,5 @@ enum Term {
     Abs(Box<Term>),
     App(Box<Term>, Box<Term>),
 }
+
+type Context = Vec<Rank1>;
