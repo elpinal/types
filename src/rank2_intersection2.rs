@@ -41,6 +41,11 @@ impl Inference {
             Abs(t) => {
                 self.type_of(&*t, ctx)
             }
+            App(t1, t2) => {
+                let t1 = self.type_of(&*t1, ctx);
+                let t2 = self.type_of(&*t2, ctx);
+                Rank2::Arr(t1, t2)
+            }
         }
     }
 }
