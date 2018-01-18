@@ -101,6 +101,20 @@ impl PartialOrd for Rank2 {
     }
 }
 
+impl Rank2 {
+    fn relation2_1(&self, t: &Rank1) -> Option<Ordering> {
+        use std::cmp::Ordering::*;
+        use self::Rank2::*;
+        for s in t.simple_types().into_iter() {
+            match self.partial_cmp(&Rank2::Simple(s)) {
+                Some(Less) => (),
+                _ => return None,
+            }
+        }
+        Some(Less)
+    }
+}
+
 impl PartialOrd for Env<Rank1> {
     fn partial_cmp(&self, e: &Env<Rank1>) -> Option<Ordering> {
         use std::cmp::Ordering::*;
