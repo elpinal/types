@@ -11,13 +11,13 @@ enum SimpleType {
     Arr(Box<SimpleType>, Box<SimpleType>),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Eq, Hash, PartialEq)]
 enum Rank1 {
     Simple(SimpleType),
     Intersection(Box<Rank1>, Box<Rank1>),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Eq, Hash, PartialEq)]
 enum Rank2 {
     Simple(SimpleType),
     Arr(Rank1, Box<Rank2>),
@@ -40,6 +40,15 @@ trait Types {
 
 #[derive(Clone, PartialEq)]
 struct Pair(Env<Rank1>, Rank2);
+
+#[derive(Clone, Eq, Hash, PartialEq)]
+enum Relation {
+    Eq(SimpleType, SimpleType),
+    Ne(Rank2, Rank1),
+}
+
+#[derive(Clone, PartialEq)]
+struct Satisfaction(Vec<String>, HashSet<Relation>);
 
 impl PartialOrd for Rank1 {
     fn partial_cmp(&self, t: &Rank1) -> Option<Ordering> {
