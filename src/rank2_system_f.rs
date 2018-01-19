@@ -54,9 +54,11 @@ pub mod lambda2_restricted {
         App(Box<Term>, Box<Term>),
     }
 
-    fn lambda(t: super::Term) -> Term {
-        let v = t.act();
-        label(t, v, Index::Left, 0)
+    impl From<super::Term> for Term {
+        fn from(t: super::Term) -> Self {
+            let v = t.act();
+            label(t, v, Index::Left, 0)
+        }
     }
 
     fn label(t: super::Term, v: Vec<usize>, i: Index, x: usize) -> Term {
