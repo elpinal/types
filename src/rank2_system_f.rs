@@ -7,16 +7,19 @@ enum Term {
 }
 
 impl Term {
-    fn act(&self) -> usize {
+    fn act(&self) -> Vec<usize> {
         use self::Term::*;
         match *self {
-            Var(..) => 0,
-            Abs(ref t) => 1 + t.act(),
+            Var(..) => Vec::new(),
+            Abs(ref t) => {
+                let mut v: Vec<usize> = t.act().iter_mut().map(|&mut n| n + 1).collect();
+                v.push(0);
+                v
+            }
             App(ref t1, _) => {
-                match t1.act() {
-                    0 => 0,
-                    n => n - 1,
-                }
+                let mut v = t1.act();
+                v.pop();
+                v
             }
         }
     }
