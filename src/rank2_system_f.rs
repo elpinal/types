@@ -37,6 +37,7 @@ pub mod lambda2_restricted {
                         Forall(n, t) => Forall(n + 1, t),
                     }
                 }
+                RankN::Sharp(t) => Self::from(*t),
             }
         }
     }
@@ -54,6 +55,7 @@ pub mod lambda2_restricted {
                     let Forall(n, t) = Self::from(*t);
                     Forall(n + 1, t)
                 }
+                RankN::Sharp(t) => Self::from(*t),
             }
         }
     }
@@ -68,6 +70,7 @@ pub mod lambda2_restricted {
             Var(usize, usize),
             Arr(T, Box<RankN<T>>),
             Forall(Box<RankN<T>>),
+            Sharp(Box<RankN<T>>),
         }
 
         pub type Rank1 = RankN<Rank0>;
