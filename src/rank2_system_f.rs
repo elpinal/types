@@ -71,10 +71,10 @@ pub mod lambda2_restricted {
             }
             match self {
                 Var(..) => self,
-                App(t1, q) => {
-                    match *t1 {
-                        App(t1, p) => {
-                            match *t1 {
+                App(t, q) => {
+                    match *t {
+                        App(t, p) => {
+                            match *t {
                                 Abs(Companion, n) => App(Box::new(abs!(Companion, App(n, q))), p),
                             }
                         }
