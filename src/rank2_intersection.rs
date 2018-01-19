@@ -210,7 +210,9 @@ impl Relation {
                             }
                         }
                     }
-                    Rank2::Arr(t11, t12) => arr!(t11, *t12, t2, Rank2::Arr(t11.clone(), t12.clone())),
+                    Rank2::Arr(t11, t12) => {
+                        arr!(t11, *t12, t2, Rank2::Arr(t11.clone(), t12.clone()))
+                    }
                 }
             }
         }
