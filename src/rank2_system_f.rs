@@ -41,6 +41,42 @@ pub mod lambda2_restricted {
         Forall(usize, Restricted2),
     }
 
+    #[derive(Clone, Copy)]
+    enum Index {
+        One,
+        Two,
+        Three,
+    }
+
+    enum Term {
+        Var(usize, usize),
+        Abs(Index, Box<Term>),
+        App(Box<Term>, Box<Term>),
+    }
+
+    fn label(t: super::Term, v: Vec<usize>, i: Index, x: usize) -> Term {
+        use self::Term::*;
+        match t {
+            super::Term::Var(x, n) => Var(x, n),
+            super::Term::Abs(t) => {
+                let no_companion = v.contains(&x);
+                let tt = Box::new(label(*t, v, i, x + 1));
+                if no_companion {
+                    Abs(i, tt)
+                } else {
+                    Abs(Index::One, tt)
+                }
+            }
+            super::Term::App(t1, t2) => {
+                let v1 = t2.act();
+                App(
+                    Box::new(label(*t1, v, i, x)),
+                    Box::new(label(*t2, v1, Index::Three, x)),
+                )
+            }
+        }
+    }
+
     impl From<Rank1> for Restricted1 {
         fn from(t: Rank1) -> Self {
             use self::Restricted1::*;
