@@ -70,30 +70,34 @@ pub mod lambda2_restricted {
                     App(Box::new($t1), Box::new($t2))
                 }
             }
-            if let App(v1, v3) = self {
-                let v1 = *v1;
-                match v1.clone() {
-                    App(v2, v4) => {
-                        let v2 = *v2;
-                        if let Abs(Companion, v5) = v2 {
-                            return Some(App(Box::new(abs!(Companion, App(v5, v3))), v4));
+            // TODO: need to prove correctness.
+            match self {
+                App(v1, v3) => {
+                    let v1 = *v1;
+                    match v1.clone() {
+                        App(v2, v4) => {
+                            let v2 = *v2;
+                            if let Abs(Companion, v5) = v2 {
+                                return Some(App(Box::new(abs!(Companion, App(v5, v3))), v4));
+                            }
+                        }
+                        Abs(Companion, v8) => {
+                            if let Abs(Left, v9) = *v8 {
+                                return Some(abs!(Left, App(Box::new(Abs(Companion, v9)), v3)));
+                            }
+                        }
+                        _ => (),
+                    }
+                    let v3 = *v3;
+                    if let App(v6, q) = v3 {
+                        if let Abs(Companion, v7) = *v6 {
+                            return Some(App(Box::new(abs!(Companion, App(Box::new(v1), v7))), q));
                         }
                     }
-                    Abs(Companion, v8) => {
-                        if let Abs(Left, v9) = *v8 {
-                            return Some(abs!(Left, App(Box::new(Abs(Companion, v9)), v3)));
-                        }
-                    }
-                    _ => (),
+                    None
                 }
-                let v3 = *v3;
-                if let App(v6, q) = v3 {
-                    if let Abs(Companion, v7) = *v6 {
-                        return Some(App(Box::new(abs!(Companion, App(Box::new(v1), v7))), q));
-                    }
-                }
+                _ => None,
             }
-            None
         }
     }
 
