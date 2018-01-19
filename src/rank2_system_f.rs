@@ -43,9 +43,9 @@ pub mod lambda2_restricted {
 
     #[derive(Clone, Copy)]
     enum Index {
-        One,
-        Two,
-        Three,
+        Companion,
+        Right,
+        Left,
     }
 
     enum Term {
@@ -64,14 +64,14 @@ pub mod lambda2_restricted {
                 if no_companion {
                     Abs(i, tt)
                 } else {
-                    Abs(Index::One, tt)
+                    Abs(Index::Companion, tt)
                 }
             }
             super::Term::App(t1, t2) => {
                 let v1 = t2.act();
                 App(
                     Box::new(label(*t1, v, i, x)),
-                    Box::new(label(*t2, v1, Index::Three, x)),
+                    Box::new(label(*t2, v1, Index::Left, x)),
                 )
             }
         }
