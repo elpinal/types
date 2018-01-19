@@ -71,8 +71,8 @@ pub mod lambda2_restricted {
                 }
             }
             if let App(v1, v3) = self {
-                let v1 = v1.clone();
-                match v1 {
+                let v1 = *v1;
+                match v1.clone() {
                     App(v2, v4) => {
                         let v2 = *v2;
                         if let Abs(Companion, v5) = v2 {
