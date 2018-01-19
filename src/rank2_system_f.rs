@@ -54,6 +54,54 @@ pub mod lambda2_restricted {
         App(Box<Term>, Box<Term>),
     }
 
+    impl Term {
+        /// Performs theta-reduction.
+        fn reduce(mut self) -> Self {
+            use self::Term::*;
+            use self::Index::*;
+            macro_rules! abs {
+                ($t1:expr, $t2:expr) => {
+                    Abs($t1, Box::new($t2))
+                }
+            }
+            macro_rules! app {
+                ($t1:expr, $t2:expr) => {
+                    App(Box::new($t1), Box::new($t2))
+                }
+            }
+            match self {
+                Var(..) => self,
+                App(t1, q) => {
+                    match *t1 {
+                        App(t1, p) => {
+                            match *t1 {
+                                Abs(Companion, n) => App(Box::new(abs!(Companion, App(n, q))), p),
+                            }
+                        }
+                    }
+                }
+                App(n, t) => {
+                    match *t {
+                        App(t, q) => {
+                            match *t {
+                                Abs(Companion, p) => App(Box::new(abs!(Companion, App(n, p))), q),
+                            }
+                        }
+                    }
+                }
+                App(t, p) => {
+                    match *t {
+                        Abs(Companion, t) => {
+                            match *t {
+                                Abs(Left, n) => abs!(Left, App(Box::new(Abs(Companion, n)), p)),
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     impl From<super::Term> for Term {
         fn from(t: super::Term) -> Self {
             let v = t.act();
