@@ -6,6 +6,22 @@ enum Term {
     App(Box<Term>, Box<Term>),
 }
 
+impl Term {
+    fn act(&self) -> usize {
+        use self::Term::*;
+        match *self {
+            Var(..) => 0,
+            Abs(ref t) => 1 + t.act(),
+            App(ref t1, _) => {
+                match t1.act() {
+                    0 => 0,
+                    n => n - 1,
+                }
+            }
+        }
+    }
+}
+
 pub mod lambda2_restricted {
     use self::lambda2::*;
 
