@@ -56,7 +56,7 @@ pub mod lambda2_restricted {
 
     impl Term {
         /// Performs theta-reduction.
-        fn reduce(mut self) -> Self {
+        fn reduce(mut self) -> Option<Self> {
             use self::Term::*;
             use self::Index::*;
             macro_rules! abs {
@@ -69,36 +69,28 @@ pub mod lambda2_restricted {
                     App(Box::new($t1), Box::new($t2))
                 }
             }
-            match self {
-                Var(..) => self,
-                App(t, q) => {
-                    match *t {
-                        App(t, p) => {
-                            match *t {
-                                Abs(Companion, n) => App(Box::new(abs!(Companion, App(n, q))), p),
-                            }
-                        }
-                    }
-                }
-                App(n, t) => {
-                    match *t {
-                        App(t, q) => {
-                            match *t {
-                                Abs(Companion, p) => App(Box::new(abs!(Companion, App(n, p))), q),
-                            }
-                        }
-                    }
-                }
-                App(t, p) => {
-                    match *t {
-                        Abs(Companion, t) => {
-                            match *t {
-                                Abs(Left, n) => abs!(Left, App(Box::new(Abs(Companion, n)), p)),
-                            }
-                        }
+            if let App(t, q) = self {
+                if let App(t, p) = *t {
+                    if let Abs(Companion, n) = *t {
+                        return Some(App(Box::new(abs!(Companion, App(n, q))), p));
                     }
                 }
             }
+            if let App(n, t) = self {
+                if let App(t, q) = *t {
+                    if let Abs(Companion, p) = *t {
+                        return Some(App(Box::new(abs!(Companion, App(n, p))), q));
+                    }
+                }
+            }
+            if let App(t, p) = self {
+                if let Abs(Companion, t) = *t {
+                    if let Abs(Left, n) = *t {
+                        return Some(abs!(Left, App(Box::new(Abs(Companion, n)), p)));
+                    }
+                }
+            }
+            None
         }
     }
 
