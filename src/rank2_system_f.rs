@@ -44,8 +44,8 @@ pub mod lambda2_restricted {
     #[derive(Clone, Copy)]
     enum Index {
         Companion,
-        Right,
         Left,
+        Right,
     }
 
     enum Term {
@@ -76,7 +76,7 @@ pub mod lambda2_restricted {
                 let v1 = t2.act();
                 App(
                     Box::new(label(*t1, v, i, x)),
-                    Box::new(label(*t2, v1, Index::Left, x)),
+                    Box::new(label(*t2, v1, Index::Right, x)),
                 )
             }
         }
