@@ -48,6 +48,7 @@ pub mod lambda2_restricted {
         Right,
     }
 
+    #[derive(Clone)]
     enum Term {
         Var(usize, usize),
         Abs(Index, Box<Term>),
@@ -69,24 +70,26 @@ pub mod lambda2_restricted {
                     App(Box::new($t1), Box::new($t2))
                 }
             }
-            if let App(t, q) = self {
-                if let App(t, p) = *t {
-                    if let Abs(Companion, n) = *t {
-                        return Some(App(Box::new(abs!(Companion, App(n, q))), p));
+            if let App(v1, v3) = self {
+                let v1 = v1.clone();
+                match v1 {
+                    App(v2, v4) => {
+                        let v2 = *v2;
+                        if let Abs(Companion, v5) = v2 {
+                            return Some(App(Box::new(abs!(Companion, App(v5, v3))), v4));
+                        }
                     }
-                }
-            }
-            if let App(n, t) = self {
-                if let App(t, q) = *t {
-                    if let Abs(Companion, p) = *t {
-                        return Some(App(Box::new(abs!(Companion, App(n, p))), q));
+                    Abs(Companion, v8) => {
+                        if let Abs(Left, v9) = *v8 {
+                            return Some(abs!(Left, App(Box::new(Abs(Companion, v9)), v3)));
+                        }
                     }
+                    _ => (),
                 }
-            }
-            if let App(t, p) = self {
-                if let Abs(Companion, t) = *t {
-                    if let Abs(Left, n) = *t {
-                        return Some(abs!(Left, App(Box::new(Abs(Companion, n)), p)));
+                let v3 = *v3;
+                if let App(v6, q) = v3 {
+                    if let Abs(Companion, v7) = *v6 {
+                        return Some(App(Box::new(abs!(Companion, App(Box::new(v1), v7))), q));
                     }
                 }
             }
