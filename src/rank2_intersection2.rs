@@ -1,5 +1,7 @@
 //! Another approach to rank 2 intersection types.
 
+#![cfg(ignore)]
+
 enum SimpleType {
     Var(String),
     Arr(Box<SimpleType>, Box<SimpleType>),
