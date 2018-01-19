@@ -43,16 +43,17 @@ pub mod lambda2_restricted {
     }
 
     impl From<Rank2> for Restricted2F {
-        fn from(t: Rank2) -> Restricted2F {
+        fn from(t: Rank2) -> Self {
+            use self::Restricted2F::*;
             match t {
-                RankN::Var(x, n) => Restricted2F::Forall(0, Restricted2::Var(x, n)),
+                RankN::Var(x, n) => Forall(0, Restricted2::Var(x, n)),
                 RankN::Arr(t1, t2) => {
-                    let Restricted2F::Forall(n, t2) = Restricted2F::from(*t2);
-                    Restricted2F::Forall(n, Restricted2::Arr(Restricted1::from(t1), Box::new(t2)))
+                    let Forall(n, t2) = Self::from(*t2);
+                    Forall(n, Restricted2::Arr(Restricted1::from(t1), Box::new(t2)))
                 }
                 RankN::Forall(t) => {
-                    let Restricted2F::Forall(n, t) = Restricted2F::from(*t);
-                    Restricted2F::Forall(n + 1, t)
+                    let Forall(n, t) = Self::from(*t);
+                    Forall(n + 1, t)
                 }
             }
         }
