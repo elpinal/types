@@ -120,7 +120,12 @@ pub mod lambda2_restricted {
                                     let l = 0; // FIXME: the length of the context.
                                     let t1 = abs!(
                                         Companion,
-                                        abs!(Right, n.subst_top(app!(Var(1, l), Var(0, l))))
+                                        abs!(
+                                            Right,
+                                            n.shift_above(1, 1).subst_top(
+                                                app!(Var(1, l), Var(0, l)),
+                                            )
+                                        )
                                     );
                                     let t2 = abs!(Right, p.subst_top(Var(0, l)));
                                     return Some(app!(t1, t2));
