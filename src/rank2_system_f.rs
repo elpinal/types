@@ -298,6 +298,9 @@ pub mod lambda2_restricted {
                             Var(x, n + d)
                         }
                     }
+                    Arr(t1, t2) => {
+                        Arr(Box::new(t1.shift_above(c, d)), Box::new(t2.shift_above(c, d)))
+                    }
                 }
             }
         }
