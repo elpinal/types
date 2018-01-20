@@ -112,6 +112,39 @@ pub mod lambda2_restricted {
                 App(t1, t2) => app!(t1.map(onvar, c), t2.map(onvar, c)),
             }
         }
+
+        fn shift_above(self, c: usize, d: isize) -> Self {
+            use self::Term::*;
+            let var = |x, n| Var(x as usize, n as usize);
+            let f = |c: usize, x: usize, n| {
+                if x >= c {
+                    var(x as isize + d, n as isize + d)
+                } else {
+                    Var(x, (n as isize + d) as usize)
+                }
+            };
+            self.map(&f, c)
+        }
+
+        fn shift(self, d: isize) -> Self {
+            self.shift_above(0, d)
+        }
+
+        fn subst(self, j: usize, t: Term) -> Self {
+            use self::Term::*;
+            let f = |j, x, n| {
+                if x == j {
+                    t.clone().shift(j as isize)
+                } else {
+                    Var(x, n)
+                }
+            };
+            self.map(&f, j)
+        }
+
+        fn subst_top(self, t: Term) -> Self {
+            self.subst(0, t)
+        }
     }
 
     impl From<super::Term> for Term {
