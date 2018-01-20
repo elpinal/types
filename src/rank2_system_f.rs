@@ -306,6 +306,10 @@ pub mod lambda2_restricted {
                     }
                 }
             }
+
+            fn shift(self, d: usize) -> Self {
+                self.shift_above(0, d)
+            }
         }
     }
 }
