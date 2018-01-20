@@ -79,12 +79,18 @@ pub mod lambda2_restricted {
                         App(v2, v4) => {
                             let v2 = *v2;
                             if let Abs(Companion, v5) = v2 {
-                                return Some(App(Box::new(abs!(Companion, App(v5, v3))), v4));
+                                return Some(App(
+                                    Box::new(abs!(Companion, App(v5, Box::new(v3.shift(1))))),
+                                    v4,
+                                ));
                             }
                         }
                         Abs(Companion, v8) => {
                             if let Abs(Left, v9) = *v8 {
-                                return Some(abs!(Left, App(Box::new(Abs(Companion, v9)), v3)));
+                                return Some(abs!(
+                                    Left,
+                                    App(Box::new(Abs(Companion, v9)), Box::new(v3.shift(1)))
+                                ));
                             }
                         }
                         _ => (),
