@@ -286,5 +286,20 @@ pub mod lambda2_restricted {
 
         pub type Rank1 = RankN<Rank0>;
         pub type Rank2 = RankN<Rank1>;
+
+        impl Rank0 {
+            fn shift_above(self, c: usize, d: usize) -> Self {
+                use self::Rank0::*;
+                match self {
+                    Var(x, n) => {
+                        if x >= c {
+                            Var(x + d, n + d)
+                        } else {
+                            Var(x, n + d)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
