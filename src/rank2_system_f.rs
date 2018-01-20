@@ -97,6 +97,24 @@ pub mod lambda2_restricted {
                     }
                     None
                 }
+                Abs(Right, t) => {
+                    let t = *t;
+                    match t {
+                        App(t, p) => {
+                            let t = *t;
+                            match t {
+                                Abs(Companion, n) => {
+                                    let l = 0; // FIXME: the length of the context.
+                                    let t1 = abs!(Companion, abs!(Right, n.subst_top(app!(Var(1, l), Var(0, l)))));
+                                    let t2 = abs!(Right, p.subst_top(Var(0, l)));
+                                    return Some(app!(t1, t2));
+                                }
+                                _ => None,
+                            }
+                        }
+                        _ => None,
+                    }
+                }
                 _ => None,
             }
         }
