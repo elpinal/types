@@ -301,12 +301,12 @@ pub mod lambda2_restricted {
                 use self::Rank0::*;
                 match self {
                     Var(x, n) => {
-                        let x = x as isize;
                         let n = n as isize;
                         if x >= c {
+                            let x = x as isize;
                             Var((x + d) as usize, (n + d) as usize)
                         } else {
-                            Var(x as usize, (n + d) as usize)
+                            Var(x, (n + d) as usize)
                         }
                     }
                     Arr(t1, t2) => {
