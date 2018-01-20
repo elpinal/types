@@ -89,10 +89,7 @@ pub mod lambda2_restricted {
                             if let Abs(Left, v9) = *v8 {
                                 return Some(abs!(
                                     Left,
-                                    App(
-                                        Box::new(abs!(Companion, v9.swap(0, 1))),
-                                        Box::new(v3.shift(1)),
-                                    )
+                                    app!(abs!(Companion, v9.swap(0, 1)), v3.shift(1))
                                 ));
                             }
                         }
