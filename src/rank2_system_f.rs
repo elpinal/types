@@ -100,6 +100,18 @@ pub mod lambda2_restricted {
                 _ => None,
             }
         }
+
+        fn map<F>(self, onvar: &F, c: usize) -> Self
+        where
+            F: Fn(usize, usize, usize) -> Self,
+        {
+            use self::Term::*;
+            match self {
+                Var(x, n) => onvar(c, x, n),
+                Abs(i, t) => abs!(i, t.map(onvar, c + 1)),
+                App(t1, t2) => app!(t1.map(onvar, c), t2.map(onvar, c)),
+            }
+        }
     }
 
     impl From<super::Term> for Term {
