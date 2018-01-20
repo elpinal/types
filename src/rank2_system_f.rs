@@ -232,9 +232,8 @@ pub mod lambda2_restricted {
     impl Restricted1 {
         fn shift_above(self, c: usize, d: isize) -> Self {
             use self::Restricted1::*;
-            if let Forall(n, t) = self {
-                t.shift_above(c + n, d)
-            }
+            let Forall(n, t) = self;
+            Forall(n, t.shift_above(c + n, d))
         }
     }
 
