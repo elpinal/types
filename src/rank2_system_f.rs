@@ -79,6 +79,7 @@ pub mod lambda2_restricted {
                         App(v2, v4) => {
                             let v2 = *v2;
                             if let Abs(Companion, v5) = v2 {
+                                // theta 1
                                 return Some(App(
                                     Box::new(abs!(Companion, App(v5, Box::new(v3.shift(1))))),
                                     v4,
@@ -87,6 +88,7 @@ pub mod lambda2_restricted {
                         }
                         Abs(Companion, v8) => {
                             if let Abs(Left, v9) = *v8 {
+                                // theta 4
                                 return Some(abs!(
                                     Left,
                                     app!(abs!(Companion, v9.swap(0, 1)), v3.shift(1))
@@ -98,6 +100,7 @@ pub mod lambda2_restricted {
                     let v3 = *v3;
                     if let App(v6, q) = v3 {
                         if let Abs(Companion, v7) = *v6 {
+                            // theta 3
                             return Some(App(
                                 Box::new(abs!(Companion, App(Box::new(v1.shift(1)), v7))),
                                 q,
@@ -113,6 +116,7 @@ pub mod lambda2_restricted {
                             let t = *t;
                             match t {
                                 Abs(Companion, n) => {
+                                    // theta 2
                                     let l = 0; // FIXME: the length of the context.
                                     let t1 = abs!(
                                         Companion,
@@ -227,6 +231,7 @@ pub mod lambda2_restricted {
                 RankN::Var(x, n) => Forall(0, Rank0::Var(x, n)),
                 RankN::Arr(t1, t2) => {
                     match Self::from(*t2) {
+                        // FIXME: `Box::new(t1)` should be shifted by `n`.
                         Forall(n, t2) => Forall(n, Rank0::Arr(Box::new(t1), Box::new(t2))),
                     }
                 }
@@ -235,6 +240,7 @@ pub mod lambda2_restricted {
                         Forall(n, t) => Forall(n + 1, t),
                     }
                 }
+                // TODO: Is this correct?
                 RankN::Sharp(t) => Self::from(*t),
             }
         }
@@ -247,12 +253,14 @@ pub mod lambda2_restricted {
                 RankN::Var(x, n) => Forall(0, Restricted2::Var(x, n)),
                 RankN::Arr(t1, t2) => {
                     let Forall(n, t2) = Self::from(*t2);
+                    // FIXME: `Restricted1::from(t1)` should be shifted by `n`.
                     Forall(n, Restricted2::Arr(Restricted1::from(t1), Box::new(t2)))
                 }
                 RankN::Forall(t) => {
                     let Forall(n, t) = Self::from(*t);
                     Forall(n + 1, t)
                 }
+                // TODO: Is this correct?
                 RankN::Sharp(t) => Self::from(*t),
             }
         }
