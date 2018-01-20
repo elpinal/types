@@ -89,7 +89,10 @@ pub mod lambda2_restricted {
                             if let Abs(Left, v9) = *v8 {
                                 return Some(abs!(
                                     Left,
-                                    App(Box::new(Abs(Companion, v9)), Box::new(v3.shift(1)))
+                                    App(
+                                        Box::new(abs!(Companion, v9.swap(0, 1))),
+                                        Box::new(v3.shift(1)),
+                                    )
                                 ));
                             }
                         }
@@ -98,7 +101,10 @@ pub mod lambda2_restricted {
                     let v3 = *v3;
                     if let App(v6, q) = v3 {
                         if let Abs(Companion, v7) = *v6 {
-                            return Some(App(Box::new(abs!(Companion, App(Box::new(v1), v7))), q));
+                            return Some(App(
+                                Box::new(abs!(Companion, App(Box::new(v1.shift(1)), v7))),
+                                q,
+                            ));
                         }
                     }
                     None
@@ -167,6 +173,23 @@ pub mod lambda2_restricted {
 
         fn subst_top(self, t: Term) -> Self {
             self.subst(0, t)
+        }
+
+        /// Swaps the two indices.
+        fn swap(self, i: usize, j: usize) -> Self {
+            use self::Term::*;
+            let f = |c, x, n| {
+                let i = c + i;
+                let j = c + j;
+                if x == i {
+                    Var(j, n)
+                } else if x == j {
+                    Var(i, n)
+                } else {
+                    Var(x, n)
+                }
+            };
+            self.map(&f, 0)
         }
     }
 
