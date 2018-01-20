@@ -105,7 +105,10 @@ pub mod lambda2_restricted {
                             match t {
                                 Abs(Companion, n) => {
                                     let l = 0; // FIXME: the length of the context.
-                                    let t1 = abs!(Companion, abs!(Right, n.subst_top(app!(Var(1, l), Var(0, l)))));
+                                    let t1 = abs!(
+                                        Companion,
+                                        abs!(Right, n.subst_top(app!(Var(1, l), Var(0, l))))
+                                    );
                                     let t2 = abs!(Right, p.subst_top(Var(0, l)));
                                     return Some(app!(t1, t2));
                                 }
@@ -134,12 +137,10 @@ pub mod lambda2_restricted {
         fn shift_above(self, c: usize, d: isize) -> Self {
             use self::Term::*;
             let var = |x, n| Var(x as usize, n as usize);
-            let f = |c: usize, x: usize, n| {
-                if x >= c {
-                    var(x as isize + d, n as isize + d)
-                } else {
-                    Var(x, (n as isize + d) as usize)
-                }
+            let f = |c: usize, x: usize, n| if x >= c {
+                var(x as isize + d, n as isize + d)
+            } else {
+                Var(x, (n as isize + d) as usize)
             };
             self.map(&f, c)
         }
@@ -150,12 +151,10 @@ pub mod lambda2_restricted {
 
         fn subst(self, j: usize, t: Term) -> Self {
             use self::Term::*;
-            let f = |j, x, n| {
-                if x == j {
-                    t.clone().shift(j as isize)
-                } else {
-                    Var(x, n)
-                }
+            let f = |j, x, n| if x == j {
+                t.clone().shift(j as isize)
+            } else {
+                Var(x, n)
             };
             self.map(&f, j)
         }
