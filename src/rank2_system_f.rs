@@ -55,21 +55,22 @@ pub mod lambda2_restricted {
         App(Box<Term>, Box<Term>),
     }
 
+    macro_rules! abs {
+        ($t1:expr, $t2:expr) => {
+            Abs($t1, Box::new($t2))
+        }
+    }
+    macro_rules! app {
+        ($t1:expr, $t2:expr) => {
+            App(Box::new($t1), Box::new($t2))
+        }
+    }
+
     impl Term {
         /// Performs theta-reduction.
         fn reduce(mut self) -> Option<Self> {
             use self::Term::*;
             use self::Index::*;
-            macro_rules! abs {
-                ($t1:expr, $t2:expr) => {
-                    Abs($t1, Box::new($t2))
-                }
-            }
-            macro_rules! app {
-                ($t1:expr, $t2:expr) => {
-                    App(Box::new($t1), Box::new($t2))
-                }
-            }
             // TODO: need to prove correctness.
             match self {
                 App(v1, v3) => {
