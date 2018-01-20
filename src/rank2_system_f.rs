@@ -297,14 +297,16 @@ pub mod lambda2_restricted {
         pub type Rank2 = RankN<Rank1>;
 
         impl Rank0 {
-            pub fn shift_above(self, c: usize, d: usize) -> Self {
+            pub fn shift_above(self, c: usize, d: isize) -> Self {
                 use self::Rank0::*;
                 match self {
                     Var(x, n) => {
+                        let x = x as isize;
+                        let n = n as isize;
                         if x >= c {
-                            Var(x + d, n + d)
+                            Var(x + d as usize, n + d as usize)
                         } else {
-                            Var(x, n + d)
+                            Var(x, n + d as usize)
                         }
                     }
                     Arr(t1, t2) => {
@@ -316,7 +318,7 @@ pub mod lambda2_restricted {
                 }
             }
 
-            fn shift(self, d: usize) -> Self {
+            fn shift(self, d: isize) -> Self {
                 self.shift_above(0, d)
             }
         }
