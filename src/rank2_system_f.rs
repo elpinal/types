@@ -229,6 +229,15 @@ pub mod lambda2_restricted {
         }
     }
 
+    impl Restricted1 {
+        fn shift_above(self, c: usize, d: isize) -> Self {
+            use self::Restricted1::*;
+            if let Forall(n, t) = self {
+                t.shift_above(c + n, d)
+            }
+        }
+    }
+
     impl From<Rank1> for Restricted1 {
         fn from(t: Rank1) -> Self {
             use self::Restricted1::*;
