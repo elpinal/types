@@ -304,9 +304,9 @@ pub mod lambda2_restricted {
                         let x = x as isize;
                         let n = n as isize;
                         if x >= c {
-                            Var(x + d as usize, n + d as usize)
+                            Var((x + d) as usize, (n + d) as usize)
                         } else {
-                            Var(x, n + d as usize)
+                            Var(x as usize, (n + d) as usize)
                         }
                     }
                     Arr(t1, t2) => {
