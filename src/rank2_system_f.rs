@@ -42,6 +42,10 @@ pub mod asup {
         Var(n, n)
     }
 
+    fn first_order(t1: Rank0, t2: Rank0) -> (Rank0, Rank0) {
+        self.fresh
+    }
+
     impl Constructor {
         fn construct(t: Term) -> Instance {
             use self::Term::*;
