@@ -54,6 +54,7 @@ pub mod theta {
         }
     }
 
+    #[cfg(ignore)]
     impl From<LTerm> for Term {
         fn from(t: LTerm) -> Self {
             use self::LTerm::*;
