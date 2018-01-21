@@ -151,6 +151,17 @@ pub mod lambda2_restricted {
     }
 
     impl Term {
+        fn reduce(mut self) -> Self {
+            let mut t0 = self;
+            loop {
+                let t = t0.clone();
+                match t0.reduce1() {
+                    Some(t) => t0 = t,
+                    None => return t,
+                }
+            }
+        }
+
         /// Performs theta-reduction.
         fn reduce1(mut self) -> Option<Self> {
             use self::Term::*;
