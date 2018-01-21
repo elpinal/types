@@ -248,7 +248,9 @@ pub mod lambda2_restricted {
                 RankN::Var(x, n) => Forall(0, Rank0::Var(x, n)),
                 RankN::Arr(t1, t2) => {
                     match Self::from(*t2) {
-                        Forall(n, t2) => Forall(n, Rank0::Arr(Box::new(t1.shift(n as isize)), Box::new(t2))),
+                        Forall(n, t2) => {
+                            Forall(n, Rank0::Arr(Box::new(t1.shift(n as isize)), Box::new(t2)))
+                        }
                     }
                 }
                 RankN::Forall(t) => {
@@ -269,7 +271,10 @@ pub mod lambda2_restricted {
                 RankN::Var(x, n) => Forall(0, Restricted2::Var(x, n)),
                 RankN::Arr(t1, t2) => {
                     let Forall(n, t2) = Self::from(*t2);
-                    Forall(n, Restricted2::Arr(Restricted1::from(t1.shift(n as isize)), Box::new(t2)))
+                    Forall(
+                        n,
+                        Restricted2::Arr(Restricted1::from(t1.shift(n as isize)), Box::new(t2)),
+                    )
                 }
                 RankN::Forall(t) => {
                     let Forall(n, t) = Self::from(*t);
@@ -337,18 +342,9 @@ pub mod lambda2_restricted {
                             Var(x, (n + d) as usize)
                         }
                     }
-                    Arr(t1, t2) => {
-                        Arr(
-                            t1.shift_above(c, d),
-                            Box::new(t2.shift_above(c, d)),
-                        )
-                    }
-                    Forall(t) => {
-                        Forall(Box::new(t.shift_above(c + 1, d)))
-                    }
-                    Sharp(t) => {
-                        Sharp(Box::new(t.shift_above(c + 1, d)))
-                    }
+                    Arr(t1, t2) => Arr(t1.shift_above(c, d), Box::new(t2.shift_above(c, d))),
+                    Forall(t) => Forall(Box::new(t.shift_above(c + 1, d))),
+                    Sharp(t) => Sharp(Box::new(t.shift_above(c + 1, d))),
                 }
             }
 
