@@ -25,6 +25,7 @@ impl Term {
     }
 }
 
+/// Acyclic Semi-Unification Problem.
 pub mod asup {
     use rank2_system_f::lambda2_restricted::lambda2::Rank0;
 
