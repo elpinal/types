@@ -66,6 +66,19 @@ pub mod lambda2_restricted {
         }
     }
 
+    impl Shift for Term {
+        fn shift_above(self, c: usize, d: isize) -> Self {
+            use self::Term::*;
+            let var = |x, n| Var(x as usize, n as usize);
+            let f = |c: usize, x: usize, n| if x >= c {
+                var(x as isize + d, n as isize + d)
+            } else {
+                Var(x, (n as isize + d) as usize)
+            };
+            self.map(&f, c)
+        }
+    }
+
     impl Term {
         /// Performs theta-reduction.
         fn reduce(mut self) -> Option<Self> {
@@ -152,21 +165,6 @@ pub mod lambda2_restricted {
             }
         }
 
-        fn shift_above(self, c: usize, d: isize) -> Self {
-            use self::Term::*;
-            let var = |x, n| Var(x as usize, n as usize);
-            let f = |c: usize, x: usize, n| if x >= c {
-                var(x as isize + d, n as isize + d)
-            } else {
-                Var(x, (n as isize + d) as usize)
-            };
-            self.map(&f, c)
-        }
-
-        fn shift(self, d: isize) -> Self {
-            self.shift_above(0, d)
-        }
-
         fn subst(self, j: usize, t: Term) -> Self {
             use self::Term::*;
             let f = |j, x, n| if x == j {
@@ -229,15 +227,11 @@ pub mod lambda2_restricted {
         }
     }
 
-    impl Restricted1 {
+    impl Shift for Restricted1 {
         fn shift_above(self, c: usize, d: isize) -> Self {
             use self::Restricted1::*;
             let Forall(n, t) = self;
             Forall(n, t.shift_above(c + n, d))
-        }
-
-        fn shift(self, d: isize) -> Self {
-            self.shift_above(0, d)
         }
     }
 
@@ -287,6 +281,8 @@ pub mod lambda2_restricted {
     }
 
     pub mod lambda2 {
+        pub use Shift;
+
         pub enum Rank0 {
             Var(usize, usize),
             Arr(Box<Rank0>, Box<Rank0>),
@@ -302,8 +298,8 @@ pub mod lambda2_restricted {
         pub type Rank1 = RankN<Rank0>;
         pub type Rank2 = RankN<Rank1>;
 
-        impl Rank0 {
-            pub fn shift_above(self, c: usize, d: isize) -> Self {
+        impl Shift for Rank0 {
+            fn shift_above(self, c: usize, d: isize) -> Self {
                 use self::Rank0::*;
                 match self {
                     Var(x, n) => {
@@ -323,14 +319,10 @@ pub mod lambda2_restricted {
                     }
                 }
             }
-
-            pub fn shift(self, d: isize) -> Self {
-                self.shift_above(0, d)
-            }
         }
 
-        impl Rank1 {
-            pub fn shift_above(self, c: usize, d: isize) -> Self {
+        impl Shift for Rank1 {
+            fn shift_above(self, c: usize, d: isize) -> Self {
                 use self::RankN::*;
                 match self {
                     Var(x, n) => {
@@ -346,10 +338,6 @@ pub mod lambda2_restricted {
                     Forall(t) => Forall(Box::new(t.shift_above(c + 1, d))),
                     Sharp(t) => Sharp(Box::new(t.shift_above(c + 1, d))),
                 }
-            }
-
-            pub fn shift(self, d: isize) -> Self {
-                self.shift_above(0, d)
             }
         }
     }
