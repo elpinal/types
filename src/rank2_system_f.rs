@@ -33,7 +33,14 @@ pub mod asup {
     struct Instance(Vec<(Rank0, Rank0)>);
 
     impl Instance {
-        fn construct(t: Term) -> Instance {}
+        fn construct(t: Term) -> Instance {
+            use self::Term::*;
+            match t {
+                Var() => ,
+                Abs() => ,
+                App() => ,
+            }
+        }
     }
 }
 
