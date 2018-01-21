@@ -25,6 +25,12 @@ impl Term {
     }
 }
 
+pub mod asup {
+    use rank2_system_f::lambda2_restricted::lambda2::Rank0;
+
+    type Instance = Vec<(Rank0, Rank0)>;
+}
+
 pub mod theta {
     use Shift;
     use rank2_system_f;
