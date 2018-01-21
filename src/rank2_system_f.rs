@@ -36,6 +36,12 @@ pub mod asup {
         n: usize,
     }
 
+    fn fresh(&mut self) -> Rank0 {
+        let n = self.n;
+        self.n = self.n + 1;
+        Var(n, n)
+    }
+
     impl Constructor {
         fn construct(t: Term) -> Instance {
             use self::Term::*;
