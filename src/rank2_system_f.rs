@@ -56,7 +56,10 @@ pub mod theta {
 
     impl Term {
         fn abs(mut self) -> Self {
-            Self { xs: self.xs + 1, ..self }
+            Self {
+                xs: self.xs + 1,
+                ..self
+            }
         }
     }
 
@@ -83,11 +86,15 @@ pub mod theta {
                                             match *t2 {
                                                 Abs(Companion, t2) => {
                                                     // theta 3
-                                                    Term::from(App(Box::new(abs!(Companion, App(Box::new(Var(x, n).shift(1)), t2))), t3))
+                                                    Term::from(App(
+                                                        Box::new(abs!(
+                                                            Companion,
+                                                            App(Box::new(Var(x, n).shift(1)), t2)
+                                                        )),
+                                                        t3,
+                                                    ))
                                                 }
-                                                t2 => {
-                                                    app!(Term::coerce(t2), Term::coerce(t3))
-                                                }
+                                                t2 => app!(Term::coerce(t2), Term::coerce(t3)),
                                             }
                                         }
                                     }
@@ -96,7 +103,10 @@ pub mod theta {
                         }
                     }
                 }
-                Var(x, n) => Term {xs: 0, terms: vec![OTerm::Var(x, n)]},
+                Var(x, n) => Term {
+                    xs: 0,
+                    terms: vec![OTerm::Var(x, n)],
+                },
             }
         }
     }
