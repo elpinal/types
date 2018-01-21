@@ -25,6 +25,16 @@ impl Term {
     }
 }
 
+pub mod theta {
+    use rank2_system_f;
+
+    /// A term in theta-normal form.
+    pub struct Term {
+        xs: usize,
+        terms: Vec<rank2_system_f::Term>,
+    }
+}
+
 pub mod lambda2_restricted {
     use self::lambda2::*;
 
