@@ -28,7 +28,7 @@ impl Term {
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     use rank2_system_f::lambda2_restricted::lambda2::Rank0;
-    use rank2_system_f::Term;
+    use rank2_system_f::lambda2_restricted::Term;
 
     struct Instance(Vec<(Rank0, Rank0)>);
 
