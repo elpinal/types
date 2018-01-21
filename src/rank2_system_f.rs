@@ -250,7 +250,7 @@ pub mod lambda2_restricted {
         }
 
         /// Swaps the two indices.
-        fn swap(self, i: usize, j: usize) -> Self {
+        pub fn swap(self, i: usize, j: usize) -> Self {
             use self::Term::*;
             let f = |c, x, n| {
                 let i = c + i;
