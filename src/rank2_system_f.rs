@@ -152,7 +152,7 @@ pub mod lambda2_restricted {
 
     impl Term {
         /// Performs theta-reduction.
-        fn reduce(mut self) -> Option<Self> {
+        fn reduce1(mut self) -> Option<Self> {
             use self::Term::*;
             use self::Index::*;
             // TODO: need to prove correctness.
