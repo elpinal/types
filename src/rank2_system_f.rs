@@ -50,7 +50,7 @@ pub mod theta {
 
     impl Term {
         fn abs(mut self) -> Self {
-            self { xs: self.xs + 1 }
+            Self { xs: self.xs + 1, ..self }
         }
     }
 
