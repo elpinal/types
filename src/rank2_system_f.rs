@@ -235,6 +235,10 @@ pub mod lambda2_restricted {
             let Forall(n, t) = self;
             Forall(n, t.shift_above(c + n, d))
         }
+
+        fn shift(self, d: isize) -> Self {
+            self.shift_above(0, d)
+        }
     }
 
     impl From<Rank1> for Restricted1 {
@@ -244,8 +248,7 @@ pub mod lambda2_restricted {
                 RankN::Var(x, n) => Forall(0, Rank0::Var(x, n)),
                 RankN::Arr(t1, t2) => {
                     match Self::from(*t2) {
-                        // FIXME: `Box::new(t1)` should be shifted by `n`.
-                        Forall(n, t2) => Forall(n, Rank0::Arr(Box::new(t1), Box::new(t2))),
+                        Forall(n, t2) => Forall(n, Rank0::Arr(Box::new(t1.shift(n as isize)), Box::new(t2))),
                     }
                 }
                 RankN::Forall(t) => {
@@ -266,8 +269,7 @@ pub mod lambda2_restricted {
                 RankN::Var(x, n) => Forall(0, Restricted2::Var(x, n)),
                 RankN::Arr(t1, t2) => {
                     let Forall(n, t2) = Self::from(*t2);
-                    // FIXME: `Restricted1::from(t1)` should be shifted by `n`.
-                    Forall(n, Restricted2::Arr(Restricted1::from(t1), Box::new(t2)))
+                    Forall(n, Restricted2::Arr(Restricted1::from(t1.shift(n as isize)), Box::new(t2)))
                 }
                 RankN::Forall(t) => {
                     let Forall(n, t) = Self::from(*t);
@@ -317,7 +319,40 @@ pub mod lambda2_restricted {
                 }
             }
 
-            fn shift(self, d: isize) -> Self {
+            pub fn shift(self, d: isize) -> Self {
+                self.shift_above(0, d)
+            }
+        }
+
+        impl Rank1 {
+            pub fn shift_above(self, c: usize, d: isize) -> Self {
+                use self::RankN::*;
+                match self {
+                    Var(x, n) => {
+                        let n = n as isize;
+                        if x >= c {
+                            let x = x as isize;
+                            Var((x + d) as usize, (n + d) as usize)
+                        } else {
+                            Var(x, (n + d) as usize)
+                        }
+                    }
+                    Arr(t1, t2) => {
+                        Arr(
+                            t1.shift_above(c, d),
+                            Box::new(t2.shift_above(c, d)),
+                        )
+                    }
+                    Forall(t) => {
+                        Forall(Box::new(t.shift_above(c + 1, d)))
+                    }
+                    Sharp(t) => {
+                        Sharp(Box::new(t.shift_above(c + 1, d)))
+                    }
+                }
+            }
+
+            pub fn shift(self, d: isize) -> Self {
                 self.shift_above(0, d)
             }
         }
