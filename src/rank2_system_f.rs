@@ -26,12 +26,72 @@ impl Term {
 }
 
 pub mod theta {
+    use Shift;
     use rank2_system_f;
+    use rank2_system_f::Term as OTerm;
+    use rank2_system_f::lambda2_restricted::Term as LTerm;
 
     /// A term in theta-normal form.
     pub struct Term {
         xs: usize,
-        terms: Vec<rank2_system_f::Term>,
+        terms: Vec<OTerm>,
+    }
+
+    macro_rules! abs {
+        ($t1:expr, $t2:expr) => {
+            LTerm::Abs($t1, Box::new($t2))
+        }
+    }
+    macro_rules! app {
+        ($t1:expr, $t2:expr) => {
+            LTerm::App(Box::new($t1), Box::new($t2))
+        }
+    }
+
+    impl Term {
+        fn abs(mut self) -> Self {
+            self { xs: self.xs + 1 }
+        }
+    }
+
+    impl From<LTerm> for Term {
+        fn from(t: LTerm) -> Self {
+            use self::LTerm::*;
+            use rank2_system_f::lambda2_restricted::Index::*;
+            match t {
+                Abs(Left, t) => Term::from(*t).abs(),
+                Abs(Companion, t) => panic!("unexpected 1-labelled abstraction"),
+                Abs(Right, t) => panic!("unexpected 3-labelled abstraction"),
+                App(t1, t2) => {
+                    match *t1 {
+                        Abs(Companion, t1) => {
+                            match *t1 {
+                                Abs(Left, t1) => {
+                                    // theta 4
+                                    Term::from(app!(abs!(Companion, t1.swap(0, 1)), t2.shift(1)))
+                                }
+                                Var(x, n) => {
+                                    match *t2 {
+                                        App(t2, t3) => {
+                                            match *t2 {
+                                                Abs(Companion, t2) => {
+                                                    // theta 3
+                                                    Term::from(App(Box::new(abs!(Companion, App(Box::new(Var(x, n).shift(1)), t2))), t3))
+                                                }
+                                                t2 => {
+                                                    app!(Term::coerce(t2), Term::coerce(t3))
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                Var(x, n) => Term {xs: 0, terms: vec![OTerm::Var(x, n)]},
+            }
+        }
     }
 }
 
@@ -52,14 +112,14 @@ pub mod lambda2_restricted {
     }
 
     #[derive(Clone, Copy)]
-    enum Index {
+    pub enum Index {
         Companion,
         Left,
         Right,
     }
 
     #[derive(Clone)]
-    enum Term {
+    pub enum Term {
         Var(usize, usize),
         Abs(Index, Box<Term>),
         App(Box<Term>, Box<Term>),
@@ -185,7 +245,7 @@ pub mod lambda2_restricted {
             self.map(&f, j)
         }
 
-        fn subst_top(self, t: Term) -> Self {
+        pub fn subst_top(self, t: Term) -> Self {
             self.subst(0, t)
         }
 
