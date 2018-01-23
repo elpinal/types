@@ -88,6 +88,13 @@ impl From<Term> for Theta {
         Theta::from_term(t, Index::NotRight, 0)
     }
 }
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Index {
+    Companion,
+    NotRight,
+    Right,
+}
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     #![cfg(ignore)]
