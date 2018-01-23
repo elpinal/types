@@ -1,5 +1,7 @@
 //! A type system which is Rank-2 fragment of System F.
 
+use Shift;
+
 enum Term {
     Var(usize, usize),
     Abs(Box<Term>),
@@ -66,6 +68,18 @@ impl Term {
     }
 }
 
+impl Shift for Term {
+    fn shift_above(self, c: usize, d: isize) -> Self {
+        use self::Term::*;
+        let var = |x, n| Var(x as usize, n as usize);
+        let f = |c: usize, x: usize, n| if x >= c {
+            var(x as isize + d, n as isize + d)
+        } else {
+            Var(x, (n as isize + d) as usize)
+        };
+        self.map(&f, c)
+    }
+}
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     #![cfg(ignore)]
