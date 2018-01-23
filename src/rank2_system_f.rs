@@ -27,6 +27,7 @@ impl Term {
 
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
+    #![cfg(ignore)]
     use rank2_system_f::lambda2_restricted::lambda2::Rank0;
     use rank2_system_f::lambda2_restricted::Term;
 
@@ -36,23 +37,23 @@ pub mod asup {
         n: usize,
     }
 
-    fn fresh(&mut self) -> Rank0 {
-        let n = self.n;
-        self.n = self.n + 1;
-        Var(n, n)
-    }
-
     fn first_order(t1: Rank0, t2: Rank0) -> (Rank0, Rank0) {
         self.fresh
     }
 
     impl Constructor {
+        fn fresh(&mut self) -> Rank0 {
+            let n = self.n;
+            self.n = self.n + 1;
+            Var(n, n)
+        }
+
         fn construct(t: Term) -> Instance {
             use self::Term::*;
             match t {
-                Var() => ,
-                Abs() => ,
-                App() => ,
+                Var() => (),
+                Abs() => (),
+                App() => (),
             }
         }
     }
