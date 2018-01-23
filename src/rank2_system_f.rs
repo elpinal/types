@@ -80,6 +80,8 @@ impl Shift for Term {
         self.map(&f, c)
     }
 }
+
+struct Theta(usize, Vec<Term>);
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     #![cfg(ignore)]
