@@ -6,6 +6,18 @@ enum Term {
     App(Box<Term>, Box<Term>),
 }
 
+macro_rules! abs {
+    ($t1:expr) => {
+        Term::Abs(Box::new($t1))
+    }
+}
+
+macro_rules! app {
+    ($t1:expr, $t2:expr) => {
+        Term::App(Box::new($t1), Box::new($t2))
+    }
+}
+
 impl Term {
     fn act(&self) -> Vec<usize> {
         use self::Term::*;
