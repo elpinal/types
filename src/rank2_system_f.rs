@@ -95,6 +95,38 @@ pub enum Index {
     NotRight,
     Right,
 }
+
+impl Theta {
+    fn from_term(t: Term, i: Index, x: usize) -> Theta {
+        use self::Term::*;
+        use self::Index::*;
+        match t {
+            Var(..) => return Theta(0, vec![t]),
+            Abs(t) => {
+                let Theta(n, v) = Theta::from_term(*t, i, x + 1);
+                return Theta(n + 1, v);
+            }
+            App(t1, t2) => {
+                match *t1 {
+                    Abs(t1) => {
+                        match *t1 {
+                            Abs(t1) => {
+                                if i == NotRight {
+                                    return Theta::from_term(
+                                        abs!(app!(abs!(t1.swap(0, 1)), t2.shift(1))),
+                                        i,
+                                        x,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     #![cfg(ignore)]
