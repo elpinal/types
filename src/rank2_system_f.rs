@@ -82,6 +82,12 @@ impl Shift for Term {
 }
 
 struct Theta(usize, Vec<Term>);
+
+impl From<Term> for Theta {
+    fn from(t: Term) -> Theta {
+        Theta::from_term(t, Index::NotRight, 0)
+    }
+}
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     #![cfg(ignore)]
