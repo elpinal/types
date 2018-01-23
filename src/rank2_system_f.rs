@@ -35,6 +35,35 @@ impl Term {
             }
         }
     }
+
+    fn map<F>(self, onvar: &F, c: usize) -> Self
+    where
+        F: Fn(usize, usize, usize) -> Self,
+    {
+        use self::Term::*;
+        match self {
+            Var(x, n) => onvar(c, x, n),
+            Abs(t) => abs!(t.map(onvar, c + 1)),
+            App(t1, t2) => app!(t1.map(onvar, c), t2.map(onvar, c)),
+        }
+    }
+
+    /// Swaps the two indices.
+    pub fn swap(self, i: usize, j: usize) -> Self {
+        use self::Term::*;
+        let f = |c, x, n| {
+            let i = c + i;
+            let j = c + j;
+            if x == i {
+                Var(j, n)
+            } else if x == j {
+                Var(i, n)
+            } else {
+                Var(x, n)
+            }
+        };
+        self.map(&f, 0)
+    }
 }
 
 /// Acyclic Semi-Unification Problem.
