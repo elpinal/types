@@ -16,3 +16,11 @@ pub trait Shift: Sized {
         Self::shift_above(self, 0, d)
     }
 }
+
+pub trait Subst: Shift {
+    fn subst(self, j: usize, x: &Self) -> Self;
+
+    fn subst_top(self, x: &Self) -> Self {
+        self.subst(0, &x.shift(1)).shift(-1)
+    }
+}

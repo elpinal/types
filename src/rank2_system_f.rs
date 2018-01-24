@@ -1,6 +1,6 @@
 //! A type system which is Rank-2 fragment of System F.
 
-use Shift;
+use {Shift, Subst};
 
 enum Term {
     Var(usize, usize),
@@ -78,6 +78,17 @@ impl Shift for Term {
             Var(x, (n as isize + d) as usize)
         };
         self.map(&f, c)
+    }
+}
+
+impl Subst for Term {
+    fn subst(self, j: usize, t: &Self) -> Self {
+        let f = |j, x, n| if x == j {
+            t.clone().shift(j as isize)
+        } else {
+            Term::Var(x, n)
+        };
+        self.map(&f, j)
     }
 }
 
