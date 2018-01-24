@@ -218,23 +218,45 @@ impl Theta {
                     .collect()
             }
             App(t, t1) => {
-                let mut v1 = Theta::from_right_new(*t, l).into_iter();
-                let mut v2 = Theta::from_right_new(*t1, l).into_iter();
-                v1.by_ref().map(
-                    |t| t.shift_above(1, (v2.len() - 1) as isize),
-                );
-                if let Some(t2) = v2.next() {
-                    let t2 = t2.shift_above(1, (v1.len() - 1) as isize);
-                    if let Some(t1) = v1.next() {
-                        let mut v1: Vec<_> = vec![app!(t1, t2)].into_iter().chain(v1).collect();
-                        v1.extend(v2);
-                        v1
-                    } else {
-                        panic!("empty term");
-                    }
-                } else {
-                    panic!("empty term");
-                }
+                let mut v1 = Theta::from_right_new(*t, l);
+                let mut v2 = Theta::from_right_new(*t1, l);
+                Theta::app_right(v1, v2)
+            }
+        }
+    }
+
+    fn app_right(v1: Vec<Term>, v2: Vec<Term>) -> Vec<Term> {
+        let mut v1 = v1.into_iter();
+        let mut v2 = v2.into_iter();
+        v1.by_ref().map(
+            |t| t.shift_above(1, (v2.len() - 1) as isize),
+        );
+        if let Some(t2) = v2.next() {
+            let t2 = t2.shift_above(1, (v1.len() - 1) as isize);
+            if let Some(t1) = v1.next() {
+                let mut v1: Vec<_> = vec![app!(t1, t2)].into_iter().chain(v1).collect();
+                v1.extend(v2);
+                v1
+            } else {
+                panic!("empty term");
+            }
+        } else {
+            panic!("empty term");
+        }
+    }
+
+    fn from_term_new(t: Term, l: usize) -> Theta {
+        use self::Term::*;
+        match t {
+            Var(..) => Theta(0, vec![t]),
+            Abs(t) => {
+                let Theta(n, v) = Theta::from_term_new(*t, l + 1);
+                Theta(n + 1, v)
+            }
+            App(t, t1) => {
+                let Theta(n, v) = Theta::from_term_new(*t, l);
+                let v1 = Theta::app_right(v, Theta::from_right_new(*t1, l));
+                Theta(n, v1)
             }
         }
     }
