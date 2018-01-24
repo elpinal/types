@@ -210,7 +210,7 @@ pub mod asup {
             Rank0::Var(n, l)
         }
 
-        fn construct(self, t: Theta) -> Instance {
+        fn construct(&mut self, t: Theta) -> Instance {
             use rank2_system_f::Term;
             let Theta(m, v) = t;
             let ctx = Context(Vec::new());
@@ -218,14 +218,20 @@ pub mod asup {
                 ctx.add(Restricted1::Forall(1, Rank0::Var(0, 1)))
             }
             for (i, t) in v.into_iter().rev().enumerate() {
-                let (ty, inst) = self.term(t);
+                let (ty, inst) = self.term(t, ctx);
                 let var = self.fresh(i + 1);
                 inst.add(self.unify(var, ty, i + 1));
                 ctx.add(Restricted1::Forall(0, var));
             }
         }
 
-        fn term(self, t: Term) -> (Rank0, Instance) {
+        fn term(&mut self, t: Term, ctx: Context) -> (Rank0, Instance) {
+            use self::Term::*;
+            match t {
+                Var(x, n) => {
+                    ctx.0.get(x)
+                }
+            }
         }
     }
 }
