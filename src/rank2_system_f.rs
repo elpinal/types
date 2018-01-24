@@ -198,6 +198,37 @@ impl Theta {
             }
         }
     }
+
+    fn from_right_new(t: Term, l: usize) -> Vec<Term> {
+        use self::Term::*;
+        match t {
+            Var(..) => vec![t],
+            Abs(t) => {
+                let mut v = Theta::from_right_new(*t, l + 1);
+                let mut i = v.len();
+                for t in v.iter_mut() {
+                    *t = t.rotate(i);
+                    i -= 1;
+                }
+                v
+            }
+            App(t, t1) => {
+                let mut v1 = Theta::from_right_new(*t, l);
+                let mut v2 = Theta::from_right_new(*t1, l).into_iter();
+                v1.iter_mut().map(
+                    |t| t.shift_above(1, (v2.len() - 1) as isize),
+                );
+                if let Some(t2) = v2.next() {
+                    let t2 = t2.shift_above(1, (v1.len() - 1) as isize);
+                    if let Some(t1) = v1.first_mut() {
+                        *t1 = app!(*t1, t2)
+                    }
+                }
+                v1.extend(v2);
+                v1
+            }
+        }
+    }
 }
 
 /// Acyclic Semi-Unification Problem.
