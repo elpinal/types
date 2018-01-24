@@ -112,11 +112,13 @@ impl Theta {
                         match *t1 {
                             Abs(t1) => {
                                 if i == NotRight {
-                                    return Theta::from_term(
-                                        abs!(app!(abs!(t1.swap(0, 1)), t2.shift(1))),
+                                    // Theta 4.
+                                    let Theta(n, v) = Theta::from_term(
+                                        app!(abs!(t1.swap(0, 1)), t2.shift(1)),
                                         i,
                                         x,
                                     );
+                                    return Theta(n + 1, v);
                                 }
                             }
                         }
