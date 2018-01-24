@@ -169,9 +169,8 @@ impl Theta {
 
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
-    #![cfg(ignore)]
     use rank2_system_f::lambda2_restricted::lambda2::Rank0;
-    use rank2_system_f::lambda2_restricted::Term;
+    use rank2_system_f::Theta;
 
     struct Instance(Vec<(Rank0, Rank0)>);
 
@@ -179,24 +178,26 @@ pub mod asup {
         n: usize,
     }
 
-    fn first_order(t1: Rank0, t2: Rank0) -> (Rank0, Rank0) {
-        self.fresh
-    }
+    struct Context(Vec<Rank0>);
 
     impl Constructor {
-        fn fresh(&mut self) -> Rank0 {
-            let n = self.n;
-            self.n = self.n + 1;
-            Var(n, n)
+        fn unify(&mut self, t1: Rank0, t2: Rank0) -> (Rank0, Rank0) {
+            use self::Rank0::*;
+            let a = self.fresh();
+            (
+                Arr(Box::new(a.clone()), Box::new(a)),
+                Arr(Box::new(t1), Box::new(t2)),
+            )
         }
 
-        fn construct(t: Term) -> Instance {
-            use self::Term::*;
-            match t {
-                Var() => (),
-                Abs() => (),
-                App() => (),
-            }
+        fn fresh(&mut self) -> Rank0 {
+            let n = self.n;
+            self.n += 1;
+            Rank0::Var(n, n)
+        }
+
+        fn construct(t: Theta) -> Instance {
+            Instance(Vec::new())
         }
     }
 }
@@ -386,6 +387,7 @@ pub mod lambda2_restricted {
     pub mod lambda2 {
         pub use Shift;
 
+        #[derive(Clone)]
         pub enum Rank0 {
             Var(usize, usize),
             Arr(Box<Rank0>, Box<Rank0>),
