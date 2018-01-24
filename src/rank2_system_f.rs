@@ -170,6 +170,7 @@ impl Theta {
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
     use rank2_system_f::lambda2_restricted::lambda2::Rank0;
+    use rank2_system_f::lambda2_restricted::Restricted1;
     use rank2_system_f::Theta;
 
     struct Instance(Vec<(Rank0, Rank0)>);
@@ -178,26 +179,37 @@ pub mod asup {
         n: usize,
     }
 
-    struct Context(Vec<Rank0>);
+    struct Context(Vec<Restricted1>);
+
+    impl Context {
+        fn add(&mut self, t: Restricted1) {
+            self.0.push(t);
+        }
+    }
 
     impl Constructor {
-        fn unify(&mut self, t1: Rank0, t2: Rank0) -> (Rank0, Rank0) {
+        fn unify(&mut self, t1: Rank0, t2: Rank0, l: usize) -> (Rank0, Rank0) {
             use self::Rank0::*;
-            let a = self.fresh();
+            let a = self.fresh(l);
             (
                 Arr(Box::new(a.clone()), Box::new(a)),
                 Arr(Box::new(t1), Box::new(t2)),
             )
         }
 
-        fn fresh(&mut self) -> Rank0 {
+        fn fresh(&mut self, l: usize) -> Rank0 {
             let n = self.n;
             self.n += 1;
-            Rank0::Var(n, n)
+            Rank0::Var(n, l)
         }
 
-        fn construct(t: Theta) -> Instance {
-            Instance(Vec::new())
+        fn construct(self, t: Theta) -> Instance {
+            let Theta(m, v) = t;
+            let ctx = Context(Vec::new());
+            for _ in 0..m {
+                ctx.add(Restricted1::Forall(1, Rank0::Var(0, 1)))
+            }
+            //
         }
     }
 }
@@ -205,7 +217,7 @@ pub mod asup {
 pub mod lambda2_restricted {
     use self::lambda2::*;
 
-    enum Restricted1 {
+    pub enum Restricted1 {
         Forall(usize, Rank0),
     }
 
