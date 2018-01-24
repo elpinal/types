@@ -180,13 +180,13 @@ impl Theta {
                                 let t = abs!(
                                     abs!(t.swap(0, 1).shift_above(1, 1).subst(
                                         2,
-                                        app!(
+                                        &app!(
                                             Var(1, l + 2),
                                             Var(0, l + 2)
                                         ),
                                     )).shift_above(2, -1)
                                 );
-                                return app!(t, Abs(t1));
+                                return Theta(0, vec![app!(t, Abs(t1))]);
                             }
                         }
                     }
