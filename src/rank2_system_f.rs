@@ -181,6 +181,12 @@ pub mod asup {
 
     struct Context(Vec<Restricted1>);
 
+    impl Instance {
+        fn add(&mut self, p: (Rank0, Rank0)) {
+            self.0.push(p);
+        }
+    }
+
     impl Context {
         fn add(&mut self, t: Restricted1) {
             self.0.push(t);
