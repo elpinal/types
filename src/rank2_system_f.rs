@@ -123,6 +123,32 @@ impl Theta {
                             }
                         }
                     }
+                    App(t1, t11) => {
+                        match *t1 {
+                            Abs(t1) => {
+                                // Theta 1.
+                                return Theta::from_term(
+                                    App(Box::new(abs!(App(t1, Box::new(t2.shift(1))))), t11),
+                                    i,
+                                    x,
+                                );
+                            }
+                        }
+                    }
+                }
+                match *t2 {
+                    App(t2, t3) => {
+                        match *t2 {
+                            Abs(t2) => {
+                                // Theta 3.
+                                return Theta::from_term(
+                                    App(Box::new(abs!(App(Box::new(t1.shift(1)), t2))), t3),
+                                    i,
+                                    x,
+                                );
+                            }
+                        }
+                    }
                 }
             }
         }
