@@ -99,10 +99,9 @@ impl Subst for Term {
 
 struct Theta(usize, Vec<Term>);
 
-#[cfg(ignore)]
 impl From<Term> for Theta {
     fn from(t: Term) -> Theta {
-        Theta::from_term(t, Index::NotRight, 0)
+        Theta::from_term(t, 0)
     }
 }
 
@@ -114,101 +113,12 @@ pub enum Index {
 }
 
 impl Theta {
-    #[cfg(ignore)]
-    fn from_term(t: Term, i: Index, x: usize) -> Theta {
-        use self::Term::*;
-        use self::Index::*;
-        match t {
-            Var(..) => return Theta(0, vec![t]),
-            Abs(t) => {
-                let Theta(n, v) = Theta::from_term(*t, i, x + 1);
-                return Theta(n + 1, v);
-            }
-            App(t1, t2) => {
-                match *t1 {
-                    Abs(t1) => {
-                        match *t1 {
-                            Abs(t1) => {
-                                if i == NotRight {
-                                    // Theta 4.
-                                    let Theta(n, v) = Theta::from_term(
-                                        app!(abs!(t1.swap(0, 1)), t2.shift(1)),
-                                        i,
-                                        x + 1,
-                                    );
-                                    return Theta(n + 1, v);
-                                }
-                            }
-                        }
-                    }
-                    App(t1, t11) => {
-                        match *t1 {
-                            Abs(t1) => {
-                                // Theta 1.
-                                return Theta::from_term(
-                                    App(Box::new(abs!(App(t1, Box::new(t2.shift(1))))), t11),
-                                    i,
-                                    x,
-                                );
-                            }
-                        }
-                    }
-                }
-                match *t2 {
-                    App(t2, t3) => {
-                        match *t2 {
-                            Abs(t2) => {
-                                // Theta 3.
-                                return Theta::from_term(
-                                    App(Box::new(abs!(App(Box::new(t1.shift(1)), t2))), t3),
-                                    i,
-                                    x,
-                                );
-                            }
-                        }
-                    }
-                }
-                Theta::from_right(*t2, x)
-            }
-        }
-    }
-
-    #[cfg(ignore)]
-    fn from_right(t: Term, l: usize) -> Theta {
-        use self::Term::*;
-        match t {
-            Var(..) => return Theta(0, vec![t]),
-            Abs(t) => {
-                match *t {
-                    App(t, t1) => {
-                        match *t {
-                            Abs(t) => {
-                                // Theta 2.
-                                let Theta(n, v) = Theta::from_right(*t, l);
-                                let t = abs!(
-                                    abs!(t.swap(0, 1).shift_above(1, 1).subst(
-                                        2,
-                                        &app!(
-                                            Var(1, l + 2),
-                                            Var(0, l + 2)
-                                        ),
-                                    )).shift_above(2, -1)
-                                );
-                                return Theta(0, vec![app!(t, Abs(t1))]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn from_right_new(t: Term, l: usize) -> Vec<Term> {
+    fn from_right(t: Term, l: usize) -> Vec<Term> {
         use self::Term::*;
         match t {
             Var(..) => vec![t],
             Abs(t) => {
-                let mut v = Theta::from_right_new(*t, l + 1);
+                let mut v = Theta::from_right(*t, l + 1);
                 let mut i = v.len() + 1;
                 v.into_iter()
                     .map(|t| {
@@ -218,8 +128,8 @@ impl Theta {
                     .collect()
             }
             App(t, t1) => {
-                let mut v1 = Theta::from_right_new(*t, l);
-                let mut v2 = Theta::from_right_new(*t1, l);
+                let mut v1 = Theta::from_right(*t, l);
+                let mut v2 = Theta::from_right(*t1, l);
                 Theta::app_right(v1, v2)
             }
         }
@@ -245,17 +155,17 @@ impl Theta {
         }
     }
 
-    fn from_term_new(t: Term, l: usize) -> Theta {
+    fn from_term(t: Term, l: usize) -> Theta {
         use self::Term::*;
         match t {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
-                let Theta(n, v) = Theta::from_term_new(*t, l + 1);
+                let Theta(n, v) = Theta::from_term(*t, l + 1);
                 Theta(n + 1, v)
             }
             App(t, t1) => {
-                let Theta(n, v) = Theta::from_term_new(*t, l);
-                let v1 = Theta::app_right(v, Theta::from_right_new(*t1, l));
+                let Theta(n, v) = Theta::from_term(*t, l);
+                let v1 = Theta::app_right(v, Theta::from_right(*t1, l));
                 Theta(n, v1)
             }
         }
