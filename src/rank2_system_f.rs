@@ -3,7 +3,7 @@
 use {Shift, Subst};
 
 #[derive(Clone)]
-enum Term {
+pub enum Term {
     Var(usize, usize),
     Abs(Box<Term>),
     App(Box<Term>, Box<Term>),
@@ -97,9 +97,11 @@ impl Subst for Term {
     }
 }
 
-struct Theta(usize, Vec<Term>);
+/// A term in theta-normal form.
+pub struct Theta(usize, Vec<Term>);
 
 impl From<Term> for Theta {
+    /// Performs theta-reduction of a term.
     fn from(t: Term) -> Theta {
         Theta::from_term(t, 0)
     }
