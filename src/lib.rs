@@ -17,10 +17,10 @@ pub trait Shift: Sized {
     }
 }
 
-pub trait Subst: Shift {
+pub trait Subst: Shift + Clone {
     fn subst(self, j: usize, x: &Self) -> Self;
 
     fn subst_top(self, x: &Self) -> Self {
-        self.subst(0, &x.shift(1)).shift(-1)
+        self.subst(0, &x.clone().shift(1)).shift(-1)
     }
 }
