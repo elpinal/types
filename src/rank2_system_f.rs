@@ -171,7 +171,8 @@ impl Theta {
 pub mod asup {
     use rank2_system_f::lambda2_restricted::lambda2::Rank0;
     use rank2_system_f::lambda2_restricted::Restricted1;
-    use rank2_system_f::Theta;
+    use rank2_system_f::lambda2_restricted::Restricted2F;
+    use rank2_system_f::{Term, Theta};
 
     struct Instance(Vec<(Rank0, Rank0)>);
 
@@ -209,13 +210,22 @@ pub mod asup {
             Rank0::Var(n, l)
         }
 
-        fn construct(self, t: Theta) -> Instance {
+        fn construct(self, t: Theta) -> (Restricted2F, Instance) {
+            use rank2_system_f::Term;
             let Theta(m, v) = t;
             let ctx = Context(Vec::new());
             for _ in 0..m {
                 ctx.add(Restricted1::Forall(1, Rank0::Var(0, 1)))
             }
-            //
+            for (i, t) in v.into_iter().rev().enumerate() {
+                let (ty, inst) = self.term(t);
+                let var = self.fresh(i + 1);
+                inst.add(self.unify(var, ty, i + 1));
+                ctx.add(Restricted1::Forall(0, var));
+            }
+        }
+
+        fn term(self, t: Term) -> (Restricted2F, Instance) {
         }
     }
 }
@@ -227,12 +237,12 @@ pub mod lambda2_restricted {
         Forall(usize, Rank0),
     }
 
-    enum Restricted2 {
+    pub enum Restricted2 {
         Var(usize, usize),
         Arr(Restricted1, Box<Restricted2>),
     }
 
-    enum Restricted2F {
+    pub enum Restricted2F {
         Forall(usize, Restricted2),
     }
 
