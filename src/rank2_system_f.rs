@@ -116,7 +116,7 @@ impl Theta {
                                     let Theta(n, v) = Theta::from_term(
                                         app!(abs!(t1.swap(0, 1)), t2.shift(1)),
                                         i,
-                                        x,
+                                        x + 1,
                                     );
                                     return Theta(n + 1, v);
                                 }
