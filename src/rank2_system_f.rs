@@ -210,7 +210,7 @@ pub mod asup {
             Rank0::Var(n, l)
         }
 
-        fn construct(self, t: Theta) -> (Restricted2F, Instance) {
+        fn construct(self, t: Theta) -> Instance {
             use rank2_system_f::Term;
             let Theta(m, v) = t;
             let ctx = Context(Vec::new());
@@ -225,7 +225,7 @@ pub mod asup {
             }
         }
 
-        fn term(self, t: Term) -> (Restricted2F, Instance) {
+        fn term(self, t: Term) -> (Rank0, Instance) {
         }
     }
 }
