@@ -150,6 +150,36 @@ impl Theta {
                         }
                     }
                 }
+                Theta::from_right(*t2, x)
+            }
+        }
+    }
+
+    fn from_right(t: Term, l: usize) -> Theta {
+        use self::Term::*;
+        match t {
+            Var(..) => return Theta(0, vec![t]),
+            Abs(t) => {
+                match *t {
+                    App(t, t1) => {
+                        match *t {
+                            Abs(t) => {
+                                // Theta 2.
+                                let Theta(n, v) = Theta::from_right(*t, l);
+                                let t = abs!(
+                                    abs!(t.swap(0, 1).shift_above(1, 1).subst(
+                                        2,
+                                        app!(
+                                            Var(1, l + 2),
+                                            Var(0, l + 2)
+                                        ),
+                                    )).shift_above(2, -1)
+                                );
+                                return app!(t, Abs(t1));
+                            }
+                        }
+                    }
+                }
             }
         }
     }
