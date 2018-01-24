@@ -66,6 +66,10 @@ impl Term {
         };
         self.map(&f, 0)
     }
+
+    fn rotate(self, n: usize) -> Self {
+        self.shift(1).subst(n, &Term::Var(0, n))
+    }
 }
 
 impl Shift for Term {
