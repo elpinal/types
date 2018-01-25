@@ -240,6 +240,34 @@ pub mod asup {
         None
     }
 
+    fn var_and_type(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
+        use self::Direction::*;
+        if let Some(l) = t1.left() {
+            let mut v = v.to_vec();
+            v.push(Left);
+            if let Some(p) = var_and_type(l, t2, &v) {
+                return Some(p);
+            }
+        }
+        if let Some(r) = t1.right() {
+            let mut v = v.to_vec();
+            v.push(Right);
+            if let Some(p) = var_and_type(r, t2, &v) {
+                return Some(p);
+            }
+        }
+        if let Some(t2) = Type::redo(t2, v) {
+            if t2 == t1 {
+                return None;
+            }
+            if t2.contains(t1) {
+                return None;
+            }
+            return Some((t1, t2));
+        }
+        None
+    }
+
     fn variable_paths(t1: &Box<Type>, mut v: &[Direction]) -> Vec<Vec<Direction>> {
         use self::Direction::*;
         let mut ret = Vec::new();
