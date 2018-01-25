@@ -174,62 +174,179 @@ pub mod asup {
     use rank2_system_f::lambda2_restricted::Restricted2F;
     use rank2_system_f::{Term, Theta};
 
-    struct Instance(Vec<(Rank0, Rank0)>);
+    #[derive(Clone)]
+    enum Var {
+        W(usize, usize),
+        X(usize, usize),
+        Y(usize, usize),
+        Z(usize),
+    }
+
+    #[derive(Clone)]
+    enum Type {
+        Var(Var),
+        Term(usize),
+        Arr(Box<Type>, Box<Type>),
+    }
+
+    struct Instance(Vec<(Type, Type)>);
 
     struct Constructor {
         n: usize,
+        /// 1 plus the maximum index of free variables.
+        /// Under the assumption that the indices are continuous, It's the number of free
+        /// variables.
+        w: usize,
     }
 
-    struct Context(Vec<Restricted1>);
+    struct Context {
+        ws: usize,
+        xs: usize,
+        ys: usize,
+    }
+
+    impl Type {
+        fn arr(t1: Type, t2: Type) -> Type {
+            Type::Arr(Box::new(t1), Box::new(t2))
+        }
+    }
 
     impl Instance {
-        fn add(&mut self, p: (Rank0, Rank0)) {
+        fn new() -> Self {
+            Instance(Vec::new())
+        }
+
+        fn add(&mut self, p: (Type, Type)) {
             self.0.push(p);
+        }
+
+        fn add_var(&mut self, v1: Var, v2: Var) {
+            self.add((Type::Var(v1), Type::Var(v2)))
+        }
+
+        fn append(mut self, mut i: Instance) -> Instance {
+            self.0.append(&mut i.0);
+            self
         }
     }
 
     impl Context {
-        fn add(&mut self, t: Restricted1) {
-            self.0.push(t);
+        fn new(x: usize) -> Self {
+            Context {
+                ws: 0,
+                xs: x,
+                ys: 0,
+            }
+        }
+
+        fn get(&self, n: usize, i: usize, zs: &[usize]) -> Var {
+            use self::Var::*;
+            let l = zs.len();
+            if n < l {
+                Z(zs[l - 1 - n])
+            } else if n - l < self.ys {
+                Y(i, n - l)
+            } else if n - l - self.ys < self.xs {
+                X(i, n - l - self.ys)
+            } else {
+                W(i, n - l - self.ys - self.xs)
+            }
         }
     }
 
     impl Constructor {
-        fn unify(&mut self, t1: Rank0, t2: Rank0, l: usize) -> (Rank0, Rank0) {
-            use self::Rank0::*;
-            let a = self.fresh(l);
+        fn unify(&mut self, t1: Type, t2: Type) -> (Type, Type) {
+            use self::Type::*;
+            let a = self.fresh();
             (
                 Arr(Box::new(a.clone()), Box::new(a)),
                 Arr(Box::new(t1), Box::new(t2)),
             )
         }
 
-        fn fresh(&mut self, l: usize) -> Rank0 {
+        fn fresh_number(&mut self) -> usize {
             let n = self.n;
             self.n += 1;
-            Rank0::Var(n, l)
+            n
+        }
+
+        fn fresh(&mut self) -> Type {
+            Type::Term(self.fresh_number())
         }
 
         fn construct(&mut self, t: Theta) -> Instance {
             use rank2_system_f::Term;
+            use self::Var::*;
             let Theta(m, v) = t;
-            let ctx = Context(Vec::new());
-            for _ in 0..m {
-                ctx.add(Restricted1::Forall(1, Rank0::Var(0, 1)))
-            }
+            let mut ctx = Context::new(m);
+            let l = v.len();
+            let mut inst = Instance::new();
             for (i, t) in v.into_iter().rev().enumerate() {
-                let (ty, inst) = self.term(t, ctx);
-                let var = self.fresh(i + 1);
-                inst.add(self.unify(var, ty, i + 1));
-                ctx.add(Restricted1::Forall(0, var));
+                let (ty, mut inst1) = self.term(t, i, &ctx, &[]);
+                if i < l - 1 {
+                    ctx.ys += 1;
+                    inst1.add(self.unify(Type::Var(Var::Y(i + 1, i)), ty));
+                }
+                inst = inst.append(inst1);
+            }
+            for j in 0..m {
+                for i in 0..ctx.ys {
+                    inst.add_var(X(i, j), X(i + 1, j))
+                }
+            }
+            for j in 0..self.w {
+                for i in 0..ctx.ys {
+                    inst.add_var(W(i, j), W(i + 1, j))
+                }
+            }
+            for j in 0..ctx.ys {
+                for i in j..ctx.ys {
+                    inst.add_var(Y(i + 1, j), Y(i + 2, j))
+                }
+            }
+            inst
+        }
+
+        fn record_fv(&mut self, n: usize) {
+            if self.w < n + 1 {
+                self.w = n + 1
             }
         }
 
-        fn term(&mut self, t: Term, ctx: Context) -> (Rank0, Instance) {
+        fn term(&mut self, t: Term, i: usize, ctx: &Context, mut l: &[usize]) -> (Type, Instance) {
             use self::Term::*;
+            use self::Var::*;
             match t {
-                Var(x, n) => {
-                    ctx.0.get(x)
+                Var(x, _) => {
+                    let var = ctx.get(x, i, l);
+                    if let W(_, n) = var {
+                        self.record_fv(n)
+                    }
+                    let v = self.fresh();
+                    (v.clone(), Instance(vec![(Type::Var(var), v)]))
+                }
+                App(t, t1) => {
+                    let (ty1, inst1) = self.term(*t, i, ctx, l);
+                    let (ty2, inst2) = self.term(*t1, i, ctx, l);
+                    let v = self.fresh();
+                    (
+                        v.clone(),
+                        Instance(vec![(ty1, Type::arr(ty2, v))])
+                            .append(inst1)
+                            .append(inst2),
+                    )
+                }
+                Abs(t) => {
+                    let z = self.fresh_number();
+                    let mut l = l.to_vec();
+                    l.push(z);
+                    let (ty, inst) = self.term(*t, i, ctx, &l);
+                    l.pop();
+                    let v = self.fresh();
+                    (
+                        v.clone(),
+                        Instance(vec![(Type::arr(Type::Var(Z(z)), ty), v)]).append(inst),
+                    )
                 }
             }
         }
