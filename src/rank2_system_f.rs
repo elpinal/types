@@ -211,19 +211,19 @@ pub mod asup {
         Right,
     }
 
-    fn solve_asup(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
+    fn reduce1(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
         use self::Direction::*;
         if let Some(l) = t2.left() {
             let mut v = v.to_vec();
             v.push(Left);
-            if let Some((t1, t2)) = solve_asup(t1, l, &v) {
+            if let Some((t1, t2)) = reduce1(t1, l, &v) {
                 return Some((t1, t2));
             }
         }
         if let Some(r) = t2.right() {
             let mut v = v.to_vec();
             v.push(Right);
-            if let Some((t1, t2)) = solve_asup(t1, r, &v) {
+            if let Some((t1, t2)) = reduce1(t1, r, &v) {
                 return Some((t1, t2));
             }
         }
