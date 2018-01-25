@@ -182,7 +182,7 @@ pub mod asup {
         Z(usize),
     }
 
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq)]
     pub enum Type {
         Var(Var),
         Term(usize),
