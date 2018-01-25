@@ -354,7 +354,7 @@ pub mod asup {
         fn contains(&self, t: &Self) -> bool {
             use self::Type::*;
             match *self {
-                Arr(a, b) => {
+                Arr(ref a, ref b) => {
                     a.contains(t) || b.contains(t)
                 }
                 _ => {
