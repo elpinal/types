@@ -240,6 +240,31 @@ pub mod asup {
         None
     }
 
+    fn reduce2(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
+        let paths = self.variable_paths(t1, v);
+        for p1 in paths {
+            for p2 in paths {
+                if p1 == p2 {
+                    continue;
+                }
+                if let Some(t11) = Type::redo(t1, p1) {
+                    if let Some(t12) = Type::redo(t1, p2) {
+                        if t11 != t12 {
+                            continue;
+                        }
+                        if let Some(t21) = Type::redo(t2, p1) {
+                            if let Some(t21) = Type::redo(t2, p2) {
+                                if let Some(p) = var_and_type(t21, t22, &[]) {
+                                    return Some(p);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn var_and_type(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
         use self::Direction::*;
         if let Some(l) = t1.left() {
