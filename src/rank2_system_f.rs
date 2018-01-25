@@ -205,7 +205,7 @@ pub mod asup {
         ys: usize,
     }
 
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq)]
     enum Direction {
         Left,
         Right,
