@@ -349,6 +349,18 @@ pub mod asup {
             }
             Some(t)
         }
+
+        fn contains(&self, t: &Self) -> bool {
+            use self::Type::*;
+            match *self {
+                Arr(a, b) => {
+                    a.contains(t) || b.contains(t)
+                }
+                _ => {
+                    self == t
+                }
+            }
+        }
     }
 
     impl Instance {
