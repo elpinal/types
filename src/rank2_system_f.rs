@@ -240,6 +240,25 @@ pub mod asup {
         None
     }
 
+    fn variable_paths(t1: &Box<Type>, mut v: &[Direction]) -> Vec<Vec<Direction>> {
+        use self::Direction::*;
+        let mut ret = Vec::new();
+        if let Some(l) = t1.left() {
+            let mut v = v.to_vec();
+            v.push(Left);
+            let mut vv = variable_paths(l, &v);
+            ret.append(&mut vv);
+        }
+        if let Some(r) = t1.right() {
+            let mut v = v.to_vec();
+            v.push(Right);
+            let mut vv = variable_paths(r, &v);
+            ret.append(&mut vv);
+        }
+        ret.push(v.to_vec());
+        ret
+    }
+
     impl Type {
         fn arr(t1: Type, t2: Type) -> Type {
             Type::Arr(Box::new(t1), Box::new(t2))
