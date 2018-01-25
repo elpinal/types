@@ -174,7 +174,7 @@ pub mod asup {
     use rank2_system_f::lambda2_restricted::Restricted2F;
     use rank2_system_f::{Term, Theta};
 
-    #[derive(Clone)]
+    #[derive(Clone, PartialEq)]
     pub enum Var {
         W(usize, usize),
         X(usize, usize),
