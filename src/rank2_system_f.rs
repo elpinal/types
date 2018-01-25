@@ -209,6 +209,20 @@ pub mod asup {
         fn arr(t1: Type, t2: Type) -> Type {
             Type::Arr(Box::new(t1), Box::new(t2))
         }
+
+        fn left(&self) -> Option<&Box<Type>> {
+            match *self {
+                Type::Arr(ref t, _) => Some(t),
+                _ => None,
+            }
+        }
+
+        fn right(&self) -> Option<&Box<Type>> {
+            match *self {
+                Type::Arr(_, ref t) => Some(t),
+                _ => None,
+            }
+        }
     }
 
     impl Instance {
