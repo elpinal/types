@@ -205,6 +205,12 @@ pub mod asup {
         ys: usize,
     }
 
+    #[derive(Clone)]
+    enum Direction {
+        Left,
+        Right,
+    }
+
     impl Type {
         fn arr(t1: Type, t2: Type) -> Type {
             Type::Arr(Box::new(t1), Box::new(t2))
@@ -222,6 +228,25 @@ pub mod asup {
                 Type::Arr(_, ref t) => Some(t),
                 _ => None,
             }
+        }
+
+        fn left_or_right(&self, d: &Direction) -> Option<&Box<Type>> {
+            use self::Direction::*;
+            match *d {
+                Left => self.left(),
+                Right => self.right(),
+            }
+        }
+
+        fn redo<'a>(s: &'a Box<Self>, v: &[Direction]) -> Option<&'a Box<Type>> {
+            let mut t = s;
+            for d in v {
+                match t.left_or_right(d) {
+                    Some(x) => t = x,
+                    None => return None,
+                }
+            }
+            Some(t)
         }
     }
 
