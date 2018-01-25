@@ -175,7 +175,7 @@ pub mod asup {
     use rank2_system_f::{Term, Theta};
 
     #[derive(Clone)]
-    enum Var {
+    pub enum Var {
         W(usize, usize),
         X(usize, usize),
         Y(usize, usize),
@@ -183,13 +183,13 @@ pub mod asup {
     }
 
     #[derive(Clone)]
-    enum Type {
+    pub enum Type {
         Var(Var),
         Term(usize),
         Arr(Box<Type>, Box<Type>),
     }
 
-    pub struct Instance(Vec<(Type, Type)>);
+    pub struct Instance(pub Vec<(Type, Type)>);
 
     pub struct Constructor {
         n: usize,
