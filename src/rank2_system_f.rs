@@ -189,9 +189,9 @@ pub mod asup {
         Arr(Box<Type>, Box<Type>),
     }
 
-    struct Instance(Vec<(Type, Type)>);
+    pub struct Instance(Vec<(Type, Type)>);
 
-    struct Constructor {
+    pub struct Constructor {
         n: usize,
         /// 1 plus the maximum index of free variables.
         /// Under the assumption that the indices are continuous, It's the number of free
@@ -274,7 +274,8 @@ pub mod asup {
             Type::Term(self.fresh_number())
         }
 
-        fn construct(&mut self, t: Theta) -> Instance {
+        /// Constructs for a lambda term an ASUP instance.
+        pub fn construct(&mut self, t: Theta) -> Instance {
             use rank2_system_f::Term;
             use self::Var::*;
             let Theta(m, v) = t;
