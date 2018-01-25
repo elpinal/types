@@ -263,6 +263,7 @@ pub mod asup {
                 }
             }
         }
+        None
     }
 
     fn var_and_type(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
