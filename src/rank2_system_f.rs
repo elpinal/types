@@ -253,7 +253,7 @@ pub mod asup {
                             continue;
                         }
                         if let Some(t21) = Type::redo(t2, p1) {
-                            if let Some(t21) = Type::redo(t2, p2) {
+                            if let Some(t22) = Type::redo(t2, p2) {
                                 if let Some(p) = var_and_type(t21, t22, &[]) {
                                     return Some(p);
                                 }
