@@ -211,6 +211,35 @@ pub mod asup {
         Right,
     }
 
+    fn solve_asup(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
+        use self::Direction::*;
+        if let Some(l) = t2.left() {
+            let mut v = v.to_vec();
+            v.push(Left);
+            if let Some((t1, t2)) = solve_asup(t1, l, &v) {
+                return Some((t1, t2));
+            }
+        }
+        if let Some(r) = t2.right() {
+            let mut v = v.to_vec();
+            v.push(Right);
+            if let Some((t1, t2)) = solve_asup(t1, r, &v) {
+                return Some((t1, t2));
+            }
+        }
+        if let Some(t) = Type::redo(t1, v) {
+            match **t {
+                Type::Arr(..) => {
+                    return Some((*t2.clone(), *t.clone()));
+                }
+                _ => {
+                    return None;
+                }
+            }
+        }
+        None
+    }
+
     impl Type {
         fn arr(t1: Type, t2: Type) -> Type {
             Type::Arr(Box::new(t1), Box::new(t2))
