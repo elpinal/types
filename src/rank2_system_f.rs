@@ -247,13 +247,13 @@ pub mod asup {
                 if p1 == p2 {
                     continue;
                 }
-                if let Some(t11) = Type::redo(t1, p1) {
-                    if let Some(t12) = Type::redo(t1, p2) {
+                if let Some(t11) = Type::redo(t1, &p1) {
+                    if let Some(t12) = Type::redo(t1, &p2) {
                         if t11 != t12 {
                             continue;
                         }
-                        if let Some(t21) = Type::redo(t2, p1) {
-                            if let Some(t22) = Type::redo(t2, p2) {
+                        if let Some(t21) = Type::redo(t2, &p1) {
+                            if let Some(t22) = Type::redo(t2, &p2) {
                                 if let Some(p) = var_and_type(t21, t22, &[]) {
                                     return Some(p);
                                 }
