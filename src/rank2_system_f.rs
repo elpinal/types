@@ -288,7 +288,7 @@ pub mod asup {
             if t2.contains(t1) {
                 return None;
             }
-            return Some((t1, t2));
+            return Some((*t1.clone(), *t2.clone()));
         }
         None
     }
