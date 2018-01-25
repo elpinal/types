@@ -242,8 +242,8 @@ pub mod asup {
 
     fn reduce2(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
         let paths = variable_paths(t1, v);
-        for p1 in paths {
-            for p2 in paths {
+        for p1 in &paths {
+            for p2 in &paths {
                 if p1 == p2 {
                     continue;
                 }
