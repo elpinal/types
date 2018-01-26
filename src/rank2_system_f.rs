@@ -174,7 +174,9 @@ pub mod asup {
     use rank2_system_f::lambda2_restricted::Restricted2F;
     use rank2_system_f::{Term, Theta};
 
-    #[derive(Clone, PartialEq)]
+    use std::collections::HashMap;
+
+    #[derive(Clone, Eq, Hash, PartialEq)]
     pub enum Var {
         W(usize, usize),
         X(usize, usize),
@@ -182,7 +184,7 @@ pub mod asup {
         Z(usize),
     }
 
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, Eq, Hash, PartialEq)]
     pub enum Type {
         Var(Var),
         Term(usize),
@@ -211,33 +213,74 @@ pub mod asup {
         Right,
     }
 
-    fn reduce1(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
-        use self::Direction::*;
-        if let Some(l) = t2.left() {
-            let mut v = v.to_vec();
-            v.push(Left);
-            if let Some((t1, t2)) = reduce1(t1, l, &v) {
-                return Some((t1, t2));
-            }
+    struct Reducer {
+        n: usize,
+    }
+
+    impl Reducer {
+        fn from_constructor(c: &Constructor) -> Reducer {
+            Reducer { n: c.n }
         }
-        if let Some(r) = t2.right() {
-            let mut v = v.to_vec();
-            v.push(Right);
-            if let Some((t1, t2)) = reduce1(t1, r, &v) {
-                return Some((t1, t2));
-            }
-        }
-        if let Some(t) = Type::redo(t1, v) {
-            match **t {
-                Type::Arr(..) => {
-                    return Some((*t2.clone(), *t.clone()));
+
+        fn reduce1(
+            &mut self,
+            t1: &Box<Type>,
+            t2: &Box<Type>,
+            mut v: &[Direction],
+        ) -> Option<(Type, Type)> {
+            use self::Direction::*;
+            if let Some(l) = t2.left() {
+                let mut v = v.to_vec();
+                v.push(Left);
+                if let Some((t1, t2)) = self.reduce1(t1, l, &v) {
+                    return Some((t1, t2));
                 }
+            }
+            if let Some(r) = t2.right() {
+                let mut v = v.to_vec();
+                v.push(Right);
+                if let Some((t1, t2)) = self.reduce1(t1, r, &v) {
+                    return Some((t1, t2));
+                }
+            }
+            if let Some(t1) = Type::redo(t1, v) {
+                match **t1 {
+                    Type::Arr(..) => {
+                        return Some((*t2.clone(), self.make_fresh(*t1.clone())));
+                    }
+                    _ => {
+                        return None;
+                    }
+                }
+            }
+            None
+        }
+
+        fn make_fresh(&mut self, t: Type) -> Type {
+            let mut m = HashMap::new();
+            self.make_fresh_map(t, &mut m)
+        }
+
+        fn make_fresh_map(&mut self, t: Type, m: &mut HashMap<Type, Type>) -> Type {
+            use self::Type::*;
+            match t {
                 _ => {
-                    return None;
+                    if let Some(t) = m.get(&t) {
+                        return t.clone();
+                    }
+                    let v = self.fresh();
+                    m.insert(t, v.clone());
+                    v
                 }
+                Arr(t1, t2) => Type::arr(self.make_fresh_map(*t1, m), self.make_fresh_map(*t2, m)),
             }
         }
-        None
+
+        fn fresh(&mut self) -> Type {
+            let n = self.n;
+            self.n += 1;
+            Type::Term(n)
+        }
     }
 
     fn reduce2(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
