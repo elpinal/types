@@ -515,7 +515,7 @@ pub mod asup {
         }
 
         /// Constructs for a lambda term an ASUP instance.
-        pub fn construct(&mut self, t: Theta) -> Instance {
+        pub fn construct(&mut self, t: Theta) -> (Type, Instance) {
             use self::Var::*;
             let Theta(m, mut v) = t;
             let mut ctx = Context::new(m);
@@ -545,7 +545,7 @@ pub mod asup {
                     inst.add_var(Y(i + 1, j), Y(i + 2, j))
                 }
             }
-            inst
+            (ty, inst)
         }
 
         fn record_fv(&mut self, n: usize) {
