@@ -248,17 +248,15 @@ pub mod asup {
                     return Some((t1, t2));
                 }
             }
-            if let Some(t1) = Type::redo(t1, v) {
-                match **t1 {
-                    Type::Arr(..) => {
-                        return Some((*t2.clone(), self.make_fresh(*t1.clone())));
-                    }
-                    _ => {
-                        return None;
-                    }
+            let t1 = Type::redo(t1, v)?;
+            match **t1 {
+                Type::Arr(..) => {
+                    return Some((*t2.clone(), self.make_fresh(*t1.clone())));
+                }
+                _ => {
+                    return None;
                 }
             }
-            None
         }
 
         fn make_fresh(&mut self, t: Type) -> Type {
@@ -298,26 +296,31 @@ pub mod asup {
         let paths = variable_paths(t1, v);
         for p1 in &paths {
             for p2 in &paths {
-                if p1 == p2 {
-                    continue;
-                }
-                if let Some(t11) = Type::redo(t1, &p1) {
-                    if let Some(t12) = Type::redo(t1, &p2) {
-                        if t11 != t12 {
-                            continue;
-                        }
-                        if let Some(t21) = Type::redo(t2, &p1) {
-                            if let Some(t22) = Type::redo(t2, &p2) {
-                                if let Some(p) = var_and_type(t21, t22, &[])? {
-                                    return Ok(Some(p));
-                                }
-                            }
-                        }
-                    }
+                if let Some((t21, t22)) = f(p1, p2, t1, t2) {
+                    return var_and_type(t21, t22, &[]);
                 }
             }
         }
         Ok(None)
+    }
+
+    fn f<'a>(
+        p1: &[Direction],
+        p2: &[Direction],
+        t1: &Box<Type>,
+        t2: &'a Box<Type>,
+    ) -> Option<(&'a Box<Type>, &'a Box<Type>)> {
+        if p1 == p2 {
+            return None;
+        }
+        let t11 = Type::redo(t1, &p1)?;
+        let t12 = Type::redo(t1, &p2)?;
+        if t11 != t12 {
+            return None;
+        }
+        let t21 = Type::redo(t2, &p1)?;
+        let t22 = Type::redo(t2, &p2)?;
+        Some((t21, t22))
     }
 
     fn var_and_type(
@@ -398,10 +401,7 @@ pub mod asup {
         fn redo<'a>(s: &'a Box<Self>, v: &[Direction]) -> Option<&'a Box<Type>> {
             let mut t = s;
             for d in v {
-                match t.left_or_right(d) {
-                    Some(x) => t = x,
-                    None => return None,
-                }
+                t = t.left_or_right(d)?;
             }
             Some(t)
         }
