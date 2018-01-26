@@ -136,8 +136,10 @@ impl Theta {
         v1.by_ref().map(
             |t| t.shift_above(1, (v2.len() - 1) as isize),
         );
-        let t2 = v2.next().expect("empty term");
-        let t2 = t2.shift_above(1, (v1.len() - 1) as isize);
+        let t2 = v2.next().expect("empty term").shift_above(
+            1,
+            (v1.len() - 1) as isize,
+        );
         let t1 = v1.next().expect("empty term");
         let mut v1: Vec<_> = vec![app!(t1, t2)].into_iter().chain(v1).collect();
         v1.extend(v2);
