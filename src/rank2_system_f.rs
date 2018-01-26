@@ -98,6 +98,10 @@ impl Subst for Term {
 }
 
 /// A term in theta-normal form.
+///
+/// `Theta(m, vec![t0, t1, ..., tn])` represents
+/// `\\...\(\...(\(\tn)tn-1)t1)t0` where `\t` is a lambda abstraction of `t`
+/// on an implicit parameter, and `m` is the number of the outermost abstractions.
 pub struct Theta(usize, Vec<Term>);
 
 impl From<Term> for Theta {
@@ -126,10 +130,10 @@ impl Theta {
             Var(..) => vec![t],
             Abs(t) => {
                 let v = Theta::from_right(*t);
-                let mut i = v.len() + 1;
+                let mut i = 0;
                 v.into_iter()
                     .map(|t| {
-                        i -= 1;
+                        i += 1;
                         t.rotate(i)
                     })
                     .collect()
@@ -142,18 +146,17 @@ impl Theta {
         }
     }
 
-    fn app_right(v1: Vec<Term>, v2: Vec<Term>) -> Vec<Term> {
-        let mut v2 = v2.into_iter();
+    fn app_right(v1: Vec<Term>, mut v2: Vec<Term>) -> Vec<Term> {
         let l = v2.len() as isize;
-        let mut v1 = v1.into_iter().map(|t| t.shift_above(1, l - 1));
-        let t2 = v2.next().expect("empty term").shift_above(
+        let mut v1: Vec<Term> = v1.into_iter().map(|t| t.shift_above(1, l - 1)).collect();
+        let t2 = v2.pop().expect("empty term").shift_above(
             1,
             (v1.len() - 1) as isize,
         );
-        let t1 = v1.next().expect("empty term");
-        let mut v1: Vec<_> = vec![app!(t1, t2)].into_iter().chain(v1).collect();
-        v1.extend(v2);
-        v1
+        let t1 = v1.pop().expect("empty term");
+        v2.extend(v1);
+        v2.push(app!(t1, t2));
+        v2
     }
 }
 
@@ -518,7 +521,7 @@ pub mod asup {
             let mut ctx = Context::new(m);
             let l = v.len();
             let mut inst = Instance::new();
-            for (i, t) in v.into_iter().rev().enumerate() {
+            for (i, t) in v.into_iter().enumerate() {
                 let (ty, mut inst1) = self.term(t, i, &ctx, &[]);
                 if i < l - 1 {
                     ctx.ys += 1;
