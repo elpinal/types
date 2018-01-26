@@ -133,9 +133,7 @@ impl Theta {
     fn app_right(v1: Vec<Term>, v2: Vec<Term>) -> Vec<Term> {
         let mut v2 = v2.into_iter();
         let l = v2.len() as isize;
-        let mut v1 = v1.into_iter().map(
-            |t| t.shift_above(1, l - 1),
-        );
+        let mut v1 = v1.into_iter().map(|t| t.shift_above(1, l - 1));
         let t2 = v2.next().expect("empty term").shift_above(
             1,
             (v1.len() - 1) as isize,
@@ -212,6 +210,44 @@ pub mod asup {
 
     enum Error {
         NoSolution,
+    }
+
+    fn reduce(c: &Constructor, inst: Instance) -> Option<Vec<(Type, Type)>> {
+        let mut r = Reducer::from_constructor(c);
+        let mut ps = inst.0;
+        let mut v = Vec::new();
+        loop {
+            let p = ps.pop()?;
+            let t1 = Box::new(p.0);
+            let t2 = Box::new(p.1);
+            if let Some(p0) = r.reduce1(&t1, &t2, &[]) {
+                ps.push((*t1, *t2));
+                ps = ps.into_iter()
+                    .map(|(t1, t2)| {
+                        (t1.replace(&p0.0, &p0.1), t2.replace(&p0.0, &p0.1))
+                    })
+                    .collect();
+                v.push(p0);
+            } else {
+                match reduce2(&t1, &t2, &[]) {
+                    Err(_) => return None,
+                    Ok(p0) => {
+                        match p0 {
+                            None => return Some(v),
+                            Some(p0) => {
+                                ps.push((*t1, *t2));
+                                ps = ps.into_iter()
+                                    .map(|(t1, t2)| {
+                                        (t1.replace(&p0.0, &p0.1), t2.replace(&p0.0, &p0.1))
+                                    })
+                                    .collect();
+                                v.push(p0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     impl Reducer {
@@ -400,6 +436,14 @@ pub mod asup {
             match *self {
                 Arr(ref a, ref b) => a.contains(t) || b.contains(t),
                 _ => self == t,
+            }
+        }
+
+        fn replace(self, t1: &Type, t2: &Type) -> Self {
+            use self::Type::*;
+            match self {
+                Arr(a, b) => Type::arr(a.replace(t1, t2), b.replace(t1, t2)),
+                _ => if self == *t1 { t2.clone() } else { self },
             }
         }
     }
