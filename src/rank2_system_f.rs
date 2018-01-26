@@ -328,9 +328,6 @@ pub mod asup {
             }
         }
         if let Some(t2) = Type::redo(t2, v) {
-            if t2 == t1 {
-                return None;
-            }
             if t2.contains(t1) {
                 return None;
             }
