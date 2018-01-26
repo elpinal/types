@@ -212,7 +212,7 @@ pub mod asup {
         NoSolution,
     }
 
-    fn reduce(c: &Constructor, inst: Instance) -> Option<Vec<(Type, Type)>> {
+    pub fn reduce(c: &Constructor, inst: Instance) -> Option<Vec<(Type, Type)>> {
         let mut r = Reducer::from_constructor(c);
         let mut ps = inst.0;
         let mut v = Vec::new();
@@ -439,7 +439,7 @@ pub mod asup {
             }
         }
 
-        fn replace(self, t1: &Type, t2: &Type) -> Self {
+        pub fn replace(self, t1: &Type, t2: &Type) -> Self {
             use self::Type::*;
             match self {
                 Arr(a, b) => Type::arr(a.replace(t1, t2), b.replace(t1, t2)),
@@ -492,6 +492,10 @@ pub mod asup {
     }
 
     impl Constructor {
+        pub fn new() -> Self {
+            Constructor { n: 0, w: 0 }
+        }
+
         fn unify(&mut self, t1: Type, t2: Type) -> (Type, Type) {
             use self::Type::*;
             let a = self.fresh();
