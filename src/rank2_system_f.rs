@@ -246,12 +246,8 @@ pub mod asup {
             }
             let t1 = Type::redo(t1, v)?;
             match **t1 {
-                Type::Arr(..) => {
-                    return Some((*t2.clone(), self.make_fresh(*t1.clone())));
-                }
-                _ => {
-                    return None;
-                }
+                Type::Arr(..) => Some((*t2.clone(), self.make_fresh(*t1.clone()))),
+                _ => None,
             }
         }
 
