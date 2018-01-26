@@ -517,18 +517,19 @@ pub mod asup {
         /// Constructs for a lambda term an ASUP instance.
         pub fn construct(&mut self, t: Theta) -> Instance {
             use self::Var::*;
-            let Theta(m, v) = t;
+            let Theta(m, mut v) = t;
             let mut ctx = Context::new(m);
             let l = v.len();
             let mut inst = Instance::new();
+            let innermost = v.pop().expect("empty term");
             for (i, t) in v.into_iter().enumerate() {
                 let (ty, mut inst1) = self.term(t, i, &ctx, &[]);
-                if i < l - 1 {
-                    ctx.ys += 1;
-                    inst1.add(self.unify(Type::Var(Var::Y(i + 1, i)), ty));
-                }
+                ctx.ys += 1;
+                inst1.add(self.unify(Type::Var(Var::Y(i + 1, i)), ty));
                 inst = inst.append(inst1);
             }
+            let (ty, inst1) = self.term(innermost, l - 1, &ctx, &[]);
+            inst = inst.append(inst1);
             for j in 0..m {
                 for i in 0..ctx.ys {
                     inst.add_var(X(i, j), X(i + 1, j))
