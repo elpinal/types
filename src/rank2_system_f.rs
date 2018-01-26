@@ -222,6 +222,7 @@ pub mod asup {
             Reducer { n: c.n }
         }
 
+        /// Returns a pair which is called Redex I, if any.
         fn reduce1(
             &mut self,
             t1: &Box<Type>,
@@ -283,6 +284,7 @@ pub mod asup {
         }
     }
 
+    /// Returns a pair which is called Redex II, if any.
     fn reduce2(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
         let paths = variable_paths(t1, v);
         for p1 in &paths {
