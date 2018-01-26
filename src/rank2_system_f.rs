@@ -110,10 +110,10 @@ impl From<Term> for Theta {
                 let Theta(n, v) = Theta::from(*t);
                 Theta(n + 1, v)
             }
-            App(t, t1) => {
-                let Theta(n, v) = Theta::from(*t);
-                let v1 = Theta::app_right(v, Theta::from_right(*t1));
-                Theta(n, v1)
+            App(t1, t2) => {
+                let Theta(n, v) = Theta::from(*t1);
+                let v = Theta::app_right(v, Theta::from_right(*t2));
+                Theta(n, v)
             }
         }
     }
