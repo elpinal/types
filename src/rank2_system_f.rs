@@ -165,9 +165,6 @@ impl Theta {
 
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
-    use rank2_system_f::lambda2_restricted::lambda2::Rank0;
-    use rank2_system_f::lambda2_restricted::Restricted1;
-    use rank2_system_f::lambda2_restricted::Restricted2F;
     use rank2_system_f::{Term, Theta};
 
     use std::collections::HashMap;
@@ -259,6 +256,7 @@ pub mod asup {
         fn make_fresh_map(&mut self, t: Type, m: &mut HashMap<Type, Type>) -> Type {
             use self::Type::*;
             match t {
+                Arr(t1, t2) => Type::arr(self.make_fresh_map(*t1, m), self.make_fresh_map(*t2, m)),
                 _ => {
                     if let Some(t) = m.get(&t) {
                         return t.clone();
@@ -267,7 +265,6 @@ pub mod asup {
                     m.insert(t, v.clone());
                     v
                 }
-                Arr(t1, t2) => Type::arr(self.make_fresh_map(*t1, m), self.make_fresh_map(*t2, m)),
             }
         }
 
@@ -472,7 +469,6 @@ pub mod asup {
 
         /// Constructs for a lambda term an ASUP instance.
         pub fn construct(&mut self, t: Theta) -> Instance {
-            use rank2_system_f::Term;
             use self::Var::*;
             let Theta(m, v) = t;
             let mut ctx = Context::new(m);
