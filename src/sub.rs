@@ -44,7 +44,7 @@ impl Term {
         use self::Type::*;
         use self::TypeError::*;
         match *self {
-            Var(x, n) => ctx.get(x).ok_or_else(|| Unbound(x, ctx)),
+            Var(x, _) => ctx.get(x).ok_or_else(|| Unbound(x, ctx)),
             Abs(ref i, ref ty1, ref t) => {
                 let ctx1 = ctx.clone().add(i.clone(), ty1.clone());
                 let ty2 = t.type_of(ctx1)?;

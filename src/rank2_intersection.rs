@@ -151,7 +151,7 @@ impl PartialOrd for Pair {
 }
 
 impl Relation {
-    fn to_equality(mut self) -> HashSet<Relation> {
+    fn to_equality(self) -> HashSet<Relation> {
         use self::Relation::*;
         macro_rules! set {
             ( $($e:expr),* ) => {

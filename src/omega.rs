@@ -73,7 +73,7 @@ impl Type {
         use self::Type::*;
         use self::KindError::*;
         match *self {
-            Var(x, n) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx.clone())),
+            Var(x, _) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx.clone())),
             Abs(ref i, ref k1, ref t) => {
                 let ctx1 = ctx.add(i.clone(), Binding::Type(k1.clone()));
                 let k2 = t.kind_of(&ctx1)?;
@@ -147,7 +147,7 @@ impl Type {
                 }
                 match t1.eval1() {
                     (t, true) => changed(app!(t)),
-                    (Abs(i, k, t), false) => changed(t.subst_top(*t2)),
+                    (Abs(_, _, t), false) => changed(t.subst_top(*t2)),
                     (t, false) => unchanged(app!(t)), // What should happen?
                 }
             }
@@ -234,7 +234,7 @@ impl Term {
         use self::TypeError::*;
         use self::Kind;
         match *self {
-            Var(x, n) => ctx.get_type(x).ok_or_else(|| Unbound(x, ctx.clone())),
+            Var(x, _) => ctx.get_type(x).ok_or_else(|| Unbound(x, ctx.clone())),
             Abs(ref i, ref ty1, ref t) => {
                 match ty1.kind_of(ctx)? {
                     Kind::Star => (),
