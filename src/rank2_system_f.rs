@@ -217,6 +217,10 @@ pub mod asup {
         n: usize,
     }
 
+    enum Error {
+        NoSolution,
+    }
+
     impl Reducer {
         fn from_constructor(c: &Constructor) -> Reducer {
             Reducer { n: c.n }
@@ -284,8 +288,13 @@ pub mod asup {
         }
     }
 
-    /// Returns a pair which is called Redex II, if any.
-    fn reduce2(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
+    /// Returns a pair which is called Redex II, if any. Informs the caller of an error if there is
+    /// no solution.
+    fn reduce2(
+        t1: &Box<Type>,
+        t2: &Box<Type>,
+        mut v: &[Direction],
+    ) -> Result<Option<(Type, Type)>, Error> {
         let paths = variable_paths(t1, v);
         for p1 in &paths {
             for p2 in &paths {
@@ -299,8 +308,8 @@ pub mod asup {
                         }
                         if let Some(t21) = Type::redo(t2, &p1) {
                             if let Some(t22) = Type::redo(t2, &p2) {
-                                if let Some(p) = var_and_type(t21, t22, &[]) {
-                                    return Some(p);
+                                if let Some(p) = var_and_type(t21, t22, &[])? {
+                                    return Ok(Some(p));
                                 }
                             }
                         }
@@ -308,32 +317,36 @@ pub mod asup {
                 }
             }
         }
-        None
+        Ok(None)
     }
 
-    fn var_and_type(t1: &Box<Type>, t2: &Box<Type>, mut v: &[Direction]) -> Option<(Type, Type)> {
+    fn var_and_type(
+        t1: &Box<Type>,
+        t2: &Box<Type>,
+        mut v: &[Direction],
+    ) -> Result<Option<(Type, Type)>, Error> {
         use self::Direction::*;
         if let Some(l) = t1.left() {
             let mut v = v.to_vec();
             v.push(Left);
-            if let Some(p) = var_and_type(l, t2, &v) {
-                return Some(p);
+            if let Some(p) = var_and_type(l, t2, &v)? {
+                return Ok(Some(p));
             }
         }
         if let Some(r) = t1.right() {
             let mut v = v.to_vec();
             v.push(Right);
-            if let Some(p) = var_and_type(r, t2, &v) {
-                return Some(p);
+            if let Some(p) = var_and_type(r, t2, &v)? {
+                return Ok(Some(p));
             }
         }
         if let Some(t2) = Type::redo(t2, v) {
             if t2.contains(t1) {
-                return None;
+                return Err(Error::NoSolution);
             }
-            return Some((*t1.clone(), *t2.clone()));
+            return Ok(Some((*t1.clone(), *t2.clone())));
         }
-        None
+        Ok(None)
     }
 
     fn variable_paths(t1: &Box<Type>, mut v: &[Direction]) -> Vec<Vec<Direction>> {
