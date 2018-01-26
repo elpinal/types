@@ -69,7 +69,18 @@ impl Term {
     }
 
     fn rotate(self, n: usize) -> Self {
-        self.shift(1).subst(n, &Term::Var(0, n))
+        self.shift(1).subst(n, &Term::Var(0, n)) // TODO: the length of the context is correct?
+    }
+
+    fn infer_type(self) -> Option<asup::Type> {
+        let tnf = Theta::from(self);
+        let mut c = asup::Constructor::new();
+        let (mut ty, inst) = c.construct(tnf);
+        let ps = asup::reduce(&c, inst)?;
+        for (t1, t2) in ps {
+            ty = ty.replace(&t1, &t2);
+        }
+        Some(ty)
     }
 }
 
