@@ -292,12 +292,6 @@ impl Context {
     }
 }
 
-macro_rules! context {
-    ( $($i:expr , $b:expr),* ) => {
-        Context(vec![ $( ($i.to_string(), $b) ),* ])
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -305,6 +299,12 @@ mod tests {
     macro_rules! assert_kind_of {
         ( $t:expr , $ctx:expr, $k:expr ) => {
             assert_eq!($t.kind_of(&$ctx), $k)
+        }
+    }
+
+    macro_rules! context {
+        ( $($i:expr , $b:expr),* ) => {
+            Context(vec![ $( ($i.to_string(), $b) ),* ])
         }
     }
 
