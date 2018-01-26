@@ -113,7 +113,7 @@ impl Theta {
         match t {
             Var(..) => vec![t],
             Abs(t) => {
-                let mut v = Theta::from_right(*t, l + 1);
+                let v = Theta::from_right(*t, l + 1);
                 let mut i = v.len() + 1;
                 v.into_iter()
                     .map(|t| {
@@ -123,18 +123,18 @@ impl Theta {
                     .collect()
             }
             App(t, t1) => {
-                let mut v1 = Theta::from_right(*t, l);
-                let mut v2 = Theta::from_right(*t1, l);
+                let v1 = Theta::from_right(*t, l);
+                let v2 = Theta::from_right(*t1, l);
                 Theta::app_right(v1, v2)
             }
         }
     }
 
     fn app_right(v1: Vec<Term>, v2: Vec<Term>) -> Vec<Term> {
-        let mut v1 = v1.into_iter();
         let mut v2 = v2.into_iter();
-        v1.by_ref().map(
-            |t| t.shift_above(1, (v2.len() - 1) as isize),
+        let l = v2.len() as isize;
+        let mut v1 = v1.into_iter().map(
+            |t| t.shift_above(1, l - 1),
         );
         let t2 = v2.next().expect("empty term").shift_above(
             1,
@@ -227,7 +227,7 @@ pub mod asup {
             &mut self,
             t1: &Box<Type>,
             t2: &Box<Type>,
-            mut v: &[Direction],
+            v: &[Direction],
         ) -> Option<(Type, Type)> {
             use self::Direction::*;
             if let Some(l) = t2.left() {
@@ -283,7 +283,7 @@ pub mod asup {
     fn reduce2(
         t1: &Box<Type>,
         t2: &Box<Type>,
-        mut v: &[Direction],
+        v: &[Direction],
     ) -> Result<Option<(Type, Type)>, Error> {
         let paths = variable_paths(t1, v);
         for p1 in &paths {
@@ -318,7 +318,7 @@ pub mod asup {
     fn var_and_type(
         t1: &Box<Type>,
         t2: &Box<Type>,
-        mut v: &[Direction],
+        v: &[Direction],
     ) -> Result<Option<(Type, Type)>, Error> {
         use self::Direction::*;
         if let Some(l) = t1.left() {
@@ -344,7 +344,7 @@ pub mod asup {
         Ok(None)
     }
 
-    fn variable_paths(t1: &Box<Type>, mut v: &[Direction]) -> Vec<Vec<Direction>> {
+    fn variable_paths(t1: &Box<Type>, v: &[Direction]) -> Vec<Vec<Direction>> {
         use self::Direction::*;
         let mut ret = Vec::new();
         if let Some(l) = t1.left() {
@@ -510,7 +510,7 @@ pub mod asup {
             }
         }
 
-        fn term(&mut self, t: Term, i: usize, ctx: &Context, mut l: &[usize]) -> (Type, Instance) {
+        fn term(&mut self, t: Term, i: usize, ctx: &Context, l: &[usize]) -> (Type, Instance) {
             use self::Term::*;
             use self::Var::*;
             match t {
