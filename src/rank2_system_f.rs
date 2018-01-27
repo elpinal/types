@@ -108,6 +108,18 @@ impl Subst for Term {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_inference() {
+        use self::Term::*;
+        use self::asup::Type;
+        assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(0)));
+    }
+}
+
 /// A term in theta-normal form.
 ///
 /// `Theta(m, vec![t0, t1, ..., tn])` represents
@@ -177,7 +189,7 @@ pub mod asup {
 
     use std::collections::HashMap;
 
-    #[derive(Clone, Eq, Hash, PartialEq)]
+    #[derive(Clone, Debug, Eq, Hash, PartialEq)]
     pub enum Var {
         W(usize, usize),
         X(usize, usize),
@@ -185,7 +197,7 @@ pub mod asup {
         Z(usize),
     }
 
-    #[derive(Clone, Eq, Hash, PartialEq)]
+    #[derive(Clone, Debug, Eq, Hash, PartialEq)]
     pub enum Type {
         Var(Var),
         Term(usize),
