@@ -184,7 +184,11 @@ impl Theta {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
                 let Theta(n, v) = Theta::from_term(*t, xs, l + 1);
-                Theta(n + 1, v)
+                if xs.contains(&l) {
+                    Theta(n, v)
+                } else {
+                    Theta(n + 1, v)
+                }
             }
             App(t1, t2) => {
                 let ys = t1.act();
