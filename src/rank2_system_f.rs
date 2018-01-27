@@ -178,7 +178,7 @@ impl Theta {
         }
     }
 
-    fn from_left(t: Term, xs: Vec<usize>, l: usize) -> Theta {
+    fn from_left(t: Term, xs: &[usize], l: usize) -> Theta {
         use self::Term::*;
         match t {
             Var(..) => Theta(0, vec![t]),
