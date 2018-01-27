@@ -183,7 +183,7 @@ impl Theta {
         match t {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
-                let Theta(n, v) = Theta::from_left(*t, xs);
+                let Theta(n, v) = Theta::from_term(*t, xs);
                 Theta(n + 1, v)
             }
             App(t1, t2) => {
