@@ -178,7 +178,7 @@ impl Theta {
         }
     }
 
-    fn from_left(t: Term, xs: Vec<usize>) -> Theta {
+    fn from_left(t: Term, xs: Vec<usize>, l: usize) -> Theta {
         use self::Term::*;
         match t {
             Var(..) => Theta(0, vec![t]),
@@ -188,7 +188,7 @@ impl Theta {
             }
             App(t1, t2) => {
                 let ys = t1.act();
-                let Theta(n, v) = Theta::from_left(*t1, ys);
+                let Theta(n, v) = Theta::from_left(*t1, ys, l);
                 let v = Theta::app_right(v, Theta::from_right(*t2));
                 Theta(n, v)
             }
