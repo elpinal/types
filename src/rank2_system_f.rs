@@ -117,6 +117,8 @@ mod tests {
         use self::Term::*;
         use self::asup::Type;
         assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(0)));
+        let t = abs!(app!(abs!(Var(0, 2)), abs!(app!(abs!(Var(0, 3)), Var(0, 2)))));
+        assert_eq!(t.infer_type(), Some(Type::Term(4)));
     }
 }
 
