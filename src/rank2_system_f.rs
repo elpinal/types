@@ -155,7 +155,8 @@ pub struct Theta(usize, Vec<Term>);
 impl From<Term> for Theta {
     /// Performs theta-reduction of a term.
     fn from(t: Term) -> Theta {
-        Theta::from_term(t, Vec::new())
+        let xs = t.act();
+        Theta::from_term(t, xs)
     }
 }
 
