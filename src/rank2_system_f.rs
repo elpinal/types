@@ -185,7 +185,7 @@ impl Theta {
             Abs(t) => {
                 let Theta(n, v) = Theta::from_term(*t, xs, l + 1);
                 if xs.contains(&l) {
-                    Theta(n, v)
+                    Theta(n + 1, v)
                 } else {
                     Theta(n + 1, v)
                 }
