@@ -127,6 +127,9 @@ mod tests {
         let t = abs!(app!(Var(0, 1), Var(0, 1)));
         assert_eq!(Theta::from(t), Theta(1, vec![app!(Var(0, 1), Var(0, 1))]));
 
+        let t = app!(abs!(Var(0, 2)), Var(0, 1));
+        assert_eq!(Theta::from(t), Theta(0, vec![Var(0, 1), Var(0, 2)]));
+
         let t = abs!(app!(abs!(Var(0, 2)), abs!(app!(abs!(Var(0, 3)), Var(0, 2)))));
         assert_eq!(Theta::from(t), Theta(2, vec![app!(Var(0, 2), app!(Var(2, 3), Var(1, 2)))]));
     }
