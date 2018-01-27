@@ -2,7 +2,7 @@
 
 use {Shift, Subst};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Term {
     Var(usize, usize),
     Abs(Box<Term>),
@@ -113,6 +113,13 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_theta_reduction() {
+        use self::Term::*;
+        let t = abs!(app!(abs!(Var(0, 2)), abs!(app!(abs!(Var(0, 3)), Var(0, 2)))));
+        assert_eq!(Theta::from(t), Theta(2, vec![app!(Var(0, 2), app!(Var(2, 3), Var(1, 2)))]));
+    }
+
+    #[test]
     fn test_inference() {
         use self::Term::*;
         use self::asup::Type;
@@ -127,6 +134,7 @@ mod tests {
 /// `Theta(m, vec![t0, t1, ..., tn])` represents
 /// `\\...\(\...(\(\tn)tn-1)t1)t0` where `\t` is a lambda abstraction of `t`
 /// on an implicit parameter, and `m` is the number of the outermost abstractions.
+#[derive(Debug, PartialEq)]
 pub struct Theta(usize, Vec<Term>);
 
 impl From<Term> for Theta {
