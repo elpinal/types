@@ -156,22 +156,22 @@ impl From<Term> for Theta {
     /// Performs theta-reduction of a term.
     fn from(t: Term) -> Theta {
         let xs = t.act();
-        Theta::from_term(t, xs)
+        Theta::from_term(t, xs, 0)
     }
 }
 
 impl Theta {
-    fn from_term(t: Term, xs: Vec<usize>) -> Theta {
+    fn from_term(t: Term, xs: Vec<usize>, l: usize) -> Theta {
         use self::Term::*;
         match t {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
-                let Theta(n, v) = Theta::from_term(*t, xs);
+                let Theta(n, v) = Theta::from_term(*t, xs, l + 1);
                 Theta(n + 1, v)
             }
             App(t1, t2) => {
                 let ys = t1.act();
-                let Theta(n, v) = Theta::from_term(*t1, ys);
+                let Theta(n, v) = Theta::from_term(*t1, ys, l);
                 let v = Theta::app_right(v, Theta::from_right(*t2));
                 Theta(n, v)
             }
@@ -183,7 +183,7 @@ impl Theta {
         match t {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
-                let Theta(n, v) = Theta::from_term(*t, xs);
+                let Theta(n, v) = Theta::from_term(*t, xs, l);
                 Theta(n + 1, v)
             }
             App(t1, t2) => {
