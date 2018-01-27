@@ -115,6 +115,9 @@ mod tests {
     #[test]
     fn test_theta_reduction() {
         use self::Term::*;
+        let t = Var(0, 1);
+        assert_eq!(Theta::from(t.clone()), Theta(0, vec![t]));
+
         let t = abs!(app!(abs!(Var(0, 2)), abs!(app!(abs!(Var(0, 3)), Var(0, 2)))));
         assert_eq!(Theta::from(t), Theta(2, vec![app!(Var(0, 2), app!(Var(2, 3), Var(1, 2)))]));
     }
