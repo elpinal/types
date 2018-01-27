@@ -155,23 +155,27 @@ pub struct Theta(usize, Vec<Term>);
 impl From<Term> for Theta {
     /// Performs theta-reduction of a term.
     fn from(t: Term) -> Theta {
+        Theta::from_term(t, Vec::new())
+    }
+}
+
+impl Theta {
+    fn from_term(t: Term, xs: Vec<usize>) -> Theta {
         use self::Term::*;
         match t {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
-                let Theta(n, v) = Theta::from(*t);
+                let Theta(n, v) = Theta::from_term(*t, xs);
                 Theta(n + 1, v)
             }
             App(t1, t2) => {
-                let Theta(n, v) = Theta::from(*t1);
+                let Theta(n, v) = Theta::from_term(*t1, xs);
                 let v = Theta::app_right(v, Theta::from_right(*t2));
                 Theta(n, v)
             }
         }
     }
-}
 
-impl Theta {
     fn from_right(t: Term) -> Vec<Term> {
         use self::Term::*;
         match t {
