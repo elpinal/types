@@ -192,7 +192,7 @@ impl Theta {
             }
             App(t1, t2) => {
                 let ys = t1.act();
-                let (Theta(n, v), _) = Theta::from_left(*t1, &ys, l);
+                let (Theta(n, v), m) = Theta::from_left(*t1, &ys, l);
                 let v = Theta::app_right(v, Theta::from_right(*t2));
                 Theta(n, v)
             }
