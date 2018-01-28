@@ -203,7 +203,7 @@ impl Theta {
 
     fn app(mut v: Vec<Term>, m: usize, r: Vec<Term>) -> (Vec<Term>, Vec<Term>) {
         for i in 0..m {
-            v = zip(m, r)
+            v = zip(m, &mut r)
         }
         (v, r)
     }
