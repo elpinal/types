@@ -202,6 +202,9 @@ impl Theta {
     }
 
     fn app(v: Vec<Term>, m: usize, r: Vec<Term>) -> (Vec<Term>, Vec<Term>) {
+        for i in 0..m {
+            app(i, m)
+        }
     }
 
     fn from_right(t: Term) -> Vec<Term> {
