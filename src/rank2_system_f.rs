@@ -208,7 +208,7 @@ impl Theta {
         (v, r)
     }
 
-    fn zip(m: usize, r: &mut[Term]) -> (Vec<Term>, Vec<Term>) {
+    fn zip(m: usize, r: &mut[Term]) -> Vec<Term> {
     }
 
     fn from_right(t: Term) -> Vec<Term> {
