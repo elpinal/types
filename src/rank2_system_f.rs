@@ -183,7 +183,7 @@ impl Theta {
         match t {
             Var(..) => (Theta(0, vec![t]), 0),
             Abs(t) => {
-                let Theta(n, v) = Theta::from_term(*t, xs, l + 1);
+                let (Theta(n, v), m) = Theta::from_left(*t, xs, l + 1);
                 if xs.contains(&l) {
                     (Theta(n, v), 1)
                 } else {
