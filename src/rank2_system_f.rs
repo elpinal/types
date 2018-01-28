@@ -194,7 +194,7 @@ impl Theta {
                 let ys = t1.act();
                 let (Theta(n, v), m) = Theta::from_left(*t1, &ys, l);
                 let r = Theta::from_right(*t2);
-                let v = Theta::app(v, m);
+                let (v, r) = Theta::app(v, m, r);
                 let v = Theta::app_right(v, r);
                 Theta(n, v)
             }
