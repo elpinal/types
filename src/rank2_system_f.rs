@@ -205,6 +205,7 @@ impl Theta {
         for i in 0..m {
             zip(m, r)
         }
+        (v, r)
     }
 
     fn from_right(t: Term) -> Vec<Term> {
