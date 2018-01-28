@@ -181,7 +181,7 @@ impl Theta {
     fn from_left(t: Term, xs: &[usize], l: usize) -> (Theta, usize) {
         use self::Term::*;
         match t {
-            Var(..) => Theta(0, vec![t]),
+            Var(..) => (Theta(0, vec![t]), 0),
             Abs(t) => {
                 let Theta(n, v) = Theta::from_term(*t, xs, l + 1);
                 if xs.contains(&l) {
