@@ -178,21 +178,21 @@ impl Theta {
         }
     }
 
-    fn from_left(t: Term, xs: &[usize], l: usize) -> Theta {
+    fn from_left(t: Term, xs: &[usize], l: usize) -> (Theta, usize) {
         use self::Term::*;
         match t {
             Var(..) => Theta(0, vec![t]),
             Abs(t) => {
                 let Theta(n, v) = Theta::from_term(*t, xs, l + 1);
                 if xs.contains(&l) {
-                    Theta(n + 1, v)
+                    Theta(n, v)
                 } else {
                     Theta(n + 1, v)
                 }
             }
             App(t1, t2) => {
                 let ys = t1.act();
-                let Theta(n, v) = Theta::from_left(*t1, &ys, l);
+                let (Theta(n, v), _) = Theta::from_left(*t1, &ys, l);
                 let v = Theta::app_right(v, Theta::from_right(*t2));
                 Theta(n, v)
             }
