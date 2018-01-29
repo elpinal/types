@@ -365,6 +365,7 @@ impl Theta {
         if let Some(i) = m.pop() {
             let x = r.len() - i;
             let mut rr = r.split_off(x);
+            r.iter_mut().for_each(|t| t.shift_ref(v.len() as isize));
             r.append(v);
             r.append(&mut rr);
         }
