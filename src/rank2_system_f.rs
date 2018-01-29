@@ -79,6 +79,10 @@ impl Term {
         self.map_ref(&f, c);
     }
 
+    fn shift_ref(&mut self, d: isize) {
+        self.shift_above_ref(0, d);
+    }
+
     /// Swaps the two indices.
     pub fn swap(self, i: usize, j: usize) -> Self {
         use self::Term::*;
