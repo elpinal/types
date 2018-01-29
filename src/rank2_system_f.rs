@@ -179,10 +179,10 @@ impl Theta {
                 Theta(n + 1, v)
             }
             App(t1, t2) => {
-                let (Theta(n, v), m) = Theta::from_left(*t1, &xs, l);
+                let (Theta(n, mut v), m) = Theta::from_left(*t1, &xs, l);
                 // let ys = t2.act();
-                let r = Theta::from_right(*t2);
-                let (v, _, r) = Theta::app(v, m, r);
+                let mut r = Theta::from_right(*t2);
+                let _ = Theta::app(&mut v, m, &mut r);
                 let v = Theta::app_right(v, r);
                 Theta(n, v)
             }
@@ -202,27 +202,22 @@ impl Theta {
                 }
             }
             App(t1, t2) => {
-                let (Theta(n, v), m) = Theta::from_left(*t1, &xs, l);
+                let (Theta(n, mut v), m) = Theta::from_left(*t1, &xs, l);
                 // let ys = t2.act();
-                let r = Theta::from_right(*t2);
-                let (v, m, r) = Theta::app(v, m, r);
+                let mut r = Theta::from_right(*t2);
+                let m = Theta::app(&mut v, m, &mut r);
                 let v = Theta::app_right(v, r);
                 (Theta(n, v), m)
             }
         }
     }
 
-    fn app(mut v: Vec<Term>, m: usize, mut r: Vec<Term>) -> (Vec<Term>, usize, Vec<Term>) {
+    fn app(v: &mut Vec<Term>, m: usize, r: &mut Vec<Term>) -> usize {
         if m == 0 {
-            return (v, m, r);
+            return m;
         }
-        r = Theta::zip(&mut v, r);
-        (v, m - 1, r)
-    }
-
-    fn zip(v: &mut Vec<Term>, mut r: Vec<Term>) -> Vec<Term> {
         r.append(v);
-        r
+        m - 1
     }
 
     fn from_right(t: Term) -> Vec<Term> {
