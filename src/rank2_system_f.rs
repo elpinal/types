@@ -69,7 +69,14 @@ impl Term {
     }
 
     fn rotate(self, n: usize) -> Self {
-        self.shift(1).subst(n, &Term::Var(0, n)) // TODO: the length of the context is correct?
+        self.rotate_from(0, n)
+    }
+
+    fn rotate_from(self, c: usize, n: usize) -> Self {
+        // TODO: the length of the context is correct?
+        self.shift_above(c, 1)
+            .subst(n, &Term::Var(0, n))
+            .shift_above(n, -1)
     }
 
     fn infer_type(self) -> Option<asup::Type> {
@@ -112,6 +119,52 @@ impl Subst for Term {
 mod tests {
     use super::*;
 
+    #[test]
+    fn test_rotate_from() {
+        use self::Term::*;
+        let t = abs!(Var(0, 1));
+        assert_eq!(t.clone().rotate_from(0, 1), t);
+
+        let t = abs!(Var(0, 2));
+        assert_eq!(t.clone().rotate_from(0, 1), t);
+    }
+
+    #[test]
+    fn test_rotate_map() {
+        use self::Term::*;
+        let t = abs!(Var(0, 1));
+        assert_eq!(Theta::rotate_map(vec![t.clone()], || 0, 0), vec![t]);
+
+        let t = abs!(Var(0, 2));
+        assert_eq!(Theta::rotate_map(vec![t.clone()], || 0, 0), vec![t]);
+
+        let t = abs!(Var(0, 2));
+        let mut c = 0;
+        assert_eq!(
+            Theta::rotate_map(
+                vec![t.clone()],
+                || {
+                    let c0 = c;
+                    c += 1;
+                    c0
+                },
+                0,
+            ),
+            vec![t]
+        );
+    }
+
+    #[test]
+    fn test_theta_from_left() {
+        use self::Term::*;
+        let xs = Vec::new();
+        let t = abs!(Var(0, 1));
+        assert_eq!(Theta::from_left(t, &xs, 0), (Theta(0, vec![Var(0, 1)]), 1));
+
+        let t = abs!(Var(0, 2));
+        assert_eq!(Theta::from_left(t, &xs, 0), (Theta(0, vec![Var(0, 2)]), 1));
+    }
+
     macro_rules! theta_from {
         ($t: expr, $th: expr) => {
             assert_eq!(Theta::from($t), $th);
@@ -141,12 +194,12 @@ mod tests {
 
         theta_from!(
             app!(abs!(abs!(Var(0, 3))), Var(0, 1)),
-            Theta(1, vec![Var(0, 1), Var(0, 3)])
+            Theta(1, vec![Var(1, 2), Var(1, 3)])
         );
 
         theta_from!(
             app!(app!(abs!(abs!(Var(0, 3))), Var(0, 1)), Var(0, 1)),
-            Theta(0, vec![Var(0, 1), Var(0, 1), Var(0, 3)])
+            Theta(0, vec![Var(0, 1), Var(1, 2), Var(0, 3)])
         );
 
         theta_from!(
@@ -216,7 +269,22 @@ impl Theta {
                 if xs.contains(&l) {
                     (Theta(n + 1, v), m)
                 } else {
-                    (Theta(n, v), m + 1)
+                    let mut c = 0;
+                    (
+                        Theta(
+                            n,
+                            Theta::rotate_map(
+                                v,
+                                || {
+                                    let c0 = c;
+                                    c += 1;
+                                    c0
+                                },
+                                n,
+                            ),
+                        ),
+                        m + 1,
+                    )
                 }
             }
             App(t1, t2) => {
@@ -228,6 +296,18 @@ impl Theta {
                 (Theta(n, v), m)
             }
         }
+    }
+
+    fn rotate_map<F>(v: Vec<Term>, mut f: F, mut n: usize) -> Vec<Term>
+    where
+        F: FnMut() -> usize,
+    {
+        v.into_iter()
+            .map(|t| {
+                n += 1;
+                t.rotate_from(f(), n)
+            })
+            .collect()
     }
 
     fn app(v: &mut Vec<Term>, m: usize, r: &mut Vec<Term>) -> usize {
@@ -244,13 +324,7 @@ impl Theta {
             Var(..) => vec![t],
             Abs(t) => {
                 let v = Theta::from_right(*t);
-                let mut i = 0;
-                v.into_iter()
-                    .map(|t| {
-                        i += 1;
-                        t.rotate(i)
-                    })
-                    .collect()
+                Theta::rotate_map(v, || 0, 0)
             }
             App(t, t1) => {
                 let v1 = Theta::from_right(*t);
