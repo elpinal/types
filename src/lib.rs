@@ -19,7 +19,6 @@ pub trait Shift: Sized {
 
 pub trait ShiftRef: Sized {
     fn shift_above(&mut self, c: usize, d: isize);
-
     fn shift(&mut self, d: isize) {
         Self::shift_above(self, 0, d)
     }
