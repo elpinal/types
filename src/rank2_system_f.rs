@@ -158,6 +158,12 @@ mod tests {
         t.shift_ref(1);
         assert_eq!(t, t0.shift(1));
         assert_eq!(t, abs!(Var(0, 2)));
+
+        let mut t = Var(0, 1);
+        let t0 = Var(0, 1);
+        t.shift_ref(1);
+        assert_eq!(t, t0.shift(1));
+        assert_eq!(t, Var(1, 2));
     }
 
     #[test]
