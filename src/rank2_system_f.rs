@@ -51,6 +51,23 @@ impl Term {
         }
     }
 
+    fn map_ref<F>(&mut self, onvar: &F, c: usize)
+    where
+        F: Fn(usize, usize, usize, &mut Self),
+    {
+        use self::Term::*;
+        match self {
+            &mut Var(x, n) => onvar(c, x, n, self),
+            &mut Abs(ref mut t) => {
+                t.map_ref(onvar, c + 1);
+            }
+            &mut App(ref mut t1, ref mut t2) => {
+                t1.map_ref(onvar, c);
+                t2.map_ref(onvar, c);
+            }
+        }
+    }
+
     /// Swaps the two indices.
     pub fn swap(self, i: usize, j: usize) -> Self {
         use self::Term::*;
