@@ -130,8 +130,14 @@ mod tests {
         let t = app!(abs!(Var(0, 2)), Var(0, 1));
         assert_eq!(Theta::from(t), Theta(0, vec![Var(0, 1), Var(0, 2)]));
 
-        let t = abs!(app!(abs!(Var(0, 2)), abs!(app!(abs!(Var(0, 3)), Var(0, 2)))));
-        assert_eq!(Theta::from(t), Theta(2, vec![app!(Var(0, 2), app!(Var(2, 3), Var(1, 2)))]));
+        let t = abs!(app!(
+            abs!(Var(0, 2)),
+            abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
+        ));
+        assert_eq!(
+            Theta::from(t),
+            Theta(2, vec![app!(Var(0, 2), app!(Var(2, 3), Var(1, 2)))])
+        );
     }
 
     #[test]
@@ -139,7 +145,10 @@ mod tests {
         use self::Term::*;
         use self::asup::Type;
         assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(0)));
-        let t = abs!(app!(abs!(Var(0, 2)), abs!(app!(abs!(Var(0, 3)), Var(0, 2)))));
+        let t = abs!(app!(
+            abs!(Var(0, 2)),
+            abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
+        ));
         assert_eq!(t.infer_type(), Some(Type::Term(4)));
     }
 }
@@ -170,9 +179,11 @@ impl Theta {
                 Theta(n + 1, v)
             }
             App(t1, t2) => {
-                let ys = t1.act();
-                let Theta(n, v) = Theta::from_term(*t1, &ys, l);
-                let v = Theta::app_right(v, Theta::from_right(*t2));
+                let (Theta(n, v), m) = Theta::from_left(*t1, &xs, l);
+                // let ys = t2.act();
+                let r = Theta::from_right(*t2);
+                let (v, _, r) = Theta::app(v, m, r);
+                let v = Theta::app_right(v, r);
                 Theta(n, v)
             }
         }
@@ -185,30 +196,33 @@ impl Theta {
             Abs(t) => {
                 let (Theta(n, v), m) = Theta::from_left(*t, xs, l + 1);
                 if xs.contains(&l) {
-                    (Theta(n, v), m + 1)
-                } else {
                     (Theta(n + 1, v), m)
+                } else {
+                    (Theta(n, v), m + 1)
                 }
             }
             App(t1, t2) => {
-                let ys = t1.act();
-                let (Theta(n, v), m) = Theta::from_left(*t1, &ys, l);
+                let (Theta(n, v), m) = Theta::from_left(*t1, &xs, l);
+                // let ys = t2.act();
                 let r = Theta::from_right(*t2);
-                let (v, r) = Theta::app(v, m, r);
+                let (v, m, r) = Theta::app(v, m, r);
                 let v = Theta::app_right(v, r);
-                Theta(n, v)
+                (Theta(n, v), m)
             }
         }
     }
 
-    fn app(mut v: Vec<Term>, m: usize, r: Vec<Term>) -> (Vec<Term>, Vec<Term>) {
-        for i in 0..m {
-            v = zip(v, &mut r)
+    fn app(mut v: Vec<Term>, m: usize, mut r: Vec<Term>) -> (Vec<Term>, usize, Vec<Term>) {
+        if m == 0 {
+            return (v, m, r);
         }
-        (v, r)
+        r = Theta::zip(&mut v, r);
+        (v, m - 1, r)
     }
 
-    fn zip(v: Vec<Term>, r: &mut[Term]) -> Vec<Term> {
+    fn zip(v: &mut Vec<Term>, mut r: Vec<Term>) -> Vec<Term> {
+        r.append(v);
+        r
     }
 
     fn from_right(t: Term) -> Vec<Term> {
@@ -234,6 +248,12 @@ impl Theta {
     }
 
     fn app_right(v1: Vec<Term>, mut v2: Vec<Term>) -> Vec<Term> {
+        if v1.is_empty() {
+            return v2;
+        }
+        if v2.is_empty() {
+            return v1;
+        }
         let l = v2.len() as isize;
         let mut v1: Vec<Term> = v1.into_iter().map(|t| t.shift_above(1, l - 1)).collect();
         let t2 = v2.pop().expect("empty term").shift_above(
