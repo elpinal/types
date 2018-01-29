@@ -68,14 +68,13 @@ impl Term {
         self.map(&f, 0)
     }
 
-    fn rotate(self, n: usize) -> Self {
-        self.rotate_from(0, n)
+    fn rotate(self, n: usize, l: usize) -> Self {
+        self.rotate_from(0, n, l)
     }
 
-    fn rotate_from(self, c: usize, n: usize) -> Self {
-        // TODO: the length of the context is correct?
+    fn rotate_from(self, c: usize, n: usize, l: usize) -> Self {
         self.shift_above(c, 1)
-            .subst(n, &Term::Var(0, n))
+            .subst(n, &Term::Var(0, l))
             .shift_above(n, -1)
     }
 
@@ -123,20 +122,20 @@ mod tests {
     fn test_rotate_from() {
         use self::Term::*;
         let t = abs!(Var(0, 1));
-        assert_eq!(t.clone().rotate_from(0, 1), t);
+        assert_eq!(t.clone().rotate_from(0, 1, 1), t);
 
         let t = abs!(Var(0, 2));
-        assert_eq!(t.clone().rotate_from(0, 1), t);
+        assert_eq!(t.clone().rotate_from(0, 1, 1), t);
     }
 
     #[test]
     fn test_rotate_map() {
         use self::Term::*;
         let t = abs!(Var(0, 1));
-        assert_eq!(Theta::rotate_map(vec![t.clone()], || 0, 0), vec![t]);
+        assert_eq!(Theta::rotate_map(vec![t.clone()], || 0, 0, 0), vec![t]);
 
         let t = abs!(Var(0, 2));
-        assert_eq!(Theta::rotate_map(vec![t.clone()], || 0, 0), vec![t]);
+        assert_eq!(Theta::rotate_map(vec![t.clone()], || 0, 0, 0), vec![t]);
 
         let t = abs!(Var(0, 2));
         let mut c = 0;
@@ -148,6 +147,7 @@ mod tests {
                     c += 1;
                     c0
                 },
+                0,
                 0,
             ),
             vec![t]
@@ -162,7 +162,7 @@ mod tests {
         assert_eq!(Theta::from_left(t, &xs, 0), (Theta(0, vec![Var(0, 1)]), 1));
 
         let t = abs!(Var(0, 2));
-        assert_eq!(Theta::from_left(t, &xs, 0), (Theta(0, vec![Var(0, 2)]), 1));
+        assert_eq!(Theta::from_left(t, &xs, 1), (Theta(0, vec![Var(0, 2)]), 1));
     }
 
     macro_rules! theta_from {
@@ -270,21 +270,17 @@ impl Theta {
                     (Theta(n + 1, v), m)
                 } else {
                     let mut c = 0;
-                    (
-                        Theta(
-                            n,
-                            Theta::rotate_map(
-                                v,
-                                || {
-                                    let c0 = c;
-                                    c += 1;
-                                    c0
-                                },
-                                n,
-                            ),
-                        ),
-                        m + 1,
-                    )
+                    let vv = Theta::rotate_map(
+                        v,
+                        || {
+                            let c0 = c;
+                            c += 1;
+                            c0
+                        },
+                        n,
+                        l,
+                    );
+                    (Theta(n, vv), m + 1)
                 }
             }
             App(t1, t2) => {
@@ -298,14 +294,15 @@ impl Theta {
         }
     }
 
-    fn rotate_map<F>(v: Vec<Term>, mut f: F, mut n: usize) -> Vec<Term>
+    fn rotate_map<F>(v: Vec<Term>, mut f: F, mut n: usize, mut l: usize) -> Vec<Term>
     where
         F: FnMut() -> usize,
     {
         v.into_iter()
             .map(|t| {
                 n += 1;
-                t.rotate_from(f(), n)
+                l += 1;
+                t.rotate_from(f(), n, l)
             })
             .collect()
     }
@@ -324,7 +321,7 @@ impl Theta {
             Var(..) => vec![t],
             Abs(t) => {
                 let v = Theta::from_right(*t);
-                Theta::rotate_map(v, || 0, 0)
+                Theta::rotate_map(v, || 0, 0, 100) // FIXME: Pass `l`.
             }
             App(t, t1) => {
                 let v1 = Theta::from_right(*t);
