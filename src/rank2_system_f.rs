@@ -159,10 +159,16 @@ mod tests {
         use self::Term::*;
         let xs = Vec::new();
         let t = abs!(Var(0, 1));
-        assert_eq!(Theta::from_left(t, &xs, 0), (Theta(0, vec![Var(0, 1)]), vec![0]));
+        assert_eq!(Theta::from_left(t, &xs, 0), (
+            Theta(0, vec![Var(0, 1)]),
+            vec![0],
+        ));
 
         let t = abs!(Var(0, 2));
-        assert_eq!(Theta::from_left(t, &xs, 1), (Theta(0, vec![Var(0, 2)]), vec![0]));
+        assert_eq!(Theta::from_left(t, &xs, 1), (
+            Theta(0, vec![Var(0, 2)]),
+            vec![0],
+        ));
     }
 
     macro_rules! theta_from {
