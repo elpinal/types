@@ -151,6 +151,15 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_shift_ref() {
+        use self::Term::*;
+        let mut t = abs!(Var(0, 1));
+        let t0 = abs!(Var(0, 1));
+        t.shift_ref(1);
+        assert_eq!(t, t0.shift(1));
+    }
+
+    #[test]
     fn test_rotate_from() {
         use self::Term::*;
         let t = abs!(Var(0, 1));
