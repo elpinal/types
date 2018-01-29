@@ -297,7 +297,10 @@ impl Theta {
             App(t1, t2) => {
                 let (Theta(n, mut v), m) = Theta::from_left(*t1, &xs, l);
                 // let ys = t2.act();
-                let mut r = Theta::from_right(*t2);
+                let mut r = Theta::from_right(*t2)
+                    .into_iter()
+                    .map(|t| t.shift(n as isize))
+                    .collect();
                 let m = Theta::app(&mut v, m, &mut r);
                 let v = Theta::app_right(v, r);
                 (Theta(n, v), m)
