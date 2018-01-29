@@ -188,7 +188,7 @@ mod tests {
         );
 
         theta_from!(
-            app!(abs!(Var(0, 2)), Var(0, 1)),
+            (app!(abs!(Var(0, 2)), Var(0, 1)), 1),
             Theta(0, vec![Var(0, 1), Var(0, 2)])
         );
 
@@ -237,6 +237,14 @@ impl From<Term> for Theta {
     fn from(t: Term) -> Theta {
         let xs = t.act();
         Theta::from_term(t, &xs, 0)
+    }
+}
+
+impl From<(Term, usize)> for Theta {
+    /// Performs theta-reduction of a term.
+    fn from((t, l): (Term, usize)) -> Theta {
+        let xs = t.act();
+        Theta::from_term(t, &xs, l)
     }
 }
 
