@@ -666,6 +666,9 @@ pub mod asup {
             }
         }
         if let Some(t2) = Type::redo(t2, v) {
+            if t1 == t2 {
+                return Ok(None);
+            }
             if t2.contains(t1) {
                 return Err(Error::NoSolution);
             }
@@ -904,6 +907,26 @@ pub mod asup {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        macro_rules! assert_reduce {
+            ($v:expr, $t:expr) => {
+                let mut c = Constructor::new();
+                c.n = 100000; // Take care about conflict of numbers!
+                assert_eq!(reduce(&c, Instance($v)), $t);
+            }
+        }
+
+        #[test]
+        fn test_reduce() {
+            use self::Type::*;
+            use self::Var::*;
+            assert_reduce!(vec![(Term(0), Term(0))], Some(vec![]));
+            assert_reduce!(vec![(Var(Y(1, 0)), Term(9))], Some(vec![]));
+            assert_reduce!(
+                vec![(Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2)))],
+                Some(vec![(Var(Z(1)), Term(2))])
+            );
+        }
 
         macro_rules! assert_reduce1 {
             ($t1:expr, $t2:expr, $t3:expr) => {
