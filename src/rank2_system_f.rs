@@ -495,6 +495,7 @@ pub mod asup {
         n: usize,
     }
 
+    #[derive(Debug, PartialEq)]
     enum Error {
         NoSolution,
     }
@@ -504,7 +505,11 @@ pub mod asup {
         let mut ps = inst.0;
         let mut v = Vec::new();
         loop {
-            let p = ps.pop()?;
+            let p;
+            match ps.pop() {
+                None => return Some(v),
+                Some(x) => p = x,
+            }
             let t1 = Box::new(p.0);
             let t2 = Box::new(p.1);
             if let Some(p0) = r.reduce1(&t1, &t2, &[]) {
@@ -520,7 +525,7 @@ pub mod asup {
                     Err(_) => return None,
                     Ok(p0) => {
                         match p0 {
-                            None => return Some(v),
+                            None => (),
                             Some(p0) => {
                                 ps.push((*t1, *t2));
                                 ps = ps.into_iter()
@@ -566,7 +571,12 @@ pub mod asup {
             }
             let t1 = Type::redo(t1, v)?;
             match **t1 {
-                Type::Arr(..) => Some((*t2.clone(), self.make_fresh(*t1.clone()))),
+                Type::Arr(..) => {
+                    match **t2 {
+                        Type::Arr(..) => None,
+                        _ => Some((*t2.clone(), self.make_fresh(*t1.clone()))),
+                    }
+                }
                 _ => None,
             }
         }
@@ -888,6 +898,74 @@ pub mod asup {
                     )
                 }
             }
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        macro_rules! assert_reduce1 {
+            ($t1:expr, $t2:expr, $t3:expr) => {
+                let mut r = Reducer { n: 0 };
+                assert_eq!(r.reduce1(&Box::new($t1), &Box::new($t2), &[]), $t3);
+            }
+        }
+
+        #[test]
+        fn test_reduce1() {
+            use self::Type::*;
+            use self::Var::*;
+            assert_reduce1!(Term(0), Term(0), None);
+
+            assert_reduce1!(
+                Type::arr(Term(8), Term(8)),
+                Type::arr(Term(7), Type::arr(Term(4), Term(0))),
+                None
+            );
+
+            assert_reduce1!(
+                Type::arr(Term(0), Term(0)),
+                Term(1),
+                Some((Term(1), Type::arr(Term(0), Term(0))))
+            );
+
+            assert_reduce1!(
+                Type::arr(Type::arr(Term(0), Term(0)), Term(3)),
+                Type::arr(Term(1), Term(2)),
+                Some((Term(1), Type::arr(Term(0), Term(0))))
+            );
+
+            assert_reduce1!(
+                Type::arr(Term(3), Type::arr(Term(0), Term(0))),
+                Type::arr(Term(1), Term(2)),
+                Some((Term(2), Type::arr(Term(0), Term(0))))
+            );
+
+            assert_reduce1!(
+                Type::arr(Term(3), Type::arr(Term(0), Term(0))),
+                Type::arr(Term(1), Type::arr(Term(4), Term(2))),
+                None
+            );
+        }
+
+        macro_rules! assert_reduce2 {
+            ($t1:expr, $t2:expr, $t3:expr) => {
+                assert_eq!(reduce2(&Box::new($t1), &Box::new($t2), &[]), $t3);
+            }
+        }
+
+        #[test]
+        fn test_reduce2() {
+            use self::Type::*;
+            use self::Var::*;
+            assert_reduce2!(Term(0), Term(0), Ok(None));
+
+            assert_reduce2!(
+                Type::arr(Term(8), Term(8)),
+                Type::arr(Term(7), Type::arr(Term(4), Term(0))),
+                Ok(Some((Term(7), Type::arr(Term(4), Term(0)))))
+            );
         }
     }
 }
