@@ -384,10 +384,10 @@ impl Theta {
                 let v = Theta::from_right(*t, xs, l + 1);
                 Theta::rotate_map(v, || 0, 0, l)
             }
-            App(t, t1) => {
-                let v1 = Theta::from_right(*t, xs, l);
-                let ys = t1.act();
-                let v2 = Theta::from_right(*t1, &ys, l);
+            App(t1, t2) => {
+                let v1 = Theta::from_right(*t1, xs, l);
+                let ys = t2.act();
+                let v2 = Theta::from_right(*t2, &ys, l);
                 Theta::app_right(v1, v2)
             }
         }
