@@ -95,15 +95,16 @@ impl Term {
             .shift_above(n, -1)
     }
 
-    fn infer_type(self) -> Option<asup::Type> {
+    fn infer_type(self) -> Option<(asup::Type, usize)> {
         let tnf = Theta::from(self);
+        let Theta(n, _) = tnf;
         let mut c = asup::Constructor::new();
-        let (mut ty, inst, _) = c.construct(tnf);
+        let (mut ty, inst, ctx) = c.construct(tnf);
         let ps = asup::reduce(&c, inst)?;
         for (t1, t2) in ps {
             ty = ty.replace(&t1, &t2);
         }
-        Some(ty)
+        Some((ty, n))
     }
 
     fn theta_2(&mut self, m: usize) {
@@ -283,17 +284,17 @@ mod tests {
     fn test_inference() {
         use self::Term::*;
         use self::asup::Type;
-        assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(1)));
-        assert_eq!(abs!(Var(0, 1)).infer_type(), Some(Type::Term(1)));
+        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0)));
+        assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1)));
         assert_eq!(
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
-            Some(Type::Term(9))
+            Some((Type::Term(9), 0))
         );
         let t = abs!(app!(
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
-        assert_eq!(t.infer_type(), Some(Type::Term(19)));
+        assert_eq!(t.infer_type(), Some((Type::Term(19), 1)));
     }
 }
 
