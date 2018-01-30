@@ -329,7 +329,7 @@ impl Theta {
                             c0
                         },
                         n,
-                        l,
+                        l + m.len(),
                     );
                     m.push(0);
                     (Theta(n, vv), m)
@@ -364,11 +364,15 @@ impl Theta {
 
     fn app(v: &mut Vec<Term>, m: &mut Vec<usize>, r: &mut Vec<Term>) {
         if let Some(i) = m.pop() {
-            let x = r.len() - i;
-            let mut rr = r.split_off(x);
-            r.iter_mut().for_each(|t| t.shift_ref(i as isize));
-            r.append(v);
-            r.append(&mut rr);
+            let mut vv = v.split_off(i);
+            r.iter_mut().enumerate().for_each(|(x, t)| {
+                t.shift_above_ref(0, (x + i) as isize)
+            });
+            vv.iter_mut().enumerate().for_each(|(x, t)| {
+                t.shift_above_ref(1, (x + r.len() - 1) as isize)
+            });
+            v.append(r);
+            v.append(&mut vv);
         }
     }
 
