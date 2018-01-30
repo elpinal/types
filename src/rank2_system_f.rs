@@ -828,9 +828,9 @@ pub mod asup {
                     inst.add_var(W(i, j), W(i + 1, j))
                 }
             }
-            for j in 0..ctx.ys {
-                for i in j..ctx.ys {
-                    inst.add_var(Y(i + 1, j), Y(i + 2, j))
+            for j in 1..ctx.ys {
+                for i in j..ctx.ys - 1 {
+                    inst.add_var(Y(i, j), Y(i + 1, j))
                 }
             }
             (ty, inst, ctx)
