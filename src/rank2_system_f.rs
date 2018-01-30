@@ -852,7 +852,13 @@ pub mod asup {
                         self.record_fv(n)
                     }
                     let v = self.fresh();
-                    (v.clone(), Instance(vec![(Type::Var(var), v)]))
+                    let p;
+                    if let Z(_) = var {
+                        p = self.unify(Type::Var(var), v.clone());
+                    } else {
+                        p = (Type::Var(var), v.clone())
+                    }
+                    (v, Instance(vec![p]))
                 }
                 App(t, t1) => {
                     let (ty1, inst1) = self.term(*t, i, ctx, l);
