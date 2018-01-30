@@ -810,11 +810,15 @@ pub mod asup {
             let l = v.len();
             let mut inst = Instance::new();
             let innermost = v.pop().expect("empty term");
+            let mut prev = self.fresh();
             for (i, t) in v.into_iter().enumerate() {
                 let (ty, mut inst1) = self.term(t, i, &ctx, &[]);
                 ctx.ys += 1;
-                inst1.add(self.unify(Type::Var(Var::Y(i + 1, i)), ty));
+                inst1.add(self.unify(Type::Var(Var::Y(i + 1, i)), ty.clone()));
                 inst = inst.append(inst1);
+                let v = self.fresh();
+                inst.add(self.unify(v.clone(), Type::arr(ty, prev)));
+                prev = v;
             }
             let (ty, inst1) = self.term(innermost, l - 1, &ctx, &[]);
             inst = inst.append(inst1);
