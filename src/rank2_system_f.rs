@@ -1,6 +1,6 @@
 //! A type system which is Rank-2 fragment of System F.
 
-use {Shift, Subst};
+use {Shift, ShiftRef, Subst};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Term {
@@ -68,21 +68,6 @@ impl Term {
         }
     }
 
-    fn shift_above_ref(&mut self, c: usize, d: isize) {
-        use self::Term::*;
-        let var = |x, n| Var(x as usize, n as usize);
-        let f = |c: usize, x: usize, n, t: &mut Term| if x >= c {
-            *t = var(x as isize + d, n as isize + d);
-        } else {
-            *t = Var(x, (n as isize + d) as usize);
-        };
-        self.map_ref(&f, c);
-    }
-
-    fn shift_ref(&mut self, d: isize) {
-        self.shift_above_ref(0, d);
-    }
-
     /// Swaps the two indices.
     pub fn swap(self, i: usize, j: usize) -> Self {
         use self::Term::*;
@@ -122,16 +107,16 @@ impl Term {
     }
 }
 
-impl Shift for Term {
-    fn shift_above(self, c: usize, d: isize) -> Self {
+impl ShiftRef for Term {
+    fn shift_above_ref(&mut self, c: usize, d: isize) {
         use self::Term::*;
         let var = |x, n| Var(x as usize, n as usize);
-        let f = |c: usize, x: usize, n| if x >= c {
-            var(x as isize + d, n as isize + d)
+        let f = |c: usize, x: usize, n, t: &mut Term| if x >= c {
+            *t = var(x as isize + d, n as isize + d);
         } else {
-            Var(x, (n as isize + d) as usize)
+            *t = Var(x, (n as isize + d) as usize);
         };
-        self.map(&f, c)
+        self.map_ref(&f, c);
     }
 }
 

@@ -13,14 +13,27 @@ pub trait Shift: Sized {
     fn shift_above(self, c: usize, d: isize) -> Self;
 
     fn shift(self, d: isize) -> Self {
-        Self::shift_above(self, 0, d)
+        self.shift_above(0, d)
     }
 }
 
 pub trait ShiftRef: Sized {
-    fn shift_above(&mut self, c: usize, d: isize);
-    fn shift(&mut self, d: isize) {
-        Self::shift_above(self, 0, d)
+    fn shift_above_ref(&mut self, c: usize, d: isize);
+
+    fn shift_ref(&mut self, d: isize) {
+        self.shift_above_ref(0, d);
+    }
+}
+
+impl<T: ShiftRef> Shift for T {
+    fn shift_above(mut self, c: usize, d: isize) -> Self {
+        self.shift_above_ref(c, d);
+        self
+    }
+
+    fn shift(mut self, d: isize) -> Self {
+        self.shift_ref(d);
+        self
     }
 }
 
