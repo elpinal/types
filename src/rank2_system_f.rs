@@ -105,6 +105,19 @@ impl Term {
         }
         Some(ty)
     }
+
+    fn theta_2(&mut self, m: usize) {
+        use self::Term::*;
+        if m == 0 {
+            return;
+        }
+        let f = |j, x, n, t: &mut Term| if x == j + m {
+            *t = Var(0, n);
+        } else {
+            *t = app!(Var(j + 1, n), Var(j, n));
+        };
+        self.map_ref(&f, 0);
+    }
 }
 
 impl ShiftRef for Term {
@@ -387,9 +400,12 @@ impl Theta {
                 let mut m: Vec<usize> = m.into_iter().map(|i| i + 1).collect();
                 if xs.contains(&l) {
                     // Theta 2.
-                    let v = Theta::rotate_map(v, || 0, 0, l)
-                        .into_iter()
-                        .map(|t| abs!(t))
+                    let v = v.into_iter()
+                        .enumerate()
+                        .map(|(x, mut t)| {
+                            t.theta_2(x);
+                            abs!(t)
+                        })
                         .collect();
                     (v, m)
                 } else {
