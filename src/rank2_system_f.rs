@@ -860,9 +860,9 @@ pub mod asup {
                     }
                     (v, Instance(vec![p]))
                 }
-                App(t, t1) => {
-                    let (ty1, inst1) = self.term(*t, i, ctx, l);
-                    let (ty2, inst2) = self.term(*t1, i, ctx, l);
+                App(t1, t2) => {
+                    let (ty1, inst1) = self.term(*t1, i, ctx, l);
+                    let (ty2, inst2) = self.term(*t2, i, ctx, l);
                     let v = self.fresh();
                     (
                         v.clone(),
