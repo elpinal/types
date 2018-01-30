@@ -256,7 +256,10 @@ mod tests {
 
         theta_from!(
             app!(abs!(Var(0, 1)), abs!(app!(abs!(Var(0, 2)), Var(0, 1)))),
-            Theta(0, vec![abs!(Var(0, 1)), abs!(Var(1, 2)), Var(0, 2)])
+            Theta(
+                0,
+                vec![abs!(Var(0, 1)), abs!(app!(Var(1, 2), Var(0, 2))), Var(0, 2)],
+            )
         );
 
         theta_from!(
@@ -280,7 +283,7 @@ mod tests {
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
-        assert_eq!(t.infer_type(), Some(Type::Term(4)));
+        assert_eq!(t.infer_type(), Some(Type::Term(10)));
     }
 }
 
