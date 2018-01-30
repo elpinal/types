@@ -884,7 +884,7 @@ pub mod asup {
                     let v = self.fresh();
                     (
                         v.clone(),
-                        Instance(vec![(Type::arr(Type::Var(Z(z)), ty), v)]).append(inst),
+                        Instance(vec![self.unify(Type::arr(Type::Var(Z(z)), ty), v)]).append(inst),
                     )
                 }
             }
