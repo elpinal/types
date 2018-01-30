@@ -242,7 +242,7 @@ mod tests {
         );
 
         theta_from!(
-            (app!(abs!(Var(0, 1)), abs!(app!(abs!(Var(0, 2)), Var(0, 1))))),
+            app!(abs!(Var(0, 1)), abs!(app!(abs!(Var(0, 2)), Var(0, 1)))),
             Theta(0, vec![abs!(Var(0, 1)), abs!(Var(1, 2)), Var(0, 2)])
         );
 
@@ -306,7 +306,7 @@ impl Theta {
             }
             App(t1, t2) => {
                 let (Theta(n, mut v), mut m) = Theta::from_left(*t1, &xs, l);
-                let ys = t2.act();
+                let ys: Vec<usize> = t2.act().into_iter().map(|x| x + l).collect();
                 let (mut r, _) = Theta::from_right(*t2, &ys, l);
                 r = r.into_iter().map(|t| t.shift(n as isize)).collect();
                 Theta::app(&mut v, &mut m, &mut r);
@@ -343,7 +343,7 @@ impl Theta {
             }
             App(t1, t2) => {
                 let (Theta(n, mut v), mut m) = Theta::from_left(*t1, &xs, l);
-                let ys = t2.act();
+                let ys: Vec<usize> = t2.act().into_iter().map(|x| x + l).collect();
                 let (mut r, _) = Theta::from_right(*t2, &ys, l);
                 r = r.into_iter().map(|t| t.shift(n as isize)).collect();
                 Theta::app(&mut v, &mut m, &mut r);
@@ -399,7 +399,7 @@ impl Theta {
             }
             App(t1, t2) => {
                 let (mut v1, mut m1) = Theta::from_right(*t1, xs, l);
-                let ys = t2.act();
+                let ys: Vec<usize> = t2.act().into_iter().map(|x| x + l).collect();
                 let (mut v2, _) = Theta::from_right(*t2, &ys, l);
                 Theta::app(&mut v1, &mut m1, &mut v2);
                 (Theta::app_right(v1, v2), Vec::new())
