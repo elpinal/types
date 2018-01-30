@@ -665,6 +665,10 @@ pub mod asup {
                 return Ok(Some(p));
             }
         }
+        match **t1 {
+            Type::Arr(..) => return Ok(None),
+            _ => (),
+        }
         if let Some(t2) = Type::redo(t2, v) {
             if t1 == t2 {
                 return Ok(None);
