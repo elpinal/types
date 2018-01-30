@@ -98,7 +98,7 @@ impl Term {
     fn infer_type(self) -> Option<asup::Type> {
         let tnf = Theta::from(self);
         let mut c = asup::Constructor::new();
-        let (mut ty, inst) = c.construct(tnf);
+        let (mut ty, inst, _) = c.construct(tnf);
         let ps = asup::reduce(&c, inst)?;
         for (t1, t2) in ps {
             ty = ty.replace(&t1, &t2);
@@ -279,6 +279,7 @@ mod tests {
         use self::Term::*;
         use self::asup::Type;
         assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(0)));
+        assert_eq!(abs!(Var(0, 1)).infer_type(), Some(Type::Term(0)));
         let t = abs!(app!(
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
@@ -467,6 +468,7 @@ pub mod asup {
         Arr(Box<Type>, Box<Type>),
     }
 
+    #[derive(Debug)]
     pub struct Instance(pub Vec<(Type, Type)>);
 
     pub struct Constructor {
@@ -477,7 +479,7 @@ pub mod asup {
         w: usize,
     }
 
-    struct Context {
+    pub struct Context {
         ws: usize,
         xs: usize,
         ys: usize,
@@ -801,7 +803,7 @@ pub mod asup {
         }
 
         /// Constructs for a lambda term an ASUP instance.
-        pub fn construct(&mut self, t: Theta) -> (Type, Instance) {
+        pub fn construct(&mut self, t: Theta) -> (Type, Instance, Context) {
             use self::Var::*;
             let Theta(m, mut v) = t;
             let mut ctx = Context::new(m);
@@ -831,7 +833,7 @@ pub mod asup {
                     inst.add_var(Y(i + 1, j), Y(i + 2, j))
                 }
             }
-            (ty, inst)
+            (ty, inst, ctx)
         }
 
         fn record_fv(&mut self, n: usize) {
