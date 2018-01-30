@@ -245,6 +245,11 @@ mod tests {
         );
 
         theta_from!(
+            app!(abs!(Var(0, 1)), abs!(Var(0, 1))),
+            Theta(0, vec![abs!(Var(0, 1)), Var(0, 1)])
+        );
+
+        theta_from!(
             app!(abs!(abs!(Var(0, 3))), Var(0, 1)),
             Theta(1, vec![Var(1, 2), Var(1, 3)])
         );
@@ -278,13 +283,17 @@ mod tests {
     fn test_inference() {
         use self::Term::*;
         use self::asup::Type;
-        assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(0)));
-        assert_eq!(abs!(Var(0, 1)).infer_type(), Some(Type::Term(0)));
+        assert_eq!(Var(0, 1).infer_type(), Some(Type::Term(1)));
+        assert_eq!(abs!(Var(0, 1)).infer_type(), Some(Type::Term(1)));
+        assert_eq!(
+            app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
+            Some(Type::Term(9))
+        );
         let t = abs!(app!(
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
-        assert_eq!(t.infer_type(), Some(Type::Term(10)));
+        assert_eq!(t.infer_type(), Some(Type::Term(19)));
     }
 }
 
