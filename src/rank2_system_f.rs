@@ -787,6 +787,7 @@ pub mod asup {
             }
         }
 
+        /// Redo directions on a type.
         fn redo<'a>(s: &'a Box<Self>, v: &[Direction]) -> Option<&'a Box<Type>> {
             let mut t = s;
             for d in v {
@@ -991,6 +992,7 @@ pub mod asup {
                 vec![(Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2)))],
                 Some(vec![(Var(Z(1)), Term(2))])
             );
+
         }
 
         macro_rules! assert_reduce1 {
