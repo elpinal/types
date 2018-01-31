@@ -1,5 +1,7 @@
 //! A type system which is Rank-2 fragment of System F.
 
+use std::iter;
+
 use {Shift, ShiftRef, Subst};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -19,6 +21,12 @@ macro_rules! app {
     ($t1:expr, $t2:expr) => {
         Term::App(Box::new($t1), Box::new($t2))
     }
+}
+
+#[derive(Debug, PartialEq)]
+struct Type {
+    args: Vec<lambda2_restricted::Restricted1>,
+    core: asup::Type,
 }
 
 impl Term {
@@ -105,6 +113,14 @@ impl Term {
             ty = ty.replace(&t1, &t2);
         }
         Some((ty, n))
+    }
+
+    fn infer_type_trivial(self) -> Option<Type> {
+        let (ty, n) = self.infer_type()?;
+        let v = iter::repeat(lambda2_restricted::Restricted1::bottom())
+            .take(n)
+            .collect();
+        Some(Type { args: v, core: ty })
     }
 
     fn theta_2(&mut self, m: usize) {
@@ -295,6 +311,20 @@ mod tests {
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
         assert_eq!(t.infer_type(), Some((Type::Term(19), 1)));
+    }
+
+    #[test]
+    fn test_inference_at_all() {
+        use self::Term::*;
+        use self::asup::Type;
+        use self::Type as T;
+        assert_eq!(
+            Var(0, 1).infer_type_trivial(),
+            Some(T {
+                args: vec![],
+                core: Type::Term(1),
+            })
+        );
     }
 }
 
@@ -1010,6 +1040,7 @@ pub mod asup {
 pub mod lambda2_restricted {
     use self::lambda2::*;
 
+    #[derive(Clone, Debug, PartialEq)]
     pub enum Restricted1 {
         Forall(usize, Rank0),
     }
@@ -1136,6 +1167,12 @@ pub mod lambda2_restricted {
         }
     }
 
+    impl Restricted1 {
+        pub fn bottom() -> Self {
+            Restricted1::Forall(1, Rank0::Var(0, 1))
+        }
+    }
+
     impl Shift for Restricted1 {
         fn shift_above(self, c: usize, d: isize) -> Self {
             use self::Restricted1::*;
@@ -1192,7 +1229,7 @@ pub mod lambda2_restricted {
     pub mod lambda2 {
         pub use Shift;
 
-        #[derive(Clone)]
+        #[derive(Clone, Debug, PartialEq)]
         pub enum Rank0 {
             Var(usize, usize),
             Arr(Box<Rank0>, Box<Rank0>),
