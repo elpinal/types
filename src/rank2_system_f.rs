@@ -334,6 +334,18 @@ mod tests {
                 core: Type::Term(1),
             })
         );
+
+        let t = abs!(app!(
+            abs!(Var(0, 2)),
+            abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
+        ));
+        assert_eq!(
+            t.infer_type_trivial(),
+            Some(T {
+                args: vec![Restricted1::bottom()],
+                core: Type::Term(19),
+            })
+        );
     }
 }
 
