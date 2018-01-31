@@ -94,10 +94,6 @@ impl Term {
         self.map(&f, 0)
     }
 
-    fn rotate(self, n: usize, l: usize) -> Self {
-        self.rotate_from(0, n, l)
-    }
-
     fn rotate_from(self, c: usize, n: usize, l: usize) -> Self {
         self.shift_above(c, 1)
             .subst(n, &Term::Var(0, l))
