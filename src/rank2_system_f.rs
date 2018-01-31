@@ -318,10 +318,19 @@ mod tests {
         use self::Term::*;
         use self::asup::Type;
         use self::Type as T;
+        use self::lambda2_restricted::Restricted1;
         assert_eq!(
             Var(0, 1).infer_type_trivial(),
             Some(T {
                 args: vec![],
+                core: Type::Term(1),
+            })
+        );
+
+        assert_eq!(
+            abs!(Var(0, 1)).infer_type_trivial(),
+            Some(T {
+                args: vec![Restricted1::bottom()],
                 core: Type::Term(1),
             })
         );
