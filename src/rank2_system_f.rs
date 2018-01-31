@@ -299,7 +299,7 @@ mod tests {
     fn test_inference() {
         use self::Term::*;
         use self::asup::Type;
-        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0, 1)));
+        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0, 0)));
         assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1, 0)));
         assert_eq!(
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
