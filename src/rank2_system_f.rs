@@ -1,6 +1,8 @@
 //! A type system which is Rank-2 fragment of System F.
 #![warn(dead_code)]
 
+use self::lambda2_restricted::Restricted1;
+
 use std::iter;
 
 use {Shift, ShiftRef, Subst};
@@ -26,7 +28,7 @@ macro_rules! app {
 
 #[derive(Debug, PartialEq)]
 pub struct Type {
-    args: Vec<lambda2_restricted::Restricted1>,
+    args: Vec<Restricted1>,
     core: asup::Type,
 }
 
@@ -114,7 +116,7 @@ impl Term {
 
     pub fn infer_type_trivial(self) -> Option<Type> {
         let (ty, n) = self.infer_type()?;
-        let v = iter::repeat(lambda2_restricted::Restricted1::bottom())
+        let v = iter::repeat(Restricted1::bottom())
             .take(n)
             .collect();
         Some(Type { args: v, core: ty })
@@ -315,7 +317,7 @@ mod tests {
         use self::Term::*;
         use self::asup::Type;
         use self::Type as T;
-        use self::lambda2_restricted::Restricted1;
+        use self::Restricted1;
         assert_eq!(
             Var(0, 1).infer_type_trivial(),
             Some(T {
