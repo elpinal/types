@@ -1,4 +1,5 @@
 //! A type system which is Rank-2 fragment of System F.
+#![warn(dead_code)]
 
 use std::iter;
 
