@@ -115,7 +115,7 @@ impl Term {
     }
 
     pub fn infer_type_trivial(self) -> Option<Type> {
-        let (ty, n) = self.infer_type()?;
+        let (ty, n, _) = self.infer_type()?;
         let v = iter::repeat(Restricted1::bottom())
             .take(n)
             .collect();
@@ -299,17 +299,17 @@ mod tests {
     fn test_inference() {
         use self::Term::*;
         use self::asup::Type;
-        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0)));
-        assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1)));
+        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0, 1)));
+        assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1, 0)));
         assert_eq!(
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
-            Some((Type::Term(9), 0))
+            Some((Type::Term(9), 0), 0)
         );
         let t = abs!(app!(
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
-        assert_eq!(t.infer_type(), Some((Type::Term(19), 1)));
+        assert_eq!(t.infer_type(), Some((Type::Term(19), 1, 0)));
     }
 
     #[test]
