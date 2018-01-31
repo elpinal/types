@@ -1059,6 +1059,7 @@ pub mod asup {
 }
 
 pub mod lambda2_restricted {
+    use Subst;
     use self::lambda2::*;
 
     #[derive(Clone, Debug, PartialEq)]
@@ -1113,6 +1114,18 @@ pub mod lambda2_restricted {
         }
     }
 
+    impl Subst for Term {
+        fn subst(self, j: usize, t: &Term) -> Self {
+            use self::Term::*;
+            let f = |j, x, n| if x == j {
+                t.clone().shift(j as isize)
+            } else {
+                Var(x, n)
+            };
+            self.map(&f, j)
+        }
+    }
+
     impl Term {
         fn map<F>(self, onvar: &F, c: usize) -> Self
         where
@@ -1124,20 +1137,6 @@ pub mod lambda2_restricted {
                 Abs(i, t) => abs!(i, t.map(onvar, c + 1)),
                 App(t1, t2) => app!(t1.map(onvar, c), t2.map(onvar, c)),
             }
-        }
-
-        fn subst(self, j: usize, t: Term) -> Self {
-            use self::Term::*;
-            let f = |j, x, n| if x == j {
-                t.clone().shift(j as isize)
-            } else {
-                Var(x, n)
-            };
-            self.map(&f, j)
-        }
-
-        pub fn subst_top(self, t: Term) -> Self {
-            self.subst(0, t)
         }
 
         /// Swaps the two indices.
