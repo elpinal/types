@@ -303,7 +303,7 @@ mod tests {
         assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1, 0)));
         assert_eq!(
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
-            Some((Type::Term(9), 0), 0)
+            Some((Type::Term(9), 0, 0))
         );
         let t = abs!(app!(
             abs!(Var(0, 2)),
