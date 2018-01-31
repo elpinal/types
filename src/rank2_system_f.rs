@@ -102,7 +102,7 @@ impl Term {
             .shift_above(n, -1)
     }
 
-    pub fn infer_type(self) -> Option<(asup::Type, usize)> {
+    pub fn infer_type(self) -> Option<(asup::Type, usize, usize)> {
         let tnf = Theta::from(self);
         let Theta(n, _) = tnf;
         let mut c = asup::Constructor::new();
@@ -111,7 +111,7 @@ impl Term {
         for (t1, t2) in ps {
             ty = ty.replace(&t1, &t2);
         }
-        Some((ty, n))
+        Some((ty, n, ws))
     }
 
     pub fn infer_type_trivial(self) -> Option<Type> {
