@@ -108,7 +108,7 @@ impl Term {
         let tnf = Theta::from(self);
         let Theta(n, _) = tnf;
         let mut c = asup::Constructor::new();
-        let (mut ty, inst, ctx) = c.construct(tnf);
+        let (mut ty, inst, ws) = c.construct(tnf);
         let ps = asup::reduce(&c, inst)?;
         for (t1, t2) in ps {
             ty = ty.replace(&t1, &t2);
