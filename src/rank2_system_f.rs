@@ -881,7 +881,8 @@ pub mod asup {
             Type::Term(self.fresh_number())
         }
 
-        /// Constructs for a lambda term an ASUP instance.
+        /// Constructs for a lambda term an ASUP instance. Returns also the innermost type and the
+        /// number of free variables.
         pub fn construct(&mut self, t: Theta) -> (Type, Instance, usize) {
             use self::Var::*;
             let Theta(m, mut v) = t;
