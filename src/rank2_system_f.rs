@@ -112,7 +112,7 @@ impl Term {
         Some((ty, n))
     }
 
-    fn infer_type_trivial(self) -> Option<Type> {
+    pub fn infer_type_trivial(self) -> Option<Type> {
         let (ty, n) = self.infer_type()?;
         let v = iter::repeat(lambda2_restricted::Restricted1::bottom())
             .take(n)
