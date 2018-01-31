@@ -25,7 +25,7 @@ macro_rules! app {
 }
 
 #[derive(Debug, PartialEq)]
-struct Type {
+pub struct Type {
     args: Vec<lambda2_restricted::Restricted1>,
     core: asup::Type,
 }
