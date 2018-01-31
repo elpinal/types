@@ -100,7 +100,7 @@ impl Term {
             .shift_above(n, -1)
     }
 
-    fn infer_type(self) -> Option<(asup::Type, usize)> {
+    pub fn infer_type(self) -> Option<(asup::Type, usize)> {
         let tnf = Theta::from(self);
         let Theta(n, _) = tnf;
         let mut c = asup::Constructor::new();
