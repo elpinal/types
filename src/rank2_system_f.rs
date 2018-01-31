@@ -1058,7 +1058,7 @@ pub mod asup {
 
 pub mod lambda2_restricted {
     use Subst;
-    use self::lambda2::*;
+    use rank2_system_f::lambda2::*;
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum Restricted1 {
@@ -1243,66 +1243,66 @@ pub mod lambda2_restricted {
             }
         }
     }
+}
 
-    pub mod lambda2 {
-        pub use Shift;
+pub mod lambda2 {
+    pub use Shift;
 
-        #[derive(Clone, Debug, PartialEq)]
-        pub enum Rank0 {
-            Var(usize, usize),
-            Arr(Box<Rank0>, Box<Rank0>),
-        }
+    #[derive(Clone, Debug, PartialEq)]
+    pub enum Rank0 {
+        Var(usize, usize),
+        Arr(Box<Rank0>, Box<Rank0>),
+    }
 
-        pub enum RankN<T> {
-            Var(usize, usize),
-            Arr(T, Box<RankN<T>>),
-            Forall(Box<RankN<T>>),
-            Sharp(Box<RankN<T>>),
-        }
+    pub enum RankN<T> {
+        Var(usize, usize),
+        Arr(T, Box<RankN<T>>),
+        Forall(Box<RankN<T>>),
+        Sharp(Box<RankN<T>>),
+    }
 
-        pub type Rank1 = RankN<Rank0>;
-        pub type Rank2 = RankN<Rank1>;
+    pub type Rank1 = RankN<Rank0>;
+    pub type Rank2 = RankN<Rank1>;
 
-        impl Shift for Rank0 {
-            fn shift_above(self, c: usize, d: isize) -> Self {
-                use self::Rank0::*;
-                match self {
-                    Var(x, n) => {
-                        let n = n as isize;
-                        if x >= c {
-                            let x = x as isize;
-                            Var((x + d) as usize, (n + d) as usize)
-                        } else {
-                            Var(x, (n + d) as usize)
-                        }
+    impl Shift for Rank0 {
+        fn shift_above(self, c: usize, d: isize) -> Self {
+            use self::Rank0::*;
+            match self {
+                Var(x, n) => {
+                    let n = n as isize;
+                    if x >= c {
+                        let x = x as isize;
+                        Var((x + d) as usize, (n + d) as usize)
+                    } else {
+                        Var(x, (n + d) as usize)
                     }
-                    Arr(t1, t2) => {
-                        Arr(
-                            Box::new(t1.shift_above(c, d)),
-                            Box::new(t2.shift_above(c, d)),
-                        )
-                    }
+                }
+                Arr(t1, t2) => {
+                    Arr(
+                        Box::new(t1.shift_above(c, d)),
+                        Box::new(t2.shift_above(c, d)),
+                    )
                 }
             }
         }
+    }
 
-        impl Shift for Rank1 {
-            fn shift_above(self, c: usize, d: isize) -> Self {
-                use self::RankN::*;
-                match self {
-                    Var(x, n) => {
-                        let n = n as isize;
-                        if x >= c {
-                            let x = x as isize;
-                            Var((x + d) as usize, (n + d) as usize)
-                        } else {
-                            Var(x, (n + d) as usize)
-                        }
+    impl Shift for Rank1 {
+        fn shift_above(self, c: usize, d: isize) -> Self {
+            use self::RankN::*;
+            match self {
+                Var(x, n) => {
+                    let n = n as isize;
+                    if x >= c {
+                        let x = x as isize;
+                        Var((x + d) as usize, (n + d) as usize)
+                    } else {
+                        Var(x, (n + d) as usize)
                     }
-                    Arr(t1, t2) => Arr(t1.shift_above(c, d), Box::new(t2.shift_above(c, d))),
-                    Forall(t) => Forall(Box::new(t.shift_above(c + 1, d))),
-                    Sharp(t) => Sharp(Box::new(t.shift_above(c + 1, d))),
                 }
+                Arr(t1, t2) => Arr(t1.shift_above(c, d), Box::new(t2.shift_above(c, d))),
+                Forall(t) => Forall(Box::new(t.shift_above(c + 1, d))),
+                Sharp(t) => Sharp(Box::new(t.shift_above(c + 1, d))),
             }
         }
     }
