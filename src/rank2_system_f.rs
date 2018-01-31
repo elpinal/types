@@ -1003,7 +1003,6 @@ pub mod asup {
         #[test]
         fn test_reduce1() {
             use self::Type::*;
-            use self::Var::*;
             assert_reduce1!(Term(0), Term(0), None);
 
             assert_reduce1!(
@@ -1046,7 +1045,6 @@ pub mod asup {
         #[test]
         fn test_reduce2() {
             use self::Type::*;
-            use self::Var::*;
             assert_reduce2!(Term(0), Term(0), Ok(None));
 
             assert_reduce2!(
