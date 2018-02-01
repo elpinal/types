@@ -73,6 +73,12 @@ impl Iterator for Context {
     }
 }
 
+impl Context {
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
