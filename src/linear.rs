@@ -1,6 +1,7 @@
 /// A linear type system.
 
 use std::cmp::Ordering;
+use std::iter::Iterator;
 
 #[derive(Clone, Copy, PartialEq)]
 enum Qual {
@@ -31,6 +32,8 @@ enum Pretype {
     Arr(Type, Type),
 }
 
+struct Context(Vec<Type>);
+
 impl PartialOrd for Qual {
     fn partial_cmp(&self, q: &Self) -> Option<Ordering> {
         use self::Qual::*;
@@ -57,6 +60,14 @@ impl Containment for Type {
     fn can_appear_in(&self, q1: Qual) -> bool {
         let Type(q2, _) = *self;
         q1 <= q2
+    }
+}
+
+impl Iterator for Context {
+    type Item = Type;
+    /// Returns a type which the most recently bound variable has.
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop()
     }
 }
 
