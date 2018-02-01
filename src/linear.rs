@@ -77,6 +77,10 @@ impl Context {
     fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    fn contains(&self, t: &Type) -> bool {
+        self.0.contains(t)
+    }
 }
 
 #[cfg(test)]
