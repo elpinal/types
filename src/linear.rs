@@ -1,5 +1,8 @@
 /// A linear type system.
 
+use std::cmp::Ordering;
+
+#[derive(Clone, Copy, PartialEq)]
 enum Qual {
     Linear,
     Unrestricted,
@@ -26,4 +29,17 @@ enum Pretype {
     Bool,
     Pair(Type, Type),
     Arr(Type, Type),
+}
+
+impl PartialOrd for Qual {
+    fn partial_cmp(&self, q: &Self) -> Option<Ordering> {
+        use self::Qual::*;
+        if *self == Unrestricted && *q == Linear {
+            return Some(Ordering::Greater);
+        }
+        if *self == Linear && *q == Unrestricted {
+            return Some(Ordering::Less);
+        }
+        None
+    }
 }
