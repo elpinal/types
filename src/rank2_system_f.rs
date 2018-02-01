@@ -313,7 +313,10 @@ mod tests {
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
-        assert_eq!(t.infer_type(), Some((Type::Term(20), 1, 0)));
+        assert_eq!(
+            t.infer_type(),
+            Some((Type::arr(Type::Term(21), Type::Term(21)), 1, 0))
+        );
 
         let t = app!(abs!(abs!(Var(0, 2))), abs!(Var(0, 1)));
         assert_eq!(t.infer_type(), Some((Type::Term(9), 1, 0)));
@@ -355,7 +358,7 @@ mod tests {
             t.infer_type_trivial(),
             Some(T {
                 args: vec![Restricted1::bottom()],
-                core: Type::Term(20),
+                core: Type::arr(Type::Term(21), Type::Term(21)),
             })
         );
     }
@@ -953,8 +956,8 @@ pub mod asup {
                 }
             }
             for j in 1..ctx.ys {
-                for i in j..ctx.ys - 1 {
-                    inst.add_var(Y(i, j), Y(i + 1, j))
+                for i in j..ctx.ys {
+                    inst.add_var(Y(i, j - 1), Y(i + 1, j - 1))
                 }
             }
             (ty, inst, self.w)
@@ -1174,6 +1177,62 @@ pub mod asup {
                         Type::arr(Term(12), Term(12)),
                         Type::arr(Var(Z(10)), Term(11))
                     ),
+                ]),
+                0
+            );
+
+            assert_construct!(
+                Theta(
+                    1,
+                    vec![
+                        abs!(Term::Var(0, 2)),
+                        abs!(app!(Term::Var(1, 3), Term::Var(0, 3))),
+                        Term::Var(0, 3),
+                    ],
+                ),
+                Term(20),
+                Instance(vec![
+                    (
+                        Type::arr(Term(5), Term(5)),
+                        Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(3), Term(3)),
+                        Type::arr(Var(Z(1)), Term(2))
+                    ),
+                    (
+                        Type::arr(Term(6), Term(6)),
+                        Type::arr(Var(Y(1, 0)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(8), Term(8)),
+                        Type::arr(Term(7), Type::arr(Term(4), Term(0)))
+                    ),
+                    (
+                        Type::arr(Term(16), Term(16)),
+                        Type::arr(Type::arr(Var(Z(9)), Term(13)), Term(15))
+                    ),
+                    (
+                        Type::arr(Term(14), Term(14)),
+                        Type::arr(Term(10), Type::arr(Term(11), Term(13)))
+                    ),
+                    (Var(Y(1, 0)), Term(10)),
+                    (
+                        Type::arr(Term(12), Term(12)),
+                        Type::arr(Var(Z(9)), Term(11))
+                    ),
+                    (
+                        Type::arr(Term(17), Term(17)),
+                        Type::arr(Var(Y(2, 1)), Term(15))
+                    ),
+                    (
+                        Type::arr(Term(19), Term(19)),
+                        Type::arr(Term(18), Type::arr(Term(15), Term(7)))
+                    ),
+                    (Var(Y(2, 0)), Term(20)),
+                    (Var(X(0, 0)), Var(X(1, 0))),
+                    (Var(X(1, 0)), Var(X(2, 0))),
+                    (Var(Y(1, 0)), Var(Y(2, 0))),
                 ]),
                 0
             );
