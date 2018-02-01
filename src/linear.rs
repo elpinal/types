@@ -44,11 +44,7 @@ impl PartialOrd for Qual {
         if *self == Linear && *q == Unrestricted {
             return Some(Less);
         }
-        if self == q {
-            Some(Equal)
-        } else {
-            None
-        }
+        if self == q { Some(Equal) } else { None }
     }
 }
 
