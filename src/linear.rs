@@ -43,3 +43,14 @@ impl PartialOrd for Qual {
         None
     }
 }
+
+trait Qualified {
+    fn can_appear_in(&self, q: Qual) -> bool;
+}
+
+impl Qualified for Type {
+    fn can_appear_in(&self, q1: Qual) -> bool {
+        let Type(q2, _) = *self;
+        q1 <= q2
+    }
+}
