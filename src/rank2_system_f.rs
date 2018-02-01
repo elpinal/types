@@ -303,11 +303,15 @@ mod tests {
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
             Some((Type::Term(9), 0, 0))
         );
+
         let t = abs!(app!(
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
         assert_eq!(t.infer_type(), Some((Type::Term(19), 1, 0)));
+
+        let t = app!(abs!(abs!(Var(0, 2))), abs!(Var(0, 1)));
+        assert_eq!(t.infer_type(), Some((Type::Term(9), 1, 0)));
     }
 
     #[test]
@@ -543,7 +547,7 @@ pub mod asup {
         ys: usize,
     }
 
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, Debug, PartialEq)]
     enum Direction {
         Left,
         Right,
@@ -677,7 +681,9 @@ pub mod asup {
         for p1 in &paths {
             for p2 in &paths {
                 if let Some((t21, t22)) = f(p1, p2, t1, t2) {
-                    return var_and_type(t21, t22, &[]);
+                    if let Some(p) = var_and_type(t21, t22, &[])? {
+                        return Ok(Some(p));
+                    }
                 }
             }
         }
@@ -1114,10 +1120,22 @@ pub mod asup {
                 ],
                 Some(vec![
                     (Var(Z(9)), Term(10)),
+                    (Term(12), Type::arr(Term(10), Term(10))),
                     (Term(7), Type::arr(Term(4), Term(0))),
                     (Var(Y(1, 0)), Term(4)),
                     (Var(Z(1)), Term(2)),
+                    (Term(4), Type::arr(Term(2), Term(2))),
                 ])
+            );
+
+            assert_reduce!(
+                vec![
+                    (
+                        Type::arr(Term(13), Term(13)),
+                        Type::arr(Type::arr(Var(Z(9)), Term(10)), Term(12))
+                    ),
+                ],
+                Some(vec![(Term(12), Type::arr(Var(Z(9)), Term(10)))])
             );
         }
 
@@ -1171,9 +1189,25 @@ pub mod asup {
         }
 
         #[test]
+        fn test_variable_paths() {
+            use self::Direction::*;
+            use self::Type::*;
+            let vv = variable_paths(&Box::new(Type::arr(Term(13), Term(13))), &[]);
+            assert_eq!(vv, vec![vec![Left], vec![Right], vec![]]);
+        }
+
+        #[test]
         fn test_reduce2() {
             use self::Type::*;
+            use self::Var::*;
+
             assert_reduce2!(Term(0), Term(0), Ok(None));
+
+            assert_reduce2!(
+                Type::arr(Term(13), Term(13)),
+                Type::arr(Type::arr(Var(Z(9)), Term(10)), Term(12)),
+                Ok(Some((Term(12), Type::arr(Var(Z(9)), Term(10)))))
+            );
 
             assert_reduce2!(
                 Type::arr(Term(8), Term(8)),
