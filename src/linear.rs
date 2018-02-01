@@ -2,6 +2,7 @@
 
 use std::cmp::Ordering;
 use std::iter::Iterator;
+use std::ops::Div;
 
 #[derive(Clone, Copy, PartialEq)]
 enum Qual {
@@ -70,6 +71,24 @@ impl Iterator for Context {
     /// Returns a type which the most recently bound variable has.
     fn next(&mut self) -> Option<Self::Item> {
         self.0.pop()
+    }
+}
+
+impl Div for Context {
+    type Output = Option<Context>;
+
+    fn div(self, ctx: Self) -> Self::Output {
+        use self::Qual::*;
+        if ctx.is_empty() {
+            return Some(self);
+        }
+        match ctx.next()? {
+            Type(Linear, _) as x => {
+                if ctx.contains(&x) {
+                    return self.div(ctx);
+                }
+            }
+        }
     }
 }
 
