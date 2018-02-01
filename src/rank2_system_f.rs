@@ -79,7 +79,7 @@ impl Term {
         }
     }
 
-    /// Swaps the two indices.
+    /// Swaps two indices.
     pub fn swap(self, i: usize, j: usize) -> Self {
         use self::Term::*;
         let f = |c, x, n| {
@@ -102,6 +102,8 @@ impl Term {
             .shift_above(n, -1)
     }
 
+    /// Infer the type of a term on the Rank 2 fragment in System F. It returns the type, the
+    /// number of outermost abstractions, and the number of free variables.
     pub fn infer_type(self) -> Option<(asup::Type, usize, usize)> {
         let tnf = Theta::from(self);
         let Theta(n, _) = tnf;
@@ -114,6 +116,8 @@ impl Term {
         Some((ty, n, ws))
     }
 
+    /// Infer the type of a term on the Rank 2 fragment in System F. It assume that each lambda-2
+    /// abstraction bind a variable with `∀α.α`.
     pub fn infer_type_trivial(self) -> Option<Type> {
         let (ty, n, _) = self.infer_type()?;
         let v = iter::repeat(Restricted1::bottom()).take(n).collect();
@@ -1525,7 +1529,7 @@ pub mod lambda2_restricted {
             }
         }
 
-        /// Swaps the two indices.
+        /// Swaps two indices.
         pub fn swap(self, i: usize, j: usize) -> Self {
             use self::Term::*;
             let f = |c, x, n| {
