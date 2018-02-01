@@ -88,6 +88,14 @@ impl Div for Context {
                     return self.div(ctx);
                 }
             }
+            Type(Unrestricted, _) as x => {
+                let ctx1 = self.div(ctx)?;
+                let i = ctx1.position(x);
+                if let (mut ctx2, ctx3) = ctx1.split_off(i) {
+                    ctx2.append(ctx3);
+                    return Some(ctx2);
+                }
+            }
         }
     }
 }
