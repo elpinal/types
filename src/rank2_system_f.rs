@@ -291,6 +291,11 @@ mod tests {
                 vec![abs!(Var(0, 2)), abs!(app!(Var(1, 3), Var(0, 3))), Var(0, 3)],
             )
         );
+
+        theta_from!(
+            app!(abs!(app!(Var(0, 1), abs!(Var(0, 2)))), abs!(Var(0, 1))),
+            Theta(0, vec![abs!(Var(0, 1)), app!(Var(0, 1), abs!(Var(0, 2)))])
+        );
     }
 
     #[test]
@@ -308,10 +313,13 @@ mod tests {
             abs!(Var(0, 2)),
             abs!(app!(abs!(Var(0, 3)), Var(0, 2)))
         ));
-        assert_eq!(t.infer_type(), Some((Type::Term(19), 1, 0)));
+        assert_eq!(t.infer_type(), Some((Type::Term(20), 1, 0)));
 
         let t = app!(abs!(abs!(Var(0, 2))), abs!(Var(0, 1)));
         assert_eq!(t.infer_type(), Some((Type::Term(9), 1, 0)));
+
+        let t = app!(abs!(app!(Var(0, 1), abs!(Var(0, 2)))), abs!(Var(0, 1)));
+        assert_eq!(t.infer_type(), Some((Type::Term(15), 0, 0)));
     }
 
     #[test]
@@ -344,7 +352,7 @@ mod tests {
             t.infer_type_trivial(),
             Some(T {
                 args: vec![Restricted1::bottom()],
-                core: Type::Term(19),
+                core: Type::Term(20),
             })
         );
     }
@@ -953,7 +961,7 @@ pub mod asup {
                     let v = self.fresh();
                     (
                         v.clone(),
-                        Instance(vec![(ty1, Type::arr(ty2, v))])
+                        Instance(vec![self.unify(ty1, Type::arr(ty2, v))])
                             .append(inst1)
                             .append(inst2),
                     )
@@ -1001,6 +1009,49 @@ pub mod asup {
                 Theta(1, vec![Term::Var(0, 1)]),
                 Term(1),
                 Instance(vec![(Var(X(0, 0)), Term(1))]),
+                0
+            );
+
+            assert_construct!(
+                Theta(
+                    0,
+                    vec![
+                        abs!(Term::Var(0, 1)),
+                        app!(Term::Var(0, 1), abs!(Term::Var(0, 2))),
+                    ],
+                ),
+                Term(15),
+                Instance(vec![
+                    (
+                        Type::arr(Term(5), Term(5)),
+                        Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(3), Term(3)),
+                        Type::arr(Var(Z(1)), Term(2))
+                    ),
+                    (
+                        Type::arr(Term(6), Term(6)),
+                        Type::arr(Var(Y(1, 0)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(8), Term(8)),
+                        Type::arr(Term(7), Type::arr(Term(4), Term(0)))
+                    ),
+                    (
+                        Type::arr(Term(16), Term(16)),
+                        Type::arr(Term(9), Type::arr(Term(13), Term(15)))
+                    ),
+                    (Var(Y(1, 0)), Term(9)),
+                    (
+                        Type::arr(Term(14), Term(14)),
+                        Type::arr(Type::arr(Var(Z(10)), Term(11)), Term(13))
+                    ),
+                    (
+                        Type::arr(Term(12), Term(12)),
+                        Type::arr(Var(Z(10)), Term(11))
+                    ),
+                ]),
                 0
             );
 
