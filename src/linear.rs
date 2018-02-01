@@ -59,6 +59,12 @@ impl Containment for Type {
     }
 }
 
+impl Containment for Context {
+    fn can_appear_in(&self, q: Qual) -> bool {
+        self.0.iter().all(|ty| ty.can_appear_in(q))
+    }
+}
+
 impl Iterator for Context {
     type Item = Type;
     /// Returns a type which the most recently bound variable has.
