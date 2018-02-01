@@ -982,12 +982,71 @@ pub mod asup {
         #[test]
         fn test_construct() {
             use self::Var::*;
-            use self::Term::*;
+            use self::Type::*;
+            use self::Term;
             assert_construct!(
-                Theta(0, vec![Var(0, 1)]),
-                Type::Term(1),
-                Instance(vec![(Type::Var(W(0, 0)), Type::Term(1))]),
+                Theta(0, vec![Term::Var(0, 1)]),
+                Term(1),
+                Instance(vec![(Var(W(0, 0)), Term(1))]),
                 1
+            );
+
+            assert_construct!(
+                Theta(1, vec![Term::Var(0, 1)]),
+                Term(1),
+                Instance(vec![(Var(X(0, 0)), Term(1))]),
+                0
+            );
+
+            assert_construct!(
+                Theta(1, vec![Term::Var(0, 1), Term::Var(0, 2)]),
+                Term(5),
+                Instance(vec![
+                    (Var(X(0, 0)), Term(1)),
+                    (
+                        Type::arr(Term(2), Term(2)),
+                        Type::arr(Var(Y(1, 0)), Term(1))
+                    ),
+                    (
+                        Type::arr(Term(4), Term(4)),
+                        Type::arr(Term(3), Type::arr(Term(1), Term(0)))
+                    ),
+                    (Var(Y(1, 0)), Term(5)),
+                    (Var(X(0, 0)), Var(X(1, 0))),
+                ]),
+                0
+            );
+
+            assert_construct!(
+                Theta(0, vec![abs!(Term::Var(0, 1)), abs!(Term::Var(0, 2))]),
+                Term(12),
+                Instance(vec![
+                    (
+                        Type::arr(Term(5), Term(5)),
+                        Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(3), Term(3)),
+                        Type::arr(Var(Z(1)), Term(2))
+                    ),
+                    (
+                        Type::arr(Term(6), Term(6)),
+                        Type::arr(Var(Y(1, 0)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(8), Term(8)),
+                        Type::arr(Term(7), Type::arr(Term(4), Term(0)))
+                    ),
+                    (
+                        Type::arr(Term(13), Term(13)),
+                        Type::arr(Type::arr(Var(Z(9)), Term(10)), Term(12))
+                    ),
+                    (
+                        Type::arr(Term(11), Term(11)),
+                        Type::arr(Var(Z(9)), Term(10))
+                    ),
+                ]),
+                0
             );
         }
 
@@ -1008,6 +1067,57 @@ pub mod asup {
             assert_reduce!(
                 vec![(Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2)))],
                 Some(vec![(Var(Z(1)), Term(2))])
+            );
+            assert_reduce!(
+                vec![
+                    (Var(X(0, 0)), Term(1)),
+                    (
+                        Type::arr(Term(2), Term(2)),
+                        Type::arr(Var(Y(1, 0)), Term(1))
+                    ),
+                    (
+                        Type::arr(Term(4), Term(4)),
+                        Type::arr(Term(3), Type::arr(Term(1), Term(0)))
+                    ),
+                    (Var(Y(1, 0)), Term(5)),
+                    (Var(X(0, 0)), Var(X(1, 0))),
+                ],
+                Some(vec![
+                    (Term(3), Type::arr(Term(1), Term(0))),
+                    (Var(Y(1, 0)), Term(1)),
+                ])
+            );
+
+            assert_reduce!(
+                vec![
+                    (
+                        Type::arr(Term(5), Term(5)),
+                        Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
+                    ),
+                    (Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2))),
+                    (
+                        Type::arr(Term(6), Term(6)),
+                        Type::arr(Var(Y(1, 0)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(8), Term(8)),
+                        Type::arr(Term(7), Type::arr(Term(4), Term(0)))
+                    ),
+                    (
+                        Type::arr(Term(13), Term(13)),
+                        Type::arr(Type::arr(Var(Z(9)), Term(10)), Term(12))
+                    ),
+                    (
+                        Type::arr(Term(11), Term(11)),
+                        Type::arr(Var(Z(9)), Term(10))
+                    ),
+                ],
+                Some(vec![
+                    (Var(Z(9)), Term(10)),
+                    (Term(7), Type::arr(Term(4), Term(0))),
+                    (Var(Y(1, 0)), Term(4)),
+                    (Var(Z(1)), Term(2)),
+                ])
             );
         }
 
