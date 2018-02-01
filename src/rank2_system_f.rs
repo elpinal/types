@@ -116,9 +116,7 @@ impl Term {
 
     pub fn infer_type_trivial(self) -> Option<Type> {
         let (ty, n, _) = self.infer_type()?;
-        let v = iter::repeat(Restricted1::bottom())
-            .take(n)
-            .collect();
+        let v = iter::repeat(Restricted1::bottom()).take(n).collect();
         Some(Type { args: v, core: ty })
     }
 
@@ -299,7 +297,7 @@ mod tests {
     fn test_inference() {
         use self::Term::*;
         use self::asup::Type;
-        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0, 0)));
+        assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0, 1)));
         assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1, 0)));
         assert_eq!(
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
@@ -528,7 +526,7 @@ pub mod asup {
         Arr(Box<Type>, Box<Type>),
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub struct Instance(pub Vec<(Type, Type)>);
 
     pub struct Constructor {
@@ -835,7 +833,7 @@ pub mod asup {
     impl Context {
         fn new(x: usize) -> Self {
             Context {
-                ws: 0,
+                ws: 0, // TODO: Perhaps this is not necessary.
                 xs: x,
                 ys: 0,
             }
@@ -916,7 +914,7 @@ pub mod asup {
                     inst.add_var(Y(i, j), Y(i + 1, j))
                 }
             }
-            (ty, inst, ctx.ws)
+            (ty, inst, self.w)
         }
 
         fn record_fv(&mut self, n: usize) {
@@ -974,6 +972,25 @@ pub mod asup {
     mod tests {
         use super::*;
 
+        macro_rules! assert_construct {
+            ($th:expr, $ty:expr, $inst:expr, $ws:expr) => {
+                let mut c = Constructor::new();
+                assert_eq!(c.construct($th), ($ty, $inst, $ws));
+            }
+        }
+
+        #[test]
+        fn test_construct() {
+            use self::Var::*;
+            use self::Term::*;
+            assert_construct!(
+                Theta(0, vec![Var(0, 1)]),
+                Type::Term(1),
+                Instance(vec![(Type::Var(W(0, 0)), Type::Term(1))]),
+                1
+            );
+        }
+
         macro_rules! assert_reduce {
             ($v:expr, $t:expr) => {
                 let mut c = Constructor::new();
@@ -992,7 +1009,6 @@ pub mod asup {
                 vec![(Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2)))],
                 Some(vec![(Var(Z(1)), Term(2))])
             );
-
         }
 
         macro_rules! assert_reduce1 {
