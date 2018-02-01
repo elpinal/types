@@ -306,7 +306,7 @@ mod tests {
         assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1, 0)));
         assert_eq!(
             app!(abs!(Var(0, 1)), abs!(Var(0, 1))).infer_type(),
-            Some((Type::Term(9), 0, 0))
+            Some((Type::arr(Type::Term(10), Type::Term(10)), 0, 0))
         );
 
         let t = abs!(app!(
@@ -319,7 +319,10 @@ mod tests {
         assert_eq!(t.infer_type(), Some((Type::Term(9), 1, 0)));
 
         let t = app!(abs!(app!(Var(0, 1), abs!(Var(0, 2)))), abs!(Var(0, 1)));
-        assert_eq!(t.infer_type(), Some((Type::Term(15), 0, 0)));
+        assert_eq!(
+            t.infer_type(),
+            Some((Type::arr(Type::Term(11), Type::Term(11)), 0, 0))
+        );
     }
 
     #[test]
@@ -571,39 +574,65 @@ pub mod asup {
     }
 
     pub fn reduce(c: &Constructor, inst: Instance) -> Option<Vec<(Type, Type)>> {
-        let mut r = Reducer::from_constructor(c);
         let mut ps = inst.0;
+        let mut ret = Vec::new();
+        loop {
+            let (mut v, ps1, changed) = reduce0(c, ps)?;
+            ret.append(&mut v);
+            if !changed {
+                return Some(ret);
+            }
+            ps = ps1;
+        }
+    }
+
+    fn reduce0(
+        c: &Constructor,
+        mut ps: Vec<(Type, Type)>,
+    ) -> Option<(Vec<(Type, Type)>, Vec<(Type, Type)>, bool)> {
+        let mut r = Reducer::from_constructor(c);
         let mut v = Vec::new();
+        let mut ps1 = Vec::new();
+        let mut changed = false;
+        macro_rules! update {
+            ($ps:expr, $p0:expr) => {
+                $ps.into_iter()
+                    .map(|(t1, t2)| {
+                        (t1.replace(&$p0.0, &$p0.1), t2.replace(&$p0.0, &$p0.1))
+                    })
+                    .collect();
+            }
+        }
         loop {
             let p;
             match ps.pop() {
-                None => return Some(v),
+                None => return Some((v, ps1, changed)),
                 Some(x) => p = x,
             }
             let t1 = Box::new(p.0);
             let t2 = Box::new(p.1);
             if let Some(p0) = r.reduce1(&t1, &t2, &[]) {
                 ps.push((*t1, *t2));
-                ps = ps.into_iter()
-                    .map(|(t1, t2)| {
-                        (t1.replace(&p0.0, &p0.1), t2.replace(&p0.0, &p0.1))
-                    })
-                    .collect();
+                ps = update!(ps, p0);
+                ps1 = update!(ps1, p0);
                 v.push(p0);
+                changed = true;
             } else {
                 match reduce2(&t1, &t2, &[]) {
                     Err(_) => return None,
                     Ok(p0) => {
                         match p0 {
-                            None => (),
+                            None => {
+                                if t1 != t2 {
+                                    ps1.push((*t1, *t2));
+                                }
+                            }
                             Some(p0) => {
                                 ps.push((*t1, *t2));
-                                ps = ps.into_iter()
-                                    .map(|(t1, t2)| {
-                                        (t1.replace(&p0.0, &p0.1), t2.replace(&p0.0, &p0.1))
-                                    })
-                                    .collect();
+                                ps = update!(ps, p0);
+                                ps1 = update!(ps1, p0);
                                 v.push(p0);
+                                changed = true;
                             }
                         }
                     }
@@ -773,7 +802,7 @@ pub mod asup {
     }
 
     impl Type {
-        fn arr(t1: Type, t2: Type) -> Type {
+        pub fn arr(t1: Type, t2: Type) -> Type {
             Type::Arr(Box::new(t1), Box::new(t2))
         }
 
@@ -1105,6 +1134,49 @@ pub mod asup {
                 ]),
                 0
             );
+
+            assert_construct!(
+                Theta(
+                    0,
+                    vec![
+                        abs!(Term::Var(0, 1)),
+                        app!(Term::Var(0, 1), abs!(Term::Var(0, 2))),
+                    ],
+                ),
+                Term(15),
+                Instance(vec![
+                    (
+                        Type::arr(Term(5), Term(5)),
+                        Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(3), Term(3)),
+                        Type::arr(Var(Z(1)), Term(2))
+                    ),
+                    (
+                        Type::arr(Term(6), Term(6)),
+                        Type::arr(Var(Y(1, 0)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(8), Term(8)),
+                        Type::arr(Term(7), Type::arr(Term(4), Term(0)))
+                    ),
+                    (
+                        Type::arr(Term(16), Term(16)),
+                        Type::arr(Term(9), Type::arr(Term(13), Term(15)))
+                    ),
+                    (Var(Y(1, 0)), Term(9)),
+                    (
+                        Type::arr(Term(14), Term(14)),
+                        Type::arr(Type::arr(Var(Z(10)), Term(11)), Term(13))
+                    ),
+                    (
+                        Type::arr(Term(12), Term(12)),
+                        Type::arr(Var(Z(10)), Term(11))
+                    ),
+                ]),
+                0
+            );
         }
 
         macro_rules! assert_reduce {
@@ -1187,6 +1259,50 @@ pub mod asup {
                     ),
                 ],
                 Some(vec![(Term(12), Type::arr(Var(Z(9)), Term(10)))])
+            );
+
+            assert_reduce!(
+                vec![
+                    (
+                        Type::arr(Term(5), Term(5)),
+                        Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
+                    ),
+                    (Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2))),
+                    (
+                        Type::arr(Term(6), Term(6)),
+                        Type::arr(Var(Y(1, 0)), Term(4))
+                    ),
+                    (
+                        Type::arr(Term(8), Term(8)),
+                        Type::arr(Term(7), Type::arr(Term(4), Term(0)))
+                    ),
+                    (
+                        Type::arr(Term(16), Term(16)),
+                        Type::arr(Term(9), Type::arr(Term(13), Term(15)))
+                    ),
+                    (Var(Y(1, 0)), Term(9)),
+                    (
+                        Type::arr(Term(14), Term(14)),
+                        Type::arr(Type::arr(Var(Z(10)), Term(11)), Term(13))
+                    ),
+                    (
+                        Type::arr(Term(12), Term(12)),
+                        Type::arr(Var(Z(10)), Term(11))
+                    ),
+                ],
+                Some(vec![
+                    (Var(Z(10)), Term(11)),
+                    (Term(13), Type::arr(Term(11), Term(11))),
+                    (
+                        Term(9),
+                        Type::arr(Type::arr(Term(11), Term(11)), Term(15))
+                    ),
+                    (Term(7), Type::arr(Term(4), Term(0))),
+                    (Var(Y(1, 0)), Term(4)),
+                    (Var(Z(1)), Term(2)),
+                    (Term(4), Type::arr(Term(2), Term(2))),
+                    (Term(15), Type::arr(Term(11), Term(11))),
+                ])
             );
         }
 
