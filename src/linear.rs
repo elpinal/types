@@ -146,15 +146,15 @@ impl TypeCheck for Term {
     type Type = Type;
     type Ctx = Context;
 
-    fn type_of(&self, ctx: &Context) -> Self::Type {
+    fn type_of(&self, ctx: &Context) -> Option<Self::Type> {
         use self::Qual::*;
         use self::Term::*;
         qual!(Unrestricted, Pretype::Bool);
         match *self {
             Var(x, n) => {
-                let Type(q, pt) = ctx.get(x)?;
+                let &Type(q, ref pt) = ctx.get(x)?;
                 if q == Unrestricted {
-                    Some(Type(q, pt))
+                    Some(Type(q, *pt.clone()))
                 } else {
                     None
                 }
