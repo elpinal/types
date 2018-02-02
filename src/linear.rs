@@ -37,6 +37,12 @@ enum Pretype {
 
 struct Context(Vec<Type>);
 
+trait TypeCheck {
+    type Type;
+
+    fn type_of(&self) -> Self::Type;
+}
+
 impl PartialOrd for Qual {
     fn partial_cmp(&self, q: &Self) -> Option<Ordering> {
         use self::Qual::*;
