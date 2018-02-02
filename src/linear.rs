@@ -38,6 +38,18 @@ enum Pretype {
 #[derive(Clone, PartialEq)]
 struct Context(Vec<Type>);
 
+macro_rules! context {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut v = Vec::new();
+            $(
+                v.push($x);
+             )*
+                Context(v)
+        }
+    }
+}
+
 trait TypeCheck {
     type Type;
     type Ctx;
@@ -87,27 +99,9 @@ impl Iterator for Context {
 impl Div for Context {
     type Output = Option<Context>;
 
-    fn div(self, mut ctx: Self) -> Self::Output {
-        use self::Qual::*;
-        if ctx.is_empty() {
-            return Some(self);
-        }
-        match ctx.next()? {
-            x @ Type(Linear, _) => {
-                if ctx.contains(&x) {
-                    self.div(ctx)
-                } else {
-                    None
-                }
-            }
-            x @ Type(Unrestricted, _) => {
-                let mut ctx1 = self.div(ctx)?;
-                let i = ctx1.position(&x)?;
-                let mut ctx2 = ctx1.split_off(i);
-                ctx1.append(&mut ctx2);
-                return Some(ctx1);
-            }
-        }
+    fn div(mut self, ctx: Self) -> Self::Output {
+        self.div_mut(ctx)?;
+        Some(self)
     }
 }
 
@@ -139,6 +133,32 @@ impl Context {
     fn remove(&mut self, x: usize) {
         self.0.remove(x);
     }
+
+    fn push(&mut self, t: Type) {
+        self.0.push(t);
+    }
+
+    fn div_mut(&mut self, mut ctx: Self) -> Option<()> {
+        use self::Qual::*;
+        if ctx.is_empty() {
+            return Some(());
+        }
+        match ctx.next()? {
+            x @ Type(Linear, _) => {
+                if ctx.contains(&x) {
+                    self.div_mut(ctx)
+                } else {
+                    None
+                }
+            }
+            x @ Type(Unrestricted, _) => {
+                self.div_mut(ctx)?;
+                let i = Context::position(self, &x)?;
+                self.remove(i);
+                Some(())
+            }
+        }
+    }
 }
 
 macro_rules! qual {
@@ -167,6 +187,9 @@ impl TypeCheck for Term {
             }
             Bool(q, _) => Some(qual!(q, Pretype::Bool)),
             If(ref t1, ref t2, ref t3) => Term::type_of_if(t1, t2, t3, ctx),
+            Pair(q, ref t1, ref t2) => Term::type_of_pair(q, t1, t2, ctx),
+            Split(ref t1, ref t2) => Term::type_of_split(t1, t2, ctx),
+            Abs(q, ref ty, ref t) => Term::type_of_abs(q, ty, t, ctx),
             _ => unimplemented!(),
         }
     }
@@ -189,6 +212,42 @@ impl Term {
         } else {
             Some(ty2)
         }
+    }
+
+    fn type_of_pair(q: Qual, t1: &Term, t2: &Term, ctx: &mut Context) -> Option<Type> {
+        let ty1 = t1.type_of(ctx)?;
+        let ty2 = t2.type_of(ctx)?;
+        if !(ty1.can_appear_in(q) && ty2.can_appear_in(q)) {
+            return None;
+        }
+        Some(qual!(q, Pretype::Pair(ty1, ty2)))
+    }
+
+    fn type_of_split(t1: &Term, t2: &Term, ctx: &mut Context) -> Option<Type> {
+        let pt1 = t1.type_of(ctx)?.pretype();
+        if let Pretype::Pair(ty11, ty12) = pt1 {
+            ctx.push(ty11.clone());
+            ctx.push(ty12.clone());
+            let ty2 = t2.type_of(ctx)?;
+            ctx.div_mut(context![ty11, ty12])?;
+            Some(ty2)
+        } else {
+            None
+        }
+    }
+
+    fn type_of_abs(q: Qual, ty1: &Type, t: &Term, ctx: &mut Context) -> Option<Type> {
+        let mut ctx1 = ctx.clone();
+        ctx1.push(ty1.clone());
+        let ty2 = t.type_of(&mut ctx1)?;
+        if q == Qual::Unrestricted {
+            ctx1.div_mut(context![ty1.clone()])?;
+            if *ctx != ctx1 {
+                return None;
+            }
+        }
+        ctx.div_mut(context![ty1.clone()])?;
+        Some(qual!(q, Pretype::Arr(ty1.clone(), ty2)))
     }
 }
 
