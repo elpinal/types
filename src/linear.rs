@@ -153,10 +153,9 @@ impl TypeCheck for Term {
         match *self {
             Var(x, n) => {
                 let &Type(q, ref pt) = ctx.get(x)?;
-                if q == Unrestricted {
-                    Some(Type(q, *pt.clone()))
-                } else {
-                    None
+                match q {
+                    Unrestricted => Some(Type(q, *pt.clone())),
+                    Linear => None,
                 }
             }
         }
