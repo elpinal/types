@@ -155,7 +155,10 @@ impl TypeCheck for Term {
                 let &Type(q, ref pt) = ctx.get(x)?;
                 match q {
                     Unrestricted => Some(Type(q, *pt.clone())),
-                    Linear => None,
+                    Linear => {
+                        ctx.remove(x);
+                        Some(Type(q, *pt.clone()))
+                    }
                 }
             }
         }
