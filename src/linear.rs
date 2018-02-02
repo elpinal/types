@@ -164,9 +164,7 @@ impl TypeCheck for Term {
                     }
                 }
             }
-            Bool(q, b) => {
-                Some(q, Type(q, Pretype::Bool))
-            }
+            Bool(q, b) => Some(q, Type(q, Pretype::Bool)),
         }
     }
 }
