@@ -130,6 +130,10 @@ impl Context {
     fn append(&mut self, other: &mut Self) {
         self.0.append(&mut other.0);
     }
+
+    fn get(&self, x: usize) -> Option<&Type> {
+        self.0.get(x)
+    }
 }
 
 macro_rules! qual {
