@@ -140,8 +140,9 @@ macro_rules! qual {
 
 impl TypeCheck for Term {
     type Type = Type;
+    type Ctx = Context;
 
-    fn type_of(&self) -> Self::Type {
+    fn type_of(&self, ctx: &Context) -> Self::Type {
         use self::Qual::*;
         use self::Term::*;
         qual!(Unrestricted, Pretype::Bool);
