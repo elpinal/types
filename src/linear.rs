@@ -39,8 +39,9 @@ struct Context(Vec<Type>);
 
 trait TypeCheck {
     type Type;
+    type Ctx;
 
-    fn type_of(&self) -> Self::Type;
+    fn type_of(&self, ctx: &Self::Ctx) -> Self::Type;
 }
 
 impl PartialOrd for Qual {
