@@ -9,6 +9,7 @@ pub mod rank2_intersection;
 pub mod rank2_intersection2;
 pub mod rank2_system_f;
 pub mod linear;
+pub mod label_selective;
 
 pub trait Shift: Sized {
     fn shift_above(self, c: usize, d: isize) -> Self;
