@@ -153,7 +153,6 @@ impl TypeCheck for Term {
     fn type_of(&self, ctx: &mut Context) -> Option<Type> {
         use self::Qual::*;
         use self::Term::*;
-        qual!(Unrestricted, Pretype::Bool);
         match *self {
             Var(x, n) => {
                 let &Type(q, ref pt) = ctx.get(x)?;
