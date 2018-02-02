@@ -25,8 +25,10 @@ enum Bool {
     False,
 }
 
+#[derive(PartialEq)]
 struct Type(Qual, Box<Pretype>);
 
+#[derive(PartialEq)]
 enum Pretype {
     Bool,
     Pair(Type, Type),
@@ -77,24 +79,25 @@ impl Iterator for Context {
 impl Div for Context {
     type Output = Option<Context>;
 
-    fn div(self, ctx: Self) -> Self::Output {
+    fn div(self, mut ctx: Self) -> Self::Output {
         use self::Qual::*;
         if ctx.is_empty() {
             return Some(self);
         }
         match ctx.next()? {
-            Type(Linear, _) as x => {
+            x @ Type(Linear, _) => {
                 if ctx.contains(&x) {
-                    return self.div(ctx);
+                    self.div(ctx)
+                } else {
+                    None
                 }
             }
-            Type(Unrestricted, _) as x => {
-                let ctx1 = self.div(ctx)?;
-                let i = ctx1.position(x);
-                if let (mut ctx2, ctx3) = ctx1.split_off(i) {
-                    ctx2.append(ctx3);
-                    return Some(ctx2);
-                }
+            x @ Type(Unrestricted, _) => {
+                let mut ctx1 = self.div(ctx)?;
+                let i = ctx1.position(&x)?;
+                let mut ctx2 = ctx1.split_off(i);
+                ctx1.append(&mut ctx2);
+                return Some(ctx1);
             }
         }
     }
@@ -107,6 +110,18 @@ impl Context {
 
     fn contains(&self, t: &Type) -> bool {
         self.0.contains(t)
+    }
+
+    fn position(&self, t2: &Type) -> Option<usize> {
+        self.0.iter().position(|t1| t1 == t2)
+    }
+
+    fn split_off(&mut self, at: usize) -> Self {
+        Context(self.0.split_off(at))
+    }
+
+    fn append(&mut self, other: &mut Self) {
+        self.0.append(&mut other.0);
     }
 }
 
