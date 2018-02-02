@@ -41,7 +41,7 @@ trait TypeCheck {
     type Type;
     type Ctx;
 
-    fn type_of(&self, ctx: &Self::Ctx) -> Self::Type;
+    fn type_of(&self, ctx: &Self::Ctx) -> Option<Self::Type>;
 }
 
 impl PartialOrd for Qual {
