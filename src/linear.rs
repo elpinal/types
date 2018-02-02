@@ -152,7 +152,12 @@ impl TypeCheck for Term {
         qual!(Unrestricted, Pretype::Bool);
         match *self {
             Var(x, n) => {
-                //
+                let Type(q, pt) = ctx.get(x)?;
+                if q == Unrestricted {
+                    Some(Type(q, pt))
+                } else {
+                    None
+                }
             }
         }
     }
