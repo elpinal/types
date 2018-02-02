@@ -25,16 +25,17 @@ enum Bool {
     False,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 struct Type(Qual, Box<Pretype>);
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum Pretype {
     Bool,
     Pair(Type, Type),
     Arr(Type, Type),
 }
 
+#[derive(Clone, PartialEq)]
 struct Context(Vec<Type>);
 
 trait TypeCheck {
@@ -154,18 +155,46 @@ impl TypeCheck for Term {
         use self::Qual::*;
         use self::Term::*;
         match *self {
-            Var(x, n) => {
-                let &Type(q, ref pt) = ctx.get(x)?;
+            Var(x, _) => {
+                let Type(q, pt) = ctx.get(x)?.clone();
                 match q {
-                    Unrestricted => Some(Type(q, *pt.clone())),
+                    Unrestricted => Some(Type(q, pt)),
                     Linear => {
                         ctx.remove(x);
-                        Some(Type(q, *pt.clone()))
+                        Some(Type(q, pt))
                     }
                 }
             }
-            Bool(q, b) => Some(q, Type(q, Pretype::Bool)),
+            Bool(q, _) => Some(qual!(q, Pretype::Bool)),
+            If(ref t1, ref t2, ref t3) => Term::type_of_if(t1, t2, t3, ctx),
+            _ => unimplemented!(),
         }
+    }
+}
+
+impl Term {
+    fn type_of_if(t1: &Term, t2: &Term, t3: &Term, ctx: &mut Context) -> Option<Type> {
+        let pt = t1.type_of(ctx)?.pretype();
+        if pt != Pretype::Bool {
+            return None;
+        }
+        let ty2 = t2.type_of(ctx)?;
+        let mut ctx1 = ctx.clone();
+        let ty3 = t3.type_of(&mut ctx1)?;
+        // TODO:
+        // On Linear type system, since contexts have the exchange property, the
+        // equality check for two contexts might need consider it. Need investigation.
+        if *ctx != ctx1 || ty2 != ty3 {
+            None
+        } else {
+            Some(ty2)
+        }
+    }
+}
+
+impl Type {
+    fn pretype(self) -> Pretype {
+        *self.1
     }
 }
 
