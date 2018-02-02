@@ -134,6 +134,10 @@ impl Context {
     fn get(&self, x: usize) -> Option<&Type> {
         self.0.get(x)
     }
+
+    fn remove(&mut self, x: usize) {
+        self.0.remove(x);
+    }
 }
 
 macro_rules! qual {
