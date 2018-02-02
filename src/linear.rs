@@ -165,6 +165,9 @@ impl TypeCheck for Term {
                     }
                 }
             }
+            Bool(b) => {
+                //
+            }
         }
     }
 }
