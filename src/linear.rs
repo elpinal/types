@@ -131,6 +131,12 @@ impl Context {
     }
 }
 
+macro_rules! qual {
+    ($q:expr, $t:expr) => {
+        Type($q, Box::new($t))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
