@@ -41,7 +41,7 @@ trait TypeCheck {
     type Type;
     type Ctx;
 
-    fn type_of(&self, ctx: &Self::Ctx) -> Option<(Self::Type, Self::Ctx)>;
+    fn type_of(&self, ctx: &mut Self::Ctx) -> Option<Self::Type>;
 }
 
 impl PartialOrd for Qual {
@@ -150,7 +150,7 @@ impl TypeCheck for Term {
     type Type = Type;
     type Ctx = Context;
 
-    fn type_of(&self, ctx: &Context) -> Option<(Type, Context)> {
+    fn type_of(&self, ctx: &mut Context) -> Option<Type> {
         use self::Qual::*;
         use self::Term::*;
         qual!(Unrestricted, Pretype::Bool);
@@ -158,10 +158,10 @@ impl TypeCheck for Term {
             Var(x, n) => {
                 let &Type(q, ref pt) = ctx.get(x)?;
                 match q {
-                    Unrestricted => Some((Type(q, *pt.clone()), ctx)),
+                    Unrestricted => Some(Type(q, *pt.clone())),
                     Linear => {
                         ctx.remove(x);
-                        Some((Type(q, *pt.clone()), ctx))
+                        Some(Type(q, *pt.clone()))
                     }
                 }
             }
