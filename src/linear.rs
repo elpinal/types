@@ -137,6 +137,21 @@ macro_rules! qual {
     }
 }
 
+impl TypeCheck for Term {
+    type Type = Type;
+
+    fn type_of(&self) -> Self::Type {
+        use self::Qual::*;
+        use self::Term::*;
+        qual!(Unrestricted, Pretype::Bool);
+        match *self {
+            Var(x, n) => {
+                //
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
