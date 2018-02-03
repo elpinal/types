@@ -197,7 +197,6 @@ impl TypeCheck for Term {
             Split(ref t1, ref t2) => Term::type_of_split(t1, t2, ctx),
             Abs(q, ref ty, ref t) => Term::type_of_abs(q, ty, t, ctx),
             App(ref t1, ref t2) => Term::type_of_app(t1, t2, ctx),
-            _ => unimplemented!(),
         }
     }
 }
