@@ -138,12 +138,16 @@ impl Context {
         self.0.push(t);
     }
 
+    fn pop(&mut self) -> Option<Type> {
+        self.0.pop()
+    }
+
     fn div_mut(&mut self, mut ctx: Self) -> Option<()> {
         use self::Qual::*;
         if ctx.is_empty() {
             return Some(());
         }
-        match ctx.next()? {
+        match ctx.pop()? {
             x @ Type(Linear, _) => {
                 if ctx.contains(&x) {
                     self.div_mut(ctx)
