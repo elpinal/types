@@ -90,13 +90,13 @@ impl Containment for Context {
     }
 }
 
-impl Iterator for Context {
-    type Item = Type;
-    /// Returns a type which the most recently bound variable has.
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.pop()
-    }
-}
+//impl Iterator for Context {
+//    type Item = Type;
+//    /// Returns a type which the most recently bound variable has.
+//    fn next(&mut self) -> Option<Self::Item> {
+//        self.0.pop()
+//    }
+//}
 
 impl Div for Context {
     type Output = Option<Context>;
