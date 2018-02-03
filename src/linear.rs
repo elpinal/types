@@ -4,6 +4,8 @@ use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::ops::Div;
 
+use context::Ctx;
+
 #[derive(Clone, Copy, PartialEq)]
 enum Qual {
     Linear,
