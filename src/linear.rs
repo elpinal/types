@@ -263,7 +263,8 @@ impl Term {
         let ty2 = t2.type_of(ctx)?;
         match ty1 {
             Type(q, pt) => {
-                match *pt {
+                let pt = *pt;
+                match pt {
                     Arr(ty11, ty12) => {
                         if ty11 != ty2 {
                             None
