@@ -1,0 +1,3 @@
+trait Ctx {
+    type Item;
+}
