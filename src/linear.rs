@@ -266,9 +266,10 @@ impl Term {
                 match *pt {
                     Arr(ty11, ty12) => {
                         if ty11 != ty2 {
-                            return None;
+                            None
+                        } else {
+                            Some(ty12)
                         }
-                        Some(ty12);
                     }
                     _ => None,
                 }
