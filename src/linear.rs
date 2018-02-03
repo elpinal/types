@@ -268,9 +268,9 @@ impl Term {
                         if ty11 != ty2 {
                             return None;
                         }
-                        return Some(ty12);
+                        Some(ty12);
                     }
-                    _ => return None,
+                    _ => None,
                 }
             }
         }
