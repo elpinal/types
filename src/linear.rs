@@ -178,7 +178,6 @@ impl TypeCheck for Term {
     type Ctx = Context;
 
     fn type_of(&self, ctx: &mut Context) -> Option<Type> {
-        use self::Qual::*;
         use self::Term::*;
         match *self {
             Var(x, _) => Term::type_of_var(x, ctx),
@@ -194,6 +193,7 @@ impl TypeCheck for Term {
 
 impl Term {
     fn type_of_var(x: usize, ctx: &mut Context) -> Option<Type> {
+        use self::Qual::*;
         let Type(q, pt) = ctx.get(x)?.clone();
         match q {
             Unrestricted => Some(Type(q, pt)),
