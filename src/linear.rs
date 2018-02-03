@@ -260,14 +260,20 @@ impl Term {
     fn type_of_app(t1: &Term, t2: &Term, ctx: &mut Context) -> Option<Type> {
         use self::Pretype::*;
         let ty1 = t1.type_of(ctx);
+        let ty2 = t2.type_of(ctx);
         match ty1 {
             Type(q, pt) => {
                 match *pt {
-                    //
+                    Arr(ty11, ty12) => {
+                        if ty11 != ty2 {
+                            return None;
+                        }
+                        return Some(ty12);
+                    }
+                    _ => return None,
                 }
             }
         }
-        let ty2 = t2.type_of(ctx);
     }
 }
 
