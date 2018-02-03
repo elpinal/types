@@ -261,7 +261,7 @@ impl Term {
         let ty1 = t1.type_of(ctx)?;
         let ty2 = t2.type_of(ctx)?;
         match ty1 {
-            Type(q, pt) => {
+            Type(_, pt) => {
                 let pt = *pt;
                 match pt {
                     Arr(ty11, ty12) => {
