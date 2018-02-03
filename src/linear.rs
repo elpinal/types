@@ -256,6 +256,19 @@ impl Term {
         ctx.div_mut(context![ty1.clone()])?;
         Some(qual!(q, Pretype::Arr(ty1.clone(), ty2)))
     }
+
+    fn type_of_app(t1: &Term, t2: &Term, ctx: &mut Context) -> Option<Type> {
+        use self::Pretype::*;
+        let ty1 = t1.type_of(ctx);
+        match ty1 {
+            Type(q, pt) => {
+                match *pt {
+                    //
+                }
+            }
+        }
+        let ty2 = t2.type_of(ctx);
+    }
 }
 
 impl Type {
