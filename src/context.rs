@@ -1,3 +1,3 @@
-trait Ctx {
+pub trait Ctx {
     type Item;
 }
