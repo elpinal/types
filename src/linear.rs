@@ -264,13 +264,7 @@ impl Term {
             Type(_, pt) => {
                 let pt = *pt;
                 match pt {
-                    Arr(ty11, ty12) => {
-                        if ty11 != ty2 {
-                            None
-                        } else {
-                            Some(ty12)
-                        }
-                    }
+                    Arr(ty11, ty12) => if ty11 != ty2 { None } else { Some(ty12) },
                     _ => None,
                 }
             }
