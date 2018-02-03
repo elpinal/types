@@ -181,16 +181,7 @@ impl TypeCheck for Term {
         use self::Qual::*;
         use self::Term::*;
         match *self {
-            Var(x, _) => {
-                let Type(q, pt) = ctx.get(x)?.clone();
-                match q {
-                    Unrestricted => Some(Type(q, pt)),
-                    Linear => {
-                        ctx.remove(x);
-                        Some(Type(q, pt))
-                    }
-                }
-            }
+            Var(x, _) => Term::type_of_var(x),
             Bool(q, _) => Some(qual!(q, Pretype::Bool)),
             If(ref t1, ref t2, ref t3) => Term::type_of_if(t1, t2, t3, ctx),
             Pair(q, ref t1, ref t2) => Term::type_of_pair(q, t1, t2, ctx),
@@ -202,6 +193,17 @@ impl TypeCheck for Term {
 }
 
 impl Term {
+    fn type_of_var(x: usize) -> Option<Type> {
+        let Type(q, pt) = ctx.get(x)?.clone();
+        match q {
+            Unrestricted => Some(Type(q, pt)),
+            Linear => {
+                ctx.remove(x);
+                Some(Type(q, pt))
+            }
+        }
+    }
+
     fn type_of_if(t1: &Term, t2: &Term, t3: &Term, ctx: &mut Context) -> Option<Type> {
         let pt = t1.type_of(ctx)?.pretype();
         if pt != Pretype::Bool {
