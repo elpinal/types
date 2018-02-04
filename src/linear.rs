@@ -61,7 +61,8 @@ pub enum Error {
     ExpectArrow(Pretype),
     ExpectPair(Pretype),
     Containment(Qual, Type, Type),
-    UnusedLinear(usize),
+    UnusedLinear(Type),
+    LinearInUnAbs(Context),
 }
 
 type Result<T> = result::Result<T, Error>;
@@ -142,18 +143,19 @@ impl Context {
         }
     }
 
-    fn trancate(&mut self, l: usize, qs: &[Qual]) -> Result<()> {
+    fn trancate(&mut self, qs: &[Qual]) -> Result<()> {
         use self::Qual::*;
-        let uns = qs.iter().fold(
-            0,
-            |x, &q| if q == Unrestricted { x + 1 } else { x },
-        );
-        if self.len() != l + uns {
-            // Some of linear variables did not used.
-            return Err(Error::UnusedLinear(qs.len() - uns));
-        }
-        for _ in 0..uns {
-            let _ = self.pop().expect("trancate: unexpected error");
+        for q in qs {
+            match *q {
+                Linear => {
+                    if let Some(ty) = self.0.pop().expect("unexpected error") {
+                        return Err(Error::UnusedLinear(ty));
+                    }
+                }
+                Unrestricted => {
+                    let _ = self.0.pop();
+                }
+            }
         }
         Ok(())
     }
@@ -242,21 +244,23 @@ impl Term {
         let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair().map_err(
             |pt| Error::ExpectPair(pt),
         )?;
-        let l = ctx.len();
         let q1 = ty11.qual();
         let q2 = ty12.qual();
         ctx.push(ty11);
         ctx.push(ty12);
         let ty2 = t2.type_of(ctx)?;
-        ctx.trancate(l, &[q1, q2])?;
+        ctx.trancate(&[q2, q1])?;
         Ok(ty2)
     }
 
     fn type_of_abs(q: Qual, ty1: &Type, t: &Term, ctx: &mut Context) -> Result<Type> {
-        let l = ctx.len();
+        let v: Vec<bool> = ctx.0.iter().map(|ty| ty.is_some()).collect();
         ctx.push(ty1.clone());
         let ty2 = t.type_of(ctx)?;
-        ctx.trancate(l, &[ty1.qual()])?;
+        ctx.trancate(&[ty1.qual()])?;
+        if q == Qual::Unrestricted && ctx.0.iter().enumerate().any(|(x, ty)| v[x] != ty.is_some()) {
+            return Err(Error::LinearInUnAbs(ctx.clone()));
+        }
         Ok(qual!(q, Pretype::Arr(ty1.clone(), ty2)))
     }
 
@@ -342,28 +346,32 @@ mod tests {
         assert_eq!(ctx.index_from_outermost(1), Some(0));
     }
 
+    macro_rules! qual_some {
+        ($q:expr, $t:expr) => (Some(qual!($q, $t)))
+    }
+
     #[test]
     fn test_context_trancate() {
         use self::Qual::*;
         use self::Pretype::*;
 
-        let mut ctx = context![qual!(Linear, Bool)];
-        assert!(ctx.trancate(1, &[Linear]).is_ok());
+        let mut ctx = Context(vec![qual_some!(Linear, Bool), None]);
+        assert!(ctx.trancate(&[Linear]).is_ok());
 
-        let mut ctx = context![qual!(Linear, Bool)];
-        assert!(ctx.trancate(0, &[Linear]).is_err());
+        let mut ctx = Context(vec![qual_some!(Linear, Bool)]);
+        assert!(ctx.trancate(&[Linear]).is_err());
 
-        let mut ctx = context![qual!(Linear, Bool)];
-        assert!(ctx.trancate(0, &[Unrestricted]).is_ok());
+        let mut ctx = Context(vec![qual_some!(Linear, Bool)]);
+        assert!(ctx.trancate(&[Unrestricted]).is_ok());
 
-        let mut ctx = context![qual!(Unrestricted, Bool)];
-        assert!(ctx.trancate(0, &[Unrestricted]).is_ok());
+        let mut ctx = Context(vec![qual_some!(Unrestricted, Bool)]);
+        assert!(ctx.trancate(&[Unrestricted]).is_ok());
 
-        let mut ctx = context![qual!(Unrestricted, Bool), qual!(Unrestricted, Bool)];
-        assert!(ctx.trancate(0, &[Unrestricted]).is_err());
-
-        let mut ctx = context![qual!(Unrestricted, Bool), qual!(Unrestricted, Bool)];
-        assert!(ctx.trancate(1, &[Unrestricted]).is_ok());
+        let mut ctx = Context(vec![
+            qual_some!(Unrestricted, Bool),
+            qual_some!(Unrestricted, Bool),
+        ]);
+        assert!(ctx.trancate(&[Unrestricted]).is_ok());
     }
 
     macro_rules! assert_type {
