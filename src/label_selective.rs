@@ -11,6 +11,37 @@ pub mod symbolic {
     }
 
     impl Term {
+        fn eval(&mut self) -> bool {
+            loop {
+                if self.eval1() {
+                    changed = true;
+                } else {
+                    return changed;
+                }
+            }
+        }
+
+        fn eval1(&mut self) -> bool {
+            use self::Term::*;
+            match *self {
+                Var(..) => false,
+                Abs(..) => false,
+                App(ref l, ref t1, ref t2) => {
+                    match *t1 {
+                        Var(..) => t2.eval1(),
+                        Abs(ref m, ref t) => {
+                            if l == m {
+                                t.subst_top(&t2);
+                                return true;
+                            }
+                            t1.lift(l)
+                        }
+                        App(ref m, ref u1, ref u2) => if !t1.eval1() { t2.eval1() } else { true },
+                    }
+                }
+            }
+        }
+
         fn map_ref<F>(&mut self, onvar: &F, c: usize)
         where
             F: Fn(usize, usize, usize, &mut Self),
@@ -25,6 +56,32 @@ pub mod symbolic {
                     t1.map_ref(onvar, c);
                     t2.map_ref(onvar, c);
                 }
+            }
+        }
+
+        fn lift(&mut self, l: String) -> bool {
+            use self::Term::*;
+            match *self {
+                Abs(ref m, ref t) => {
+                    if m == l {
+                        return false;
+                    }
+                    if t.lift() {
+                        return true;
+                    }
+                    match *t {
+                        Abs(ref n, ref t) => {
+                            if n == l {
+                                t.swap(0, 1);
+                                *self = Abs(n, Abs(m, t));
+                                return true;
+                            }
+                            return false;
+                        }
+                        _ => false,
+                    }
+                }
+                _ => self.eval1(),
             }
         }
     }
