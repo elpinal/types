@@ -10,6 +10,25 @@ pub mod symbolic {
         App(String, Box<Term>, Box<Term>),
     }
 
+    impl Term {
+        fn map_ref<F>(&mut self, onvar: &F, c: usize)
+        where
+            F: Fn(usize, usize, usize, &mut Self),
+        {
+            use self::Term::*;
+            match self {
+                &mut Var(x, n) => onvar(c, x, n, self),
+                &mut Abs(_, ref mut t) => {
+                    t.map_ref(onvar, c + 1);
+                }
+                &mut App(_, ref mut t1, ref mut t2) => {
+                    t1.map_ref(onvar, c);
+                    t2.map_ref(onvar, c);
+                }
+            }
+        }
+    }
+
     impl ShiftRef for Term {
         fn shift_above_ref(&mut self, c: usize, d: isize) {
             use self::Term::*;
