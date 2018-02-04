@@ -79,26 +79,6 @@ impl Containment for Context {
 }
 
 impl Context {
-    fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    fn contains(&self, t: &Type) -> bool {
-        self.0.contains(t)
-    }
-
-    fn position(&self, t2: &Type) -> Option<usize> {
-        self.0.iter().position(|t1| t1 == t2)
-    }
-
-    fn split_off(&mut self, at: usize) -> Self {
-        Context(self.0.split_off(at))
-    }
-
-    fn append(&mut self, other: &mut Self) {
-        self.0.append(&mut other.0);
-    }
-
     fn len(&self) -> usize {
         self.0.len()
     }
