@@ -380,18 +380,33 @@ mod tests {
                 let mut ctx = context![$( $x ),*];
                 assert_eq!($t.type_of(&mut ctx), $ty);
             }
+        };
+
+        ($t:expr, [ $( $x:expr, )* ], $ty:expr) => {
+            {
+                let mut ctx = context![$( $x ),*];
+                assert_eq!($t.type_of(&mut ctx), $ty);
+            }
         }
     }
 
     macro_rules! typable {
         ($t:expr, [ $( $x:expr ),* ], $ty:expr) => {
-            { assert_type!($t, [$( $x ),*], Some($ty)); }
+            { assert_type!($t, [$( $x ),*], Ok($ty)); }
+        };
+
+        ($t:expr, [ $( $x:expr, )* ], $ty:expr) => {
+            { assert_type!($t, [$( $x ),*], Ok($ty)); }
         }
     }
 
     macro_rules! not_typable {
-        ($t:expr, [ $( $x:expr ),* ]) => {
-            { assert_type!($t, [$( $x ),*], None); }
+        ($t:expr, [ $( $x:expr ),* ], $e:expr) => {
+            { assert_type!($t, [$( $x ),*], Err($e)); }
+        };
+
+        ($t:expr, [ $( $x:expr, )* ], $e:expr) => {
+            { assert_type!($t, [$( $x ),*], Err($e)); }
         }
     }
 
@@ -445,6 +460,38 @@ mod tests {
                 ),
             ],
             qual!(Unrestricted, Pretype::Bool)
+        );
+
+        typable!(
+            Term::abs(
+                Unrestricted,
+                qual!(Linear, Pretype::Bool),
+                Term::abs(
+                    Linear,
+                    qual!(
+                        Linear,
+                        Pretype::Arr(qual!(Linear, Pretype::Bool), qual!(Linear, Pretype::Bool))
+                    ),
+                    Term::app(Var(0, 2), Var(1, 2)),
+                ),
+            ),
+            [],
+            qual!(
+                Unrestricted,
+                Pretype::Arr(
+                    qual!(Linear, Pretype::Bool),
+                    qual!(
+                        Linear,
+                        Pretype::Arr(
+                            qual!(
+                                Linear,
+                                Pretype::Arr(qual!(Linear, Pretype::Bool), qual!(Linear, Pretype::Bool))
+                            ),
+                            qual!(Linear, Pretype::Bool),
+                        )
+                    ),
+                )
+            )
         );
     }
 }
