@@ -261,16 +261,10 @@ impl Term {
     }
 
     fn type_of_abs(q: Qual, ty1: &Type, t: &Term, ctx: &mut Context) -> Option<Type> {
-        let mut ctx1 = ctx.clone();
-        ctx1.push(ty1.clone());
-        let ty2 = t.type_of(&mut ctx1)?;
-        if q == Qual::Unrestricted {
-            ctx1.div_mut(context![ty1.clone()])?;
-            if *ctx != ctx1 {
-                return None;
-            }
-        }
-        ctx.div_mut(context![ty1.clone()])?;
+        let l = ctx.len();
+        ctx.push(ty1.clone());
+        let ty2 = t.type_of(ctx)?;
+        ctx.trancate(l, &[ty1.qual()])?;
         Some(qual!(q, Pretype::Arr(ty1.clone(), ty2)))
     }
 
