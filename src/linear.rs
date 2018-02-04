@@ -149,6 +149,22 @@ impl Context {
         self.0.pop()
     }
 
+    fn trancate(&mut self, l: usize, qs: &[Qual]) -> Option<()> {
+        use self::Qual::*;
+        let uns = qs.iter().fold(
+            0,
+            |x, &q| if q == Unrestricted { x + 1 } else { x },
+        );
+        if self.len() != l + uns {
+            return None; // Some of linear variables did not used.
+        }
+        for _ in 0..uns {
+            let _ = self.pop()?;
+        }
+        Some(())
+    }
+
+    // TODO: remove this.
     fn div_mut(&mut self, mut ctx: Self) -> Option<()> {
         use self::Qual::*;
         if ctx.is_empty() {
@@ -210,8 +226,8 @@ impl Term {
         if pt != Pretype::Bool {
             return None;
         }
-        let ty2 = t2.type_of(ctx)?;
         let mut ctx1 = ctx.clone();
+        let ty2 = t2.type_of(ctx)?;
         let ty3 = t3.type_of(&mut ctx1)?;
         // TODO:
         // On Linear type system, since contexts have the exchange property, the
@@ -233,16 +249,15 @@ impl Term {
     }
 
     fn type_of_split(t1: &Term, t2: &Term, ctx: &mut Context) -> Option<Type> {
-        let pt1 = t1.type_of(ctx)?.pretype();
-        if let Pretype::Pair(ty11, ty12) = pt1 {
-            ctx.push(ty11.clone());
-            ctx.push(ty12.clone());
-            let ty2 = t2.type_of(ctx)?;
-            ctx.div_mut(context![ty11, ty12])?;
-            Some(ty2)
-        } else {
-            None
-        }
+        let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair()?;
+        let l = ctx.len();
+        let q1 = ty11.qual();
+        let q2 = ty12.qual();
+        ctx.push(ty11);
+        ctx.push(ty12);
+        let ty2 = t2.type_of(ctx)?;
+        ctx.trancate(l, &[q1, q2])?;
+        Some(ty2)
     }
 
     fn type_of_abs(q: Qual, ty1: &Type, t: &Term, ctx: &mut Context) -> Option<Type> {
@@ -276,8 +291,22 @@ impl Term {
 }
 
 impl Type {
+    fn qual(&self) -> Qual {
+        self.0
+    }
+
     fn pretype(self) -> Pretype {
         *self.1
+    }
+}
+
+impl Pretype {
+    fn pair(self) -> Option<(Type, Type)> {
+        if let Pretype::Pair(t1, t2) = self {
+            Some((t1, t2))
+        } else {
+            None
+        }
     }
 }
 
