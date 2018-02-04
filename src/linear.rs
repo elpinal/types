@@ -46,8 +46,8 @@ macro_rules! context {
             let mut v = Vec::new();
             $(
                 v.push($x);
-             )*
-                Context(v)
+            )*
+            Context(v)
         }
     }
 }
@@ -327,5 +327,29 @@ mod tests {
         assert!(Linear >= Linear);
 
         assert!(!(Unrestricted <= Linear));
+    }
+
+    #[test]
+    fn test_context_trancate() {
+        use self::Qual::*;
+        use self::Pretype::*;
+
+        let mut ctx = context![qual!(Linear, Bool)];
+        assert!(ctx.trancate(1, &[Linear]).is_some());
+
+        let mut ctx = context![qual!(Linear, Bool)];
+        assert!(ctx.trancate(0, &[Linear]).is_none());
+
+        let mut ctx = context![qual!(Linear, Bool)];
+        assert!(ctx.trancate(0, &[Unrestricted]).is_some());
+
+        let mut ctx = context![qual!(Unrestricted, Bool)];
+        assert!(ctx.trancate(0, &[Unrestricted]).is_some());
+
+        let mut ctx = context![qual!(Unrestricted, Bool), qual!(Unrestricted, Bool)];
+        assert!(ctx.trancate(0, &[Unrestricted]).is_none());
+
+        let mut ctx = context![qual!(Unrestricted, Bool), qual!(Unrestricted, Bool)];
+        assert!(ctx.trancate(1, &[Unrestricted]).is_some());
     }
 }
