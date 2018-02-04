@@ -128,12 +128,17 @@ impl Context {
         self.0.append(&mut other.0);
     }
 
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
     fn get(&self, x: usize) -> Option<&Type> {
-        self.0.get(x)
+        self.0.get(self.len() - x - 1)
     }
 
     fn remove(&mut self, x: usize) {
-        self.0.remove(x);
+        let at = self.len() - x - 1;
+        self.0.remove(at);
     }
 
     fn push(&mut self, t: Type) {
@@ -193,15 +198,11 @@ impl TypeCheck for Term {
 
 impl Term {
     fn type_of_var(x: usize, ctx: &mut Context) -> Option<Type> {
-        use self::Qual::*;
         let Type(q, pt) = ctx.get(x)?.clone();
-        match q {
-            Unrestricted => Some(Type(q, pt)),
-            Linear => {
-                ctx.remove(x);
-                Some(Type(q, pt))
-            }
+        if q == Qual::Linear {
+            ctx.remove(x);
         }
+        Some(Type(q, pt))
     }
 
     fn type_of_if(t1: &Term, t2: &Term, t3: &Term, ctx: &mut Context) -> Option<Type> {
