@@ -12,6 +12,7 @@ pub enum Qual {
     Unrestricted,
 }
 
+#[derive(Debug)]
 pub enum Term {
     Var(usize, usize),
     Bool(Qual, Bool),
@@ -22,6 +23,7 @@ pub enum Term {
     App(Box<Term>, Box<Term>),
 }
 
+#[derive(Debug)]
 pub enum Bool {
     True,
     False,
@@ -38,7 +40,9 @@ enum Pretype {
 }
 
 #[derive(Clone, PartialEq)]
-pub struct Context(Vec<Type>);
+pub struct Context(Vec<Option<Type>>);
+
+struct Iter<'a>(&'a Vec<Option<Type>>, usize);
 
 pub trait TypeCheck {
     type Type;
@@ -74,21 +78,25 @@ impl Containment for Type {
 
 impl Containment for Context {
     fn can_appear_in(&self, q: Qual) -> bool {
-        self.0.iter().all(|ty| ty.can_appear_in(q))
+        self.iter().all(|ty| ty.can_appear_in(q))
     }
 }
 
 impl Context {
+    fn iter(&self) -> Iter {
+        Iter(&self.0, self.0.len())
+    }
+
     fn len(&self) -> usize {
-        self.0.len()
+        self.iter().count()
+    }
+
+    fn get(&self, x: usize) -> Option<&Type> {
+        self.iter().nth(x)
     }
 
     fn index_from_outermost(&self, x: usize) -> Option<usize> {
         self.len().checked_sub(x + 1)
-    }
-
-    fn get(&self, x: usize) -> Option<&Type> {
-        self.0.get(self.index_from_outermost(x)?)
     }
 
     fn remove(&mut self, x: usize) {
@@ -96,15 +104,19 @@ impl Context {
             "index out of range: {}",
             x
         ));
-        self.0.remove(at);
+        self.0[at] = None;
     }
 
     fn push(&mut self, t: Type) {
-        self.0.push(t);
+        self.0.push(Some(t));
     }
 
     fn pop(&mut self) -> Option<Type> {
-        self.0.pop()
+        loop {
+            if let Some(ty) = self.0.pop()? {
+                return Some(ty);
+            }
+        }
     }
 
     fn trancate(&mut self, l: usize, qs: &[Qual]) -> Option<()> {
@@ -120,6 +132,20 @@ impl Context {
             let _ = self.pop()?;
         }
         Some(())
+    }
+}
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = &'a Type;
+
+    fn next(&mut self) -> Option<&'a Type> {
+        while 0 < self.1 {
+            self.1 -= 1;
+            if let Some(ref ty) = self.0[self.1] {
+                return Some(ty);
+            }
+        }
+        None
     }
 }
 
@@ -265,7 +291,7 @@ mod tests {
             {
                 let mut v = Vec::new();
                 $(
-                    v.push($x);
+                    v.push(Some($x));
                 )*
                 Context(v)
             }
