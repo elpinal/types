@@ -2,7 +2,6 @@
 
 use std::cmp::Ordering;
 use std::iter::Iterator;
-use std::ops::Div;
 
 use context::Ctx;
 
@@ -40,18 +39,6 @@ enum Pretype {
 #[derive(Clone, PartialEq)]
 struct Context(Vec<Type>);
 
-macro_rules! context {
-    ( $( $x:expr ),* ) => {
-        {
-            let mut v = Vec::new();
-            $(
-                v.push($x);
-            )*
-            Context(v)
-        }
-    }
-}
-
 trait TypeCheck {
     type Type;
     type Ctx;
@@ -87,23 +74,6 @@ impl Containment for Type {
 impl Containment for Context {
     fn can_appear_in(&self, q: Qual) -> bool {
         self.0.iter().all(|ty| ty.can_appear_in(q))
-    }
-}
-
-//impl Iterator for Context {
-//    type Item = Type;
-//    /// Returns a type which the most recently bound variable has.
-//    fn next(&mut self) -> Option<Self::Item> {
-//        self.0.pop()
-//    }
-//}
-
-impl Div for Context {
-    type Output = Option<Context>;
-
-    fn div(mut self, ctx: Self) -> Self::Output {
-        self.div_mut(ctx)?;
-        Some(self)
     }
 }
 
@@ -162,29 +132,6 @@ impl Context {
             let _ = self.pop()?;
         }
         Some(())
-    }
-
-    // TODO: remove this.
-    fn div_mut(&mut self, mut ctx: Self) -> Option<()> {
-        use self::Qual::*;
-        if ctx.is_empty() {
-            return Some(());
-        }
-        match ctx.pop()? {
-            x @ Type(Linear, _) => {
-                if ctx.contains(&x) {
-                    self.div_mut(ctx)
-                } else {
-                    None
-                }
-            }
-            x @ Type(Unrestricted, _) => {
-                self.div_mut(ctx)?;
-                let i = Context::position(self, &x)?;
-                self.remove(i);
-                Some(())
-            }
-        }
     }
 }
 
@@ -317,6 +264,18 @@ mod tests {
         assert!(Linear >= Linear);
 
         assert!(!(Unrestricted <= Linear));
+    }
+
+    macro_rules! context {
+        ( $( $x:expr ),* ) => {
+            {
+                let mut v = Vec::new();
+                $(
+                    v.push($x);
+                )*
+                Context(v)
+            }
+        }
     }
 
     #[test]
