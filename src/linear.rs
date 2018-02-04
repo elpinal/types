@@ -1,4 +1,5 @@
-/// A linear type system.
+//! A linear type system.
+#![warn(dead_code)]
 
 use std::cmp::Ordering;
 use std::iter::Iterator;
@@ -6,12 +7,12 @@ use std::iter::Iterator;
 use context::Ctx;
 
 #[derive(Clone, Copy, PartialEq)]
-enum Qual {
+pub enum Qual {
     Linear,
     Unrestricted,
 }
 
-enum Term {
+pub enum Term {
     Var(usize, usize),
     Bool(Qual, Bool),
     If(Box<Term>, Box<Term>, Box<Term>),
@@ -21,13 +22,13 @@ enum Term {
     App(Box<Term>, Box<Term>),
 }
 
-enum Bool {
+pub enum Bool {
     True,
     False,
 }
 
 #[derive(PartialEq, Clone)]
-struct Type(Qual, Box<Pretype>);
+pub struct Type(Qual, Box<Pretype>);
 
 #[derive(PartialEq, Clone)]
 enum Pretype {
@@ -37,9 +38,9 @@ enum Pretype {
 }
 
 #[derive(Clone, PartialEq)]
-struct Context(Vec<Type>);
+pub struct Context(Vec<Type>);
 
-trait TypeCheck {
+pub trait TypeCheck {
     type Type;
     type Ctx;
 
