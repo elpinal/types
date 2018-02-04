@@ -84,6 +84,16 @@ pub mod symbolic {
                 _ => self.eval1(),
             }
         }
+
+        fn swap(&mut self, i: usize, j: usize) {
+            use self::Term::*;
+            let f = |c: usize, x: usize, n, t: &mut Term| if x == i + c {
+                *t = Var(j + c, n);
+            } else if x == j + c {
+                *t = Var(i + c, n);
+            };
+            self.map_ref(&f, 0);
+        }
     }
 
     impl ShiftRef for Term {
