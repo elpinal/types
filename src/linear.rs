@@ -398,7 +398,7 @@ mod tests {
         not_typable!(
             Term::app(Var(0, 1), Var(0, 1)),
             [qual!(Linear, Pretype::Bool)],
-            Error::ExpectArrow(Pretype::Bool)
+            Error::Undefined(0, Context(vec![None]))
         );
         not_typable!(
             Term::app(Var(0, 1), Var(0, 1)),
