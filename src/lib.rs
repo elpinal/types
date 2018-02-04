@@ -48,3 +48,19 @@ pub trait Subst: Shift + Clone {
         self.subst(0, &x.clone().shift(1)).shift(-1)
     }
 }
+
+pub trait SubstRef: ShiftRef + Clone {
+    fn subst_ref(&mut self, j: usize, x: &Self);
+
+    fn subst_top_ref(&mut self, x: &Self) {
+        self.subst_ref(0, &x.clone().shift(1));
+        self.shift_ref(-1)
+    }
+}
+
+impl<T: SubstRef> Subst for T {
+    fn subst(self, j: usize, x: &Self) -> Self {
+        self.subst_ref(j, x);
+        self
+    }
+}
