@@ -107,11 +107,19 @@ impl Context {
     }
 
     fn get(&self, x: usize) -> Option<&Type> {
-        self.iter().nth(x)
+        match self.0.get(self.index_from_outermost(x)?) {
+            Some(x) => {
+                match x {
+                    &Some(ref ty) => Some(ty),
+                    _ => None,
+                }
+            }
+            None => None,
+        }
     }
 
     fn index_from_outermost(&self, x: usize) -> Option<usize> {
-        self.len().checked_sub(x + 1)
+        self.0.len().checked_sub(x + 1)
     }
 
     fn remove(&mut self, x: usize) {
@@ -326,6 +334,12 @@ mod tests {
                 Context(v)
             }
         }
+    }
+
+    #[test]
+    fn test_context_index() {
+        let ctx = Context(vec![Some(qual!(Qual::Linear, Pretype::Bool)), None]);
+        assert_eq!(ctx.index_from_outermost(1), Some(0));
     }
 
     #[test]
