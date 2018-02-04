@@ -141,7 +141,8 @@ impl Context {
             |x, &q| if q == Unrestricted { x + 1 } else { x },
         );
         if self.len() != l + uns {
-            return Err(Error::UnusedLinear(qs.len() - uns)); // Some of linear variables did not used.
+            // Some of linear variables did not used.
+            return Err(Error::UnusedLinear(qs.len() - uns));
         }
         for _ in 0..uns {
             let _ = self.pop().expect("trancate: unexpected error");
@@ -190,7 +191,9 @@ impl TypeCheck for Term {
 
 impl Term {
     fn type_of_var(x: usize, ctx: &mut Context) -> Result<Type> {
-        let Type(q, pt) = ctx.get(x).cloned().ok_or_else(|| Error::Undefined(x, ctx.clone()))?;
+        let Type(q, pt) = ctx.get(x).cloned().ok_or_else(
+            || Error::Undefined(x, ctx.clone()),
+        )?;
         if q == Qual::Linear {
             ctx.remove(x);
         }
@@ -228,7 +231,9 @@ impl Term {
     }
 
     fn type_of_split(t1: &Term, t2: &Term, ctx: &mut Context) -> Result<Type> {
-        let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair().map_err(|pt| Error::ExpectPair(pt))?;
+        let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair().map_err(
+            |pt| Error::ExpectPair(pt),
+        )?;
         let l = ctx.len();
         let q1 = ty11.qual();
         let q2 = ty12.qual();
@@ -257,7 +262,7 @@ impl Term {
                 }
                 return Err(Error::TypeMismatch(ty2, ty11));
             }
-            pt => Err(Error::ExpectArrow(pt))
+            pt => Err(Error::ExpectArrow(pt)),
         }
     }
 
