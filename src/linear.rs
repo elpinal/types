@@ -6,7 +6,7 @@ use std::iter::Iterator;
 
 use context::Ctx;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Qual {
     Linear,
     Unrestricted,
@@ -27,10 +27,10 @@ pub enum Bool {
     False,
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub struct Type(Qual, Box<Pretype>);
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 enum Pretype {
     Bool,
     Pair(Type, Type),
@@ -83,12 +83,19 @@ impl Context {
         self.0.len()
     }
 
+    fn index_from_outermost(&self, x: usize) -> Option<usize> {
+        self.len().checked_sub(x + 1)
+    }
+
     fn get(&self, x: usize) -> Option<&Type> {
-        self.0.get(self.len() - x - 1)
+        self.0.get(self.index_from_outermost(x)?)
     }
 
     fn remove(&mut self, x: usize) {
-        let at = self.len() - x - 1;
+        let at = self.index_from_outermost(x).expect(&format!(
+            "index out of range: {}",
+            x
+        ));
         self.0.remove(at);
     }
 
@@ -206,6 +213,10 @@ impl Term {
         }
         None
     }
+
+    fn app(t1: Term, t2: Term) -> Term {
+        Term::App(Box::new(t1), Box::new(t2))
+    }
 }
 
 impl Type {
@@ -248,6 +259,8 @@ mod tests {
     }
 
     macro_rules! context {
+        () => ( Context(Vec::new()) );
+
         ( $( $x:expr ),* ) => {
             {
                 let mut v = Vec::new();
@@ -281,5 +294,77 @@ mod tests {
 
         let mut ctx = context![qual!(Unrestricted, Bool), qual!(Unrestricted, Bool)];
         assert!(ctx.trancate(1, &[Unrestricted]).is_some());
+    }
+
+    macro_rules! assert_type {
+        ($t:expr, [ $( $x:expr ),* ], $ty:expr) => {
+            {
+                let mut ctx = context![$( $x ),*];
+                assert_eq!($t.type_of(&mut ctx), $ty);
+            }
+        }
+    }
+
+    macro_rules! typable {
+        ($t:expr, [ $( $x:expr ),* ], $ty:expr) => {
+            { assert_type!($t, [$( $x ),*], Some($ty)); }
+        }
+    }
+
+    macro_rules! not_typable {
+        ($t:expr, [ $( $x:expr ),* ]) => {
+            { assert_type!($t, [$( $x ),*], None); }
+        }
+    }
+
+    #[test]
+    fn test_typecheck() {
+        use self::Bool::*;
+        use self::Qual::*;
+        use self::Term::*;
+
+        typable!(
+            Bool(Unrestricted, True),
+            [],
+            qual!(Unrestricted, Pretype::Bool)
+        );
+
+        typable!(
+            Bool(Unrestricted, True),
+            [qual!(Unrestricted, Pretype::Bool)],
+            qual!(Unrestricted, Pretype::Bool)
+        );
+
+        typable!(Bool(Linear, True), [], qual!(Linear, Pretype::Bool));
+
+        not_typable!(Var(0, 1), []);
+        typable!(
+            Var(0, 1),
+            [qual!(Linear, Pretype::Bool)],
+            qual!(Linear, Pretype::Bool)
+        );
+
+        not_typable!(
+            Term::app(Var(0, 1), Var(0, 1)),
+            [qual!(Linear, Pretype::Bool)]
+        );
+        not_typable!(
+            Term::app(Var(0, 1), Var(0, 1)),
+            [qual!(Unrestricted, Pretype::Bool)]
+        );
+        typable!(
+            Term::app(Var(0, 2), Var(1, 2)),
+            [
+                qual!(Unrestricted, Pretype::Bool),
+                qual!(
+                    Unrestricted,
+                    Pretype::Arr(
+                        qual!(Unrestricted, Pretype::Bool),
+                        qual!(Unrestricted, Pretype::Bool),
+                    )
+                ),
+            ],
+            qual!(Unrestricted, Pretype::Bool)
+        );
     }
 }
