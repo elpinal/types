@@ -53,6 +53,8 @@ enum Prevalue {
     Abs(Type, Term),
 }
 
+struct Store(Vec<Value>);
+
 pub trait TypeCheck {
     type Output;
     type Ctx;
