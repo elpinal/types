@@ -322,6 +322,8 @@ impl Term {
                 let y = s.add(v2);
                 Some(((q, Prevalue::Pair(x, y)), s))
             }
+            Split(t1, t2) => {
+            }
         }
     }
 }
