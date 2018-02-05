@@ -45,6 +45,14 @@ pub struct Context(Vec<Option<Type>>);
 
 struct Iter<'a>(&'a Vec<Option<Type>>, usize);
 
+type Value = (Qual, Prevalue);
+
+enum Prevalue {
+    Bool(Bool),
+    Pair(usize, usize),
+    Abs(Type, Term),
+}
+
 pub trait TypeCheck {
     type Output;
     type Ctx;
