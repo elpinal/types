@@ -45,7 +45,7 @@ pub struct Context(Vec<Option<Type>>);
 
 struct Iter<'a>(&'a Vec<Option<Type>>, usize);
 
-type Value = (Qual, Prevalue);
+struct Value(Qual, Prevalue);
 
 enum Prevalue {
     Bool(Bool),
@@ -298,37 +298,48 @@ impl Term {
 
     fn eval(self) -> Option<(Value, Store)> {
         use self::Term::*;
+        use self::Bool::*;
         match self {
-            Bool(q, b) => {
-                Some(((q, Prevalue::Bool(b)), Store::new()))
-            }
+            Bool(q, b) => Some((Value(q, Prevalue::Bool(b)), Store::new())),
             If(t1, t2, t3) => {
                 let (v1, _) = t1.eval()?;
-                match v1 {
-                    (q, Bool::True) => {
-                        t2.eval()
-                    }
-                    (q, Bool::False) => {
-                        t3.eval()
-                    }
-                    _ => None,
-                }
+                let (q, b) = v1.bool()?;
+                let (v, s) = match b {
+                    True => t2.eval(),
+                    False => t3.eval(),
+                }?;
+                Some((v, s))
             }
             Pair(q, t1, t2) => {
-                let (v1, _) = t1.eval()?;
-                let (v2, _) = t2.eval()?;
-                let mut s = Store::new();
-                let x = s.add(v1);
-                let y = s.add(v2);
-                Some(((q, Prevalue::Pair(x, y)), s))
+                let (v1, mut s1) = t1.eval()?;
+                let (v2, mut s2) = t2.eval()?;
+                s1.append(&mut s2);
+                let x = s1.add(v1);
+                let y = s1.add(v2);
+                Some((Value(q, Prevalue::Pair(x, y)), s1))
             }
             Split(t1, t2) => {
+                unimplemented!();
             }
             Abs(q, ty, t) => {
+                unimplemented!();
             }
             App(t1, t2) => {
+                unimplemented!();
             }
-            Var(..) => {}
+            Var(..) => {
+                unimplemented!();
+            }
+        }
+    }
+}
+
+impl Value {
+    fn bool(self) -> Option<(Qual, Bool)> {
+        use self::Prevalue::*;
+        match self.1 {
+            Bool(b) => Some((self.0, b)),
+            _ => None,
         }
     }
 }
@@ -341,6 +352,10 @@ impl Store {
     fn add(&mut self, v: Value) -> usize {
         self.0.push(v);
         self.0.len()
+    }
+
+    fn append(&mut self, s: &mut Store) {
+        self.0.append(&mut s.0);
     }
 }
 
