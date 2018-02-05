@@ -295,6 +295,26 @@ impl Term {
     fn app(t1: Term, t2: Term) -> Term {
         Term::App(Box::new(t1), Box::new(t2))
     }
+
+    fn eval(self) -> (Value, Store) {
+        use self::Term::*;
+        match self {
+            Bool(q, b) => {
+                (q, Prevalue::Bool(b))
+            }
+            If(t1, t2, t3) => {
+                let (v1, _) = t1.eval();
+                match v1 {
+                    (q, Bool::True) => {
+                        t2.eval()
+                    }
+                    (q, Bool::False) => {
+                        t3.eval()
+                    }
+                }
+            }
+        }
+    }
 }
 
 impl Type {
