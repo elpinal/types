@@ -320,7 +320,7 @@ impl Term {
                 let s = Store::new();
                 let x = s.add(v1);
                 let y = s.add(v2);
-                Some((q, Prevalue::Pair(x, y)))
+                Some(((q, Prevalue::Pair(x, y)), s))
             }
         }
     }
