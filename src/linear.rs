@@ -324,7 +324,7 @@ impl Term {
             }
             Split(t1, t2) => {
             }
-            Abs(q, ty, t2) => {
+            Abs(q, ty, t) => {
             }
             App(t1, t2) => {
             }
