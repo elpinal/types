@@ -59,7 +59,7 @@ pub trait SubstRef: ShiftRef + Clone {
 }
 
 impl<T: SubstRef> Subst for T {
-    fn subst(self, j: usize, x: &Self) -> Self {
+    fn subst(mut self, j: usize, x: &Self) -> Self {
         self.subst_ref(j, x);
         self
     }
