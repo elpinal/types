@@ -326,6 +326,12 @@ impl Term {
     }
 }
 
+impl Store {
+    fn new() -> Store {
+        Store(vec![])
+    }
+}
+
 impl Type {
     fn qual(&self) -> Qual {
         self.0
