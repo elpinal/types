@@ -13,7 +13,7 @@ pub enum Qual {
     Unrestricted,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Term {
     Var(usize, usize),
     Bool(Qual, Bool),
@@ -24,7 +24,7 @@ pub enum Term {
     App(Box<Term>, Box<Term>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Bool {
     True,
     False,
@@ -45,14 +45,17 @@ pub struct Context(Vec<Option<Type>>);
 
 struct Iter<'a>(&'a Vec<Option<Type>>, usize);
 
+#[derive(Debug, PartialEq)]
 struct Value(Qual, Prevalue);
 
+#[derive(Debug, PartialEq)]
 enum Prevalue {
     Bool(Bool),
     Pair(usize, usize),
     Abs(Type, Term),
 }
 
+#[derive(Debug, PartialEq)]
 struct Store(Vec<Value>);
 
 pub trait TypeCheck {
@@ -294,6 +297,14 @@ impl Term {
 
     fn app(t1: Term, t2: Term) -> Term {
         Term::App(Box::new(t1), Box::new(t2))
+    }
+
+    fn conditional(t1: Term, t2: Term, t3: Term) -> Term {
+        Term::If(Box::new(t1), Box::new(t2), Box::new(t3))
+    }
+
+    fn pair(q: Qual, t1: Term, t2: Term) -> Term {
+        Term::Pair(q, Box::new(t1), Box::new(t2))
     }
 
     fn eval(self) -> Option<(Value, Store)> {
@@ -564,6 +575,75 @@ mod tests {
                     ),
                 )
             )
+        );
+    }
+
+    macro_rules! assert_eval {
+        ($t:expr, $result:expr) => {
+            assert_eq!($t.eval(), $result);
+        }
+    }
+
+    macro_rules! store {
+        ( $($x:expr),* ) => {
+            {
+                Store(vec![$($x),*])
+            }
+        }
+    }
+
+    #[test]
+    fn test_eval() {
+        use self::Term::*;
+        use self::Bool::*;
+        use self::Qual::*;
+
+        assert_eval!(
+            Bool(Unrestricted, True),
+            Some((Value(Unrestricted, Prevalue::Bool(True)), Store::new()))
+        );
+
+        assert_eval!(
+            Bool(Linear, True),
+            Some((Value(Linear, Prevalue::Bool(True)), Store::new()))
+        );
+
+        assert_eval!(
+            Term::conditional(
+                Bool(Unrestricted, True),
+                Bool(Linear, True),
+                Bool(Linear, False),
+            ),
+            Some((Value(Linear, Prevalue::Bool(True)), Store::new()))
+        );
+
+        assert_eval!(
+            Term::conditional(
+                Bool(Unrestricted, False),
+                Bool(Linear, True),
+                Bool(Linear, False),
+            ),
+            Some((Value(Linear, Prevalue::Bool(False)), Store::new()))
+        );
+
+        assert_eval!(
+            Term::conditional(
+                Bool(Linear, False),
+                Bool(Linear, True),
+                Bool(Unrestricted, False),
+            ),
+            Some((Value(Unrestricted, Prevalue::Bool(False)), Store::new()))
+        );
+
+        assert_eval!(
+            Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
+            Some((
+                Value(Linear, Prevalue::Pair(1, 2)),
+                store![
+                    Value(Unrestricted, Prevalue::Bool(False)),
+                    Value(Unrestricted, Prevalue::Bool(True)),
+                ],
+            ))
         );
     }
 }
