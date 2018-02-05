@@ -330,6 +330,11 @@ impl Store {
     fn new() -> Store {
         Store(vec![])
     }
+
+    fn add(&mut self, v: Value) -> usize {
+        self.0.push(v);
+        self.len()
+    }
 }
 
 impl Type {
