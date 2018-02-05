@@ -300,7 +300,7 @@ impl Term {
         use self::Term::*;
         match self {
             Bool(q, b) => {
-                Some((q, Prevalue::Bool(b)))
+                Some(((q, Prevalue::Bool(b)), Store::new()))
             }
             If(t1, t2, t3) => {
                 let (v1, _) = t1.eval()?;
