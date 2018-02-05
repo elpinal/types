@@ -317,7 +317,7 @@ impl Term {
             Pair(q, t1, t2) => {
                 let (v1, _) = t1.eval()?;
                 let (v2, _) = t2.eval()?;
-                let s = Store::new();
+                let mut s = Store::new();
                 let x = s.add(v1);
                 let y = s.add(v2);
                 Some(((q, Prevalue::Pair(x, y)), s))
