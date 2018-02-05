@@ -296,11 +296,11 @@ impl Term {
         Term::App(Box::new(t1), Box::new(t2))
     }
 
-    fn eval(self) -> (Value, Store) {
+    fn eval(self) -> Option<(Value, Store)> {
         use self::Term::*;
         match self {
             Bool(q, b) => {
-                (q, Prevalue::Bool(b))
+                Some((q, Prevalue::Bool(b)))
             }
             If(t1, t2, t3) => {
                 let (v1, _) = t1.eval();
@@ -311,6 +311,7 @@ impl Term {
                     (q, Bool::False) => {
                         t3.eval()
                     }
+                    _ => None,
                 }
             }
         }
