@@ -1,4 +1,10 @@
 //! A type system which is Rank-2 fragment of System F.
+//!
+//! ## Reference
+//!
+//! A. J. Kfoury and J. B. Wells, _"A direct algorithm for type inference in the rank-2 fragment
+//! of the second-order λ-calculus"_, Proceedings of the 1994 ACM conference on LISP and functional
+//! programming, pages 196-207, New York, NY, USA, 1994.
 #![warn(dead_code)]
 
 use self::lambda2_restricted::Restricted1;

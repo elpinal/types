@@ -1,5 +1,12 @@
 //! Label-selective lambda calculus.
+//!
+//! ## Reference
+//!
+//! Jacques, Garrigue and Hassan Aït-Kaci, _"The typed polymorphic label-selective
+//! lambda-calculus"_, ACM Symposium on Principles of Programming Languages (POPL), Portland,
+//! Oregon, pages 35-47, 1994.
 
+#[cfg(ignore)]
 pub mod symbolic {
     use {Shift, ShiftRef, Subst, SubstRef};
 
