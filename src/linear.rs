@@ -333,7 +333,7 @@ impl Store {
 
     fn add(&mut self, v: Value) -> usize {
         self.0.push(v);
-        self.len()
+        self.0.len()
     }
 }
 
