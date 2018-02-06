@@ -378,8 +378,8 @@ impl Term {
                 }
             }
             Split(ref mut t1, ref mut t2) => {
-                for t in &mut [t1, t2] {
-                    t.map_ref(onvar, c);
+                for &mut (i, ref mut t) in &mut [(0, t1), (2, t2)] {
+                    t.map_ref(onvar, c + i);
                 }
             }
             Abs(_, _, ref mut t) => t.map_ref(onvar, c + 1),
