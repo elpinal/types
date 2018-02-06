@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::result;
 
+use ::*;
 use context::Ctx;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -13,7 +14,7 @@ pub enum Qual {
     Unrestricted,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Term {
     Var(usize, usize),
     Bool(Qual, Bool),
@@ -24,7 +25,7 @@ pub enum Term {
     App(Box<Term>, Box<Term>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Bool {
     True,
     False,
@@ -387,6 +388,16 @@ impl ShiftRef for Term {
             *t = Var(x, add_isize(n, d))
         };
         self.map_ref(&f, c);
+    }
+}
+
+impl SubstRef for Term {
+    fn subst_ref(&mut self, j: usize, t: &Term) {
+        use self::Term::*;
+        let f = |j, x, n, t0: &mut Term| if x == j {
+            *t0 = t.clone();
+        };
+        self.map_ref(&f, j);
     }
 }
 
