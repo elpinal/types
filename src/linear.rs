@@ -343,6 +343,38 @@ impl Term {
             }
         }
     }
+
+    fn map_ref<F>(&mut self, onvar: &F, c: usize)
+    where
+        F: Fn(usize, usize, usize, &mut Self),
+    {
+        use self::Term::*;
+        match *self {
+            Var(x, n) => onvar(c, x, n, self),
+            Bool(..) => (),
+            If(ref t1, ref t2, ref t3) => {
+                for t in &[t1, t2, t3] {
+                    t.map_ref(onvar, c);
+                }
+            }
+            Pair(_, ref t1, ref t2) => {
+                for t in &[t1, t2] {
+                    t.map_ref(onvar, c);
+                }
+            }
+            Split(ref t1, ref t2) => {
+                for t in &[t1, t2] {
+                    t.map_ref(onvar, c);
+                }
+            }
+            Abs(_, _, ref t) => t.map_ref(onvar, c + 1),
+            App(ref t1, ref t2) => {
+                for t in &[t1, t2] {
+                    t.map_ref(onvar, c);
+                }
+            }
+        }
+    }
 }
 
 impl Value {
