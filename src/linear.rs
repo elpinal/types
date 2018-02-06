@@ -410,6 +410,10 @@ impl SubstRef for Term {
 }
 
 impl Value {
+    fn qual(&self) -> Qual {
+        self.0
+    }
+
     fn bool(self) -> Option<(Qual, Bool)> {
         match self.1 {
             Prevalue::Bool(b) => Some((self.0, b)),
