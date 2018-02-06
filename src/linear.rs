@@ -617,11 +617,8 @@ mod tests {
     }
 
     macro_rules! store {
-        ( $($x:expr),* ) => {
-            {
-                Store(vec![$($x),*])
-            }
-        }
+        ( $($x:expr),* ) => ( Store(vec![$($x),*]) );
+        ( $($x:expr,)* ) => ( Store(vec![$($x),*]) );
     }
 
     #[test]
