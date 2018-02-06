@@ -331,7 +331,9 @@ impl Term {
                 Some((Value(q, Prevalue::Pair(x, y)), s1))
             }
             Split(t1, t2) => {
-                unimplemented!();
+                let (v1, mut s1) = t1.eval()?;
+                let (q, x, y) = v1.pair()?;
+                t2.subst(1, x).subst(0, y)
             }
             Abs(q, ty, t) => {
                 unimplemented!();
