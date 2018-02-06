@@ -415,6 +415,13 @@ impl Value {
             _ => None,
         }
     }
+
+    fn abs(self) -> Option<(Qual, Type, Term)> {
+        match self.1 {
+            Prevalue::Abs(ty, t) => Some((self.0, ty, t)),
+            _ => None,
+        }
+    }
 }
 
 impl Store {
