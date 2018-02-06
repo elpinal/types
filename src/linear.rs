@@ -308,6 +308,7 @@ impl Term {
         Term::Pair(q, Box::new(t1), Box::new(t2))
     }
 
+    /// Evaluates a term.
     fn eval(self) -> Option<(Value, Store)> {
         self.eval_store(Store::new())
     }
