@@ -403,9 +403,15 @@ impl SubstRef for Term {
 
 impl Value {
     fn bool(self) -> Option<(Qual, Bool)> {
-        use self::Prevalue::*;
         match self.1 {
-            Bool(b) => Some((self.0, b)),
+            Prevalue::Bool(b) => Some((self.0, b)),
+            _ => None,
+        }
+    }
+
+    fn pair(self) -> Option<(Qual, usize, usize)> {
+        match self.1 {
+            Prevalue::Pair(t1, t2) => Some((self.0, t1, t2)),
             _ => None,
         }
     }
