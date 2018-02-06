@@ -337,7 +337,10 @@ impl Term {
             }
             Abs(q, ty, t) => Some((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
             App(t1, t2) => {
-                unimplemented!();
+                let (v1, mut s1) = t1.eval()?;
+                let (q, ty, t) = v1.abs()?;
+                let (v2, mut s2) = t2.eval()?;
+                t.subst_top(v2)
             }
             Var(..) => {
                 unimplemented!();
