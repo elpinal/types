@@ -333,14 +333,14 @@ impl Term {
             Split(t1, t2) => {
                 let (v1, mut s1) = t1.eval()?;
                 let (q, x, y) = v1.pair()?;
-                t2.subst(1, x).subst(0, y)
+                Some((t2.subst(1, x).subst(0, y), Store::new()))
             }
             Abs(q, ty, t) => Some((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
             App(t1, t2) => {
                 let (v1, mut s1) = t1.eval()?;
                 let (q, ty, t) = v1.abs()?;
                 let (v2, mut s2) = t2.eval()?;
-                t.subst_top(v2)
+                Some((t.subst_top(v2), Store::new()))
             }
             Var(..) => {
                 unimplemented!();
