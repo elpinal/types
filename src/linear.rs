@@ -445,6 +445,10 @@ impl Store {
     fn append(&mut self, s: &mut Store) {
         self.0.append(&mut s.0);
     }
+
+    fn get(&mut self, x: usize) -> Option<Value> {
+        self.0.get(x)
+    }
 }
 
 impl Type {
