@@ -347,7 +347,8 @@ impl Term {
                 Some((t.subst_top(v2), Store::new()))
             }
             Var(x, n) => {
-                unimplemented!();
+                let v = s.get(x)?;
+                Some((v, Store::new()))
             }
         }
     }
