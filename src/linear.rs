@@ -309,6 +309,10 @@ impl Term {
     }
 
     fn eval(self) -> Option<(Value, Store)> {
+        self.eval_store(Store::new())
+    }
+
+    fn eval_store(self) -> Option<(Value, Store)> {
         use self::Term::*;
         use self::Bool::*;
         match self {
@@ -342,7 +346,7 @@ impl Term {
                 let (v2, mut s2) = t2.eval()?;
                 Some((t.subst_top(v2), Store::new()))
             }
-            Var(..) => {
+            Var(x, n) => {
                 unimplemented!();
             }
         }
