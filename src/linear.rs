@@ -377,6 +377,19 @@ impl Term {
     }
 }
 
+impl ShiftRef for Term {
+    fn shift_above_ref(&mut self, c: usize, d: isize) {
+        use self::Term::*;
+        let add_isize = |a, b| (a as isize + b) as usize;
+        let f = |c, x, n, t: &mut Term| if x >= c {
+            *t = Var(add_isize(x, d), add_isize(n, d));
+        } else {
+            *t = Var(x, add_isize(n, d))
+        };
+        self.map_ref(&f, c);
+    }
+}
+
 impl Value {
     fn bool(self) -> Option<(Qual, Bool)> {
         use self::Prevalue::*;
