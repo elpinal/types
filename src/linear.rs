@@ -46,10 +46,10 @@ pub struct Context(Vec<Option<Type>>);
 
 struct Iter<'a>(&'a Vec<Option<Type>>, usize);
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct Value(Qual, Prevalue);
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Prevalue {
     Bool(Bool),
     Pair(usize, usize),
@@ -314,7 +314,7 @@ impl Term {
     }
 
     /// Evaluates with an initial store.
-    fn eval_store(self, s: Store) -> Option<(Value, Store)> {
+    fn eval_store(self, mut s: Store) -> Option<(Value, Store)> {
         use self::Term::*;
         use self::Bool::*;
         match self {
@@ -339,14 +339,18 @@ impl Term {
             Split(t1, t2) => {
                 let (v1, mut s1) = t1.eval()?;
                 let (q, x, y) = v1.pair()?;
-                Some((t2.subst(1, x).subst(0, y), Store::new()))
+                s1.move_top(x);
+                s1.move_top(y);
+                t2.eval_store(s1)
             }
             Abs(q, ty, t) => Some((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
             App(t1, t2) => {
-                let (v1, mut s1) = t1.eval()?;
-                let (q, ty, t) = v1.abs()?;
-                let (v2, mut s2) = t2.eval()?;
-                Some((t.subst_top(v2), Store::new()))
+                let (v1, s1) = t1.eval()?;
+                let (q, _, t) = v1.abs()?;
+                let (v2, s2) = t2.eval()?;
+                let mut s0 = Store::new();
+                s0.add(v2);
+                t.eval_store(s0)
             }
             Var(x, n) => {
                 let v = s.get(x)?;
@@ -363,24 +367,24 @@ impl Term {
         match *self {
             Var(x, n) => onvar(c, x, n, self),
             Bool(..) => (),
-            If(ref t1, ref t2, ref t3) => {
-                for t in &[t1, t2, t3] {
+            If(ref mut t1, ref mut t2, ref mut t3) => {
+                for t in &mut [t1, t2, t3] {
                     t.map_ref(onvar, c);
                 }
             }
-            Pair(_, ref t1, ref t2) => {
-                for t in &[t1, t2] {
+            Pair(_, ref mut t1, ref mut t2) => {
+                for t in &mut [t1, t2] {
                     t.map_ref(onvar, c);
                 }
             }
-            Split(ref t1, ref t2) => {
-                for t in &[t1, t2] {
+            Split(ref mut t1, ref mut t2) => {
+                for t in &mut [t1, t2] {
                     t.map_ref(onvar, c);
                 }
             }
-            Abs(_, _, ref t) => t.map_ref(onvar, c + 1),
-            App(ref t1, ref t2) => {
-                for t in &[t1, t2] {
+            Abs(_, _, ref mut t) => t.map_ref(onvar, c + 1),
+            App(ref mut t1, ref mut t2) => {
+                for t in &mut [t1, t2] {
                     t.map_ref(onvar, c);
                 }
             }
@@ -453,14 +457,19 @@ impl Store {
     }
 
     fn get(&mut self, x: usize) -> Option<Value> {
-        let v = self.0.get(x)?;
+        let v = self.0.get(x).cloned()?;
         match v.qual() {
             Qual::Linear => {
                 self.0.remove(x);
-                Some(*v.clone())
+                Some(v)
             }
-            _ => Some(*v.clone()),
+            _ => Some(v),
         }
+    }
+
+    fn move_top(&mut self, x: usize) {
+        let v = self.0.remove(x);
+        self.add(v);
     }
 }
 
