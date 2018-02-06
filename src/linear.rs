@@ -335,9 +335,7 @@ impl Term {
                 let (q, x, y) = v1.pair()?;
                 t2.subst(1, x).subst(0, y)
             }
-            Abs(q, ty, t) => {
-                unimplemented!();
-            }
+            Abs(q, ty, t) => Some((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
             App(t1, t2) => {
                 unimplemented!();
             }
