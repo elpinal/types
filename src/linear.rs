@@ -457,7 +457,7 @@ impl Store {
                 self.0.remove(x);
                 Some(v.clone())
             }
-            _ => Some(v.clone())
+            _ => Some(v.clone()),
         }
     }
 }
