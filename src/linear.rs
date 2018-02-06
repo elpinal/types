@@ -312,6 +312,7 @@ impl Term {
         self.eval_store(Store::new())
     }
 
+    /// Evaluates with an initial store.
     fn eval_store(self, s: Store) -> Option<(Value, Store)> {
         use self::Term::*;
         use self::Bool::*;
