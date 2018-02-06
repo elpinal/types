@@ -57,7 +57,10 @@ enum Prevalue {
 }
 
 #[derive(Debug, PartialEq)]
-struct Store(Vec<Value>);
+struct Store {
+    stack: Vec<Option<Value>>,
+    heap: Vec<Option<Value>>,
+}
 
 pub trait TypeCheck {
     type Output;
@@ -349,7 +352,7 @@ impl Term {
                 let (q, _, t) = v1.abs()?;
                 let (v2, s2) = t2.eval()?;
                 let mut s0 = Store::new();
-                s0.add(v2);
+                s0.push(v2);
                 t.eval_store(s0)
             }
             Var(x, n) => {
@@ -444,32 +447,40 @@ impl Value {
 
 impl Store {
     fn new() -> Store {
-        Store(vec![])
-    }
-
-    fn add(&mut self, v: Value) -> usize {
-        self.0.push(v);
-        self.0.len()
-    }
-
-    fn append(&mut self, s: &mut Store) {
-        self.0.append(&mut s.0);
-    }
-
-    fn get(&mut self, x: usize) -> Option<Value> {
-        let v = self.0.get(x).cloned()?;
-        match v.qual() {
-            Qual::Linear => {
-                self.0.remove(x);
-                Some(v)
-            }
-            _ => Some(v),
+        Store {
+            stack: vec![],
+            heap: vec![],
         }
     }
 
-    fn move_top(&mut self, x: usize) {
-        let v = self.0.remove(x);
-        self.add(v);
+    fn push(&mut self, v: Value) {
+        self.stack.push(Some(v));
+    }
+
+    fn add(&mut self, v: Value) -> usize {
+        self.heap.push(Some(v));
+        self.heap.len() - 1
+    }
+
+    fn append(&mut self, s: &mut Store) {
+        self.stack.append(&mut s.stack);
+        self.heap.append(&mut s.heap);
+    }
+
+    fn get(&mut self, x: usize) -> Option<Value> {
+        let at = self.stack.len() - x - 1;
+        let v = self.stack.get(at).cloned()??;
+        if v.qual() == Qual::Linear {
+            self.stack[at] = None;
+        }
+        Some(v)
+    }
+
+    fn move_top(&mut self, x: usize) -> Option<()> {
+        let v = self.heap.get(x).cloned()??;
+        self.heap[x] = None;
+        self.push(v);
+        Some(())
     }
 }
 
@@ -688,8 +699,13 @@ mod tests {
     }
 
     macro_rules! store {
-        ( $($x:expr),* ) => ( Store(vec![$($x),*]) );
-        ( $($x:expr,)* ) => ( Store(vec![$($x),*]) );
+        ( $($x:expr),* ) => ( Store{stack: vec![$(Some($x)),*], heap: vec![]} );
+        ( $($x:expr,)* ) => ( store![$($x),*] );
+    }
+
+    macro_rules! store_heap {
+        ( $($x:expr),* ) => ( Store{heap: vec![$(Some($x)),*], stack: vec![]} );
+        ( $($x:expr,)* ) => ( store_heap![$($x),*] );
     }
 
     #[test]
@@ -738,8 +754,8 @@ mod tests {
         assert_eval!(
             Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
             Some((
-                Value(Linear, Prevalue::Pair(1, 2)),
-                store![
+                Value(Linear, Prevalue::Pair(0, 1)),
+                store_heap![
                     Value(Unrestricted, Prevalue::Bool(False)),
                     Value(Unrestricted, Prevalue::Bool(True)),
                 ],
