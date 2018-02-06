@@ -451,7 +451,14 @@ impl Store {
     }
 
     fn get(&mut self, x: usize) -> Option<Value> {
-        self.0.get(x)
+        let v = self.0.get(x)?;
+        match v.qual() {
+            Qual::Linear => {
+                self.0.remove(x);
+                Some(v.clone())
+            }
+            _ => Some(v.clone())
+        }
     }
 }
 
