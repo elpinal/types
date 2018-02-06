@@ -455,9 +455,9 @@ impl Store {
         match v.qual() {
             Qual::Linear => {
                 self.0.remove(x);
-                Some(v.clone())
+                Some(*v.clone())
             }
-            _ => Some(v.clone()),
+            _ => Some(*v.clone()),
         }
     }
 }
