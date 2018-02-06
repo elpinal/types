@@ -312,7 +312,7 @@ impl Term {
         self.eval_store(Store::new())
     }
 
-    fn eval_store(self) -> Option<(Value, Store)> {
+    fn eval_store(self, s: Store) -> Option<(Value, Store)> {
         use self::Term::*;
         use self::Bool::*;
         match self {
