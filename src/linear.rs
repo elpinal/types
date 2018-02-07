@@ -363,7 +363,7 @@ impl Term {
                 s2.pop_times_expect(2, "eval_store: Split");
                 Ok((v2, s2))
             }
-            Abs(q, ty, t) => Ok((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
+            Abs(q, ty, t) => Ok((Value(q, Prevalue::Abs(ty, *t)), s)),
             App(t1, t2) => {
                 let (v1, s1) = t1.eval()?;
                 let (q, _, t) = v1.abs().map_err(|v| NotAbs(v))?;
@@ -884,6 +884,32 @@ mod tests {
                 Bool(Linear, False),
             ),
             Ok((Value(Unrestricted, Prevalue::Bool(True)), Store::new()))
+        );
+
+        assert_eval!(
+            Term::app(
+                Term::abs(Linear, qual!(Linear, Pretype::Bool), Var(0, 1)),
+                Bool(Linear, False),
+            ),
+            Ok((Value(Linear, Prevalue::Bool(False)), Store::new()))
+        );
+
+        assert_eval!(
+            Term::app(
+                Term::abs(
+                    Linear,
+                    qual!(Linear, Pretype::Bool),
+                    Term::abs(Linear, qual!(Linear, Pretype::Bool), Var(1, 2)),
+                ),
+                Bool(Linear, False),
+            ),
+            Ok((
+                Value(
+                    Linear,
+                    Prevalue::Abs(qual!(Linear, Pretype::Bool), Var(1, 2)),
+                ),
+                store![],
+            ))
         );
     }
 }
