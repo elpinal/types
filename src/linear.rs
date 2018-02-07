@@ -339,13 +339,12 @@ impl Term {
         match self {
             Bool(q, b) => Ok((Value(q, Prevalue::Bool(b)), s)),
             If(t1, t2, t3) => {
-                let (v1, _) = t1.eval_store(s)?;
+                let (v1, s) = t1.eval_store(s)?;
                 let (q, b) = v1.bool().map_err(|v| NotBool(v))?;
-                let (v, s) = match b {
-                    True => t2.eval(),
-                    False => t3.eval(),
-                }?;
-                Ok((v, s))
+                match b {
+                    True => t2.eval_store(s),
+                    False => t3.eval_store(s),
+                }
             }
             Pair(q, t1, t2) => {
                 let (v1, mut s1) = t1.eval()?;
@@ -361,9 +360,10 @@ impl Term {
                 s1.move_top(x);
                 s1.move_top(y);
                 let (v2, mut s2) = t2.eval_store(s1)?;
-                s2.pop_times(2).expect(
-                    "eval_store: Split: unexpectedly small Store",
-                );
+                s2.pop_times(2).expect(&format!(
+                    "eval_store: Split: unexpectedly small Store: {:?}",
+                    s2
+                ));
                 Ok((v2, s2))
             }
             Abs(q, ty, t) => Ok((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
