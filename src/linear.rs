@@ -311,6 +311,10 @@ impl Term {
         Term::Pair(q, Box::new(t1), Box::new(t2))
     }
 
+    fn split(t1: Term, t2: Term) -> Term {
+        Term::Split(Box::new(t1), Box::new(t2))
+    }
+
     /// Evaluates a term.
     fn eval(self) -> Option<(Value, Store)> {
         self.eval_store(Store::new())
@@ -374,9 +378,11 @@ impl Term {
             If(ref mut t1, ref mut t2, ref mut t3) => f(&mut [t1, t2, t3]),
             Pair(_, ref mut t1, ref mut t2) => f(&mut [t1, t2]),
             Split(ref mut t1, ref mut t2) => {
-                [(0, t1), (2, t2)].iter_mut().for_each(|&mut (i, ref mut t)| {
-                    t.map_ref(onvar, c + i)
-                })
+                [(0, t1), (2, t2)].iter_mut().for_each(
+                    |&mut (i, ref mut t)| {
+                        t.map_ref(onvar, c + i)
+                    },
+                )
             }
             Abs(_, _, ref mut t) => t.map_ref(onvar, c + 1),
             App(ref mut t1, ref mut t2) => f(&mut [t1, t2]),
@@ -678,6 +684,24 @@ mod tests {
                     ),
                 )
             )
+        );
+
+        typable!(
+            Term::split(
+                Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
+                Bool(Linear, True),
+            ),
+            [],
+            qual!(Linear, Pretype::Bool)
+        );
+
+        not_typable!(
+            Term::split(
+                Term::pair(Linear, Bool(Linear, False), Bool(Unrestricted, True)),
+                Bool(Linear, True),
+            ),
+            [],
+            Error::UnusedLinear(qual!(Linear, Pretype::Bool))
         );
     }
 
