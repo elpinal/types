@@ -47,7 +47,7 @@ pub struct Context(Vec<Option<Type>>);
 struct Iter<'a>(&'a Vec<Option<Type>>, usize);
 
 #[derive(Clone, Debug, PartialEq)]
-struct Value(Qual, Prevalue);
+pub struct Value(Qual, Prevalue);
 
 #[derive(Clone, Debug, PartialEq)]
 enum Prevalue {
@@ -56,8 +56,8 @@ enum Prevalue {
     Abs(Type, Term),
 }
 
-#[derive(Debug, PartialEq)]
-struct Store {
+#[derive(Clone, Debug, PartialEq)]
+pub struct Store {
     stack: Vec<Option<Value>>,
     heap: Vec<Option<Value>>,
 }
@@ -83,6 +83,16 @@ pub enum TypeError {
 }
 
 type Result<T> = result::Result<T, TypeError>;
+
+#[derive(Debug, PartialEq)]
+pub enum EvalError {
+    Undefined(usize, Store),
+    NotAbs(Value),
+    NotPair(Value),
+    NotBool(Value),
+}
+
+type EvalResult<T> = result::Result<T, EvalError>;
 
 impl PartialOrd for Qual {
     fn partial_cmp(&self, q: &Self) -> Option<Ordering> {
@@ -317,24 +327,25 @@ impl Term {
     }
 
     /// Evaluates a term.
-    fn eval(self) -> Option<(Value, Store)> {
+    fn eval(self) -> EvalResult<(Value, Store)> {
         self.eval_store(Store::new())
     }
 
     /// Evaluates with an initial store.
-    fn eval_store(self, mut s: Store) -> Option<(Value, Store)> {
+    fn eval_store(self, mut s: Store) -> EvalResult<(Value, Store)> {
         use self::Term::*;
         use self::Bool::*;
+        use self::EvalError::*;
         match self {
-            Bool(q, b) => Some((Value(q, Prevalue::Bool(b)), s)),
+            Bool(q, b) => Ok((Value(q, Prevalue::Bool(b)), s)),
             If(t1, t2, t3) => {
                 let (v1, _) = t1.eval_store(s)?;
-                let (q, b) = v1.bool()?;
+                let (q, b) = v1.bool().map_err(|v| NotBool(v))?;
                 let (v, s) = match b {
                     True => t2.eval(),
                     False => t3.eval(),
                 }?;
-                Some((v, s))
+                Ok((v, s))
             }
             Pair(q, t1, t2) => {
                 let (v1, mut s1) = t1.eval()?;
@@ -342,29 +353,31 @@ impl Term {
                 s1.append(&mut s2);
                 let x = s1.add(v1);
                 let y = s1.add(v2);
-                Some((Value(q, Prevalue::Pair(x, y)), s1))
+                Ok((Value(q, Prevalue::Pair(x, y)), s1))
             }
             Split(t1, t2) => {
                 let (v1, mut s1) = t1.eval()?;
-                let (q, x, y) = v1.pair()?;
+                let (q, x, y) = v1.pair().map_err(|v| NotPair(v))?;
                 s1.move_top(x);
                 s1.move_top(y);
                 let (v2, mut s2) = t2.eval_store(s1)?;
-                s2.pop_times(2)?;
-                Some((v2, s2))
+                s2.pop_times(2).expect(
+                    "eval_store: Split: unexpectedly small Store",
+                );
+                Ok((v2, s2))
             }
-            Abs(q, ty, t) => Some((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
+            Abs(q, ty, t) => Ok((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
             App(t1, t2) => {
                 let (v1, s1) = t1.eval()?;
-                let (q, _, t) = v1.abs()?;
+                let (q, _, t) = v1.abs().map_err(|v| NotAbs(v))?;
                 let (v2, s2) = t2.eval()?;
                 let mut s0 = Store::new();
                 s0.push(v2);
                 t.eval_store(s0)
             }
             Var(x, n) => {
-                let v = s.get(x)?;
-                Some((v, s))
+                let v = s.get(x).ok_or_else(|| Undefined(x, s.clone()))?;
+                Ok((v, s))
             }
         }
     }
@@ -421,24 +434,24 @@ impl Value {
         self.0
     }
 
-    fn bool(self) -> Option<(Qual, Bool)> {
+    fn bool(self) -> result::Result<(Qual, Bool), Self> {
         match self.1 {
-            Prevalue::Bool(b) => Some((self.0, b)),
-            _ => None,
+            Prevalue::Bool(b) => Ok((self.0, b)),
+            _ => Err(self),
         }
     }
 
-    fn pair(self) -> Option<(Qual, usize, usize)> {
+    fn pair(self) -> result::Result<(Qual, usize, usize), Self> {
         match self.1 {
-            Prevalue::Pair(t1, t2) => Some((self.0, t1, t2)),
-            _ => None,
+            Prevalue::Pair(t1, t2) => Ok((self.0, t1, t2)),
+            _ => Err(self),
         }
     }
 
-    fn abs(self) -> Option<(Qual, Type, Term)> {
+    fn abs(self) -> result::Result<(Qual, Type, Term), Self> {
         match self.1 {
-            Prevalue::Abs(ty, t) => Some((self.0, ty, t)),
-            _ => None,
+            Prevalue::Abs(ty, t) => Ok((self.0, ty, t)),
+            _ => Err(self),
         }
     }
 }
@@ -752,12 +765,12 @@ mod tests {
 
         assert_eval!(
             Bool(Unrestricted, True),
-            Some((Value(Unrestricted, Prevalue::Bool(True)), Store::new()))
+            Ok((Value(Unrestricted, Prevalue::Bool(True)), Store::new()))
         );
 
         assert_eval!(
             Bool(Linear, True),
-            Some((Value(Linear, Prevalue::Bool(True)), Store::new()))
+            Ok((Value(Linear, Prevalue::Bool(True)), Store::new()))
         );
 
         assert_eval!(
@@ -766,7 +779,7 @@ mod tests {
                 Bool(Linear, True),
                 Bool(Linear, False),
             ),
-            Some((Value(Linear, Prevalue::Bool(True)), Store::new()))
+            Ok((Value(Linear, Prevalue::Bool(True)), Store::new()))
         );
 
         assert_eval!(
@@ -775,7 +788,7 @@ mod tests {
                 Bool(Linear, True),
                 Bool(Linear, False),
             ),
-            Some((Value(Linear, Prevalue::Bool(False)), Store::new()))
+            Ok((Value(Linear, Prevalue::Bool(False)), Store::new()))
         );
 
         assert_eval!(
@@ -784,12 +797,12 @@ mod tests {
                 Bool(Linear, True),
                 Bool(Unrestricted, False),
             ),
-            Some((Value(Unrestricted, Prevalue::Bool(False)), Store::new()))
+            Ok((Value(Unrestricted, Prevalue::Bool(False)), Store::new()))
         );
 
         assert_eval!(
             Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
-            Some((
+            Ok((
                 Value(Linear, Prevalue::Pair(0, 1)),
                 store_heap![
                     Value(Unrestricted, Prevalue::Bool(False)),
@@ -803,7 +816,7 @@ mod tests {
                 Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
                 Bool(Linear, True),
             ),
-            Some((
+            Ok((
                 Value(Linear, Prevalue::Bool(True)),
                 Store {
                     stack: vec![],
@@ -817,7 +830,7 @@ mod tests {
                 Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
                 Var(0, 2),
             ),
-            Some((
+            Ok((
                 Value(Unrestricted, Prevalue::Bool(True)),
                 Store {
                     stack: vec![],
@@ -831,7 +844,7 @@ mod tests {
                 Term::pair(Linear, Bool(Linear, False), Bool(Unrestricted, True)),
                 Var(1, 2),
             ),
-            Some((
+            Ok((
                 Value(Linear, Prevalue::Bool(False)),
                 Store {
                     stack: vec![],
@@ -845,7 +858,7 @@ mod tests {
                 Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
                 Term::conditional(Var(1, 2), Bool(Linear, False), Bool(Linear, True)),
             ),
-            Some((
+            Ok((
                 Value(Linear, Prevalue::Bool(True)),
                 Store {
                     stack: vec![],
