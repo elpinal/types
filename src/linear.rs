@@ -348,7 +348,9 @@ impl Term {
                 let (q, x, y) = v1.pair()?;
                 s1.move_top(x);
                 s1.move_top(y);
-                t2.eval_store(s1)
+                let (v2, mut s2) = t2.eval_store(s1)?;
+                s2.pop_times(2)?;
+                Some((v2, s2))
             }
             Abs(q, ty, t) => Some((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
             App(t1, t2) => {
@@ -452,6 +454,17 @@ impl Store {
         self.stack.push(Some(v));
     }
 
+    fn pop(&mut self) -> Option<Value> {
+        self.stack.pop()?
+    }
+
+    fn pop_times(&mut self, n: usize) -> Option<()> {
+        for _ in 0..n {
+            self.pop()?;
+        }
+        Some(())
+    }
+
     fn add(&mut self, v: Value) -> usize {
         self.heap.push(Some(v));
         self.heap.len() - 1
@@ -464,11 +477,7 @@ impl Store {
 
     fn get(&mut self, x: usize) -> Option<Value> {
         let at = self.stack.len() - x - 1;
-        let v = self.stack.get(at).cloned()??;
-        if v.qual() == Qual::Linear {
-            self.stack[at] = None;
-        }
-        Some(v)
+        self.stack.get(at).cloned()?
     }
 
     fn move_top(&mut self, x: usize) -> Option<()> {
@@ -783,10 +792,7 @@ mod tests {
             Some((
                 Value(Linear, Prevalue::Bool(True)),
                 Store {
-                    stack: vec![
-                        Some(Value(Unrestricted, Prevalue::Bool(False))),
-                        Some(Value(Unrestricted, Prevalue::Bool(True))),
-                    ],
+                    stack: vec![],
                     heap: vec![None, None],
                 },
             ))
@@ -800,10 +806,7 @@ mod tests {
             Some((
                 Value(Unrestricted, Prevalue::Bool(True)),
                 Store {
-                    stack: vec![
-                        Some(Value(Unrestricted, Prevalue::Bool(False))),
-                        Some(Value(Unrestricted, Prevalue::Bool(True))),
-                    ],
+                    stack: vec![],
                     heap: vec![None, None],
                 },
             ))
@@ -817,7 +820,7 @@ mod tests {
             Some((
                 Value(Linear, Prevalue::Bool(False)),
                 Store {
-                    stack: vec![None, Some(Value(Unrestricted, Prevalue::Bool(True)))],
+                    stack: vec![],
                     heap: vec![None, None],
                 },
             ))
