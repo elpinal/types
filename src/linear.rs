@@ -475,9 +475,12 @@ impl Store {
         self.heap.append(&mut s.heap);
     }
 
+    fn index_from_top(&self, x: usize) -> Option<usize> {
+        self.stack.len().checked_sub(x + 1)
+    }
+
     fn get(&mut self, x: usize) -> Option<Value> {
-        let at = self.stack.len() - x - 1;
-        self.stack.get(at).cloned()?
+        self.stack.get(self.index_from_top(x)?).cloned()?
     }
 
     fn move_top(&mut self, x: usize) -> Option<()> {
