@@ -325,7 +325,7 @@ impl Term {
         use self::Term::*;
         use self::Bool::*;
         match self {
-            Bool(q, b) => Some((Value(q, Prevalue::Bool(b)), Store::new())),
+            Bool(q, b) => Some((Value(q, Prevalue::Bool(b)), s)),
             If(t1, t2, t3) => {
                 let (v1, _) = t1.eval()?;
                 let (q, b) = v1.bool()?;
@@ -772,6 +772,23 @@ mod tests {
                     Value(Unrestricted, Prevalue::Bool(False)),
                     Value(Unrestricted, Prevalue::Bool(True)),
                 ],
+            ))
+        );
+
+        assert_eval!(
+            Term::split(
+                Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
+                Bool(Linear, True),
+            ),
+            Some((
+                Value(Linear, Prevalue::Bool(True)),
+                Store {
+                    stack: vec![
+                        Some(Value(Unrestricted, Prevalue::Bool(False))),
+                        Some(Value(Unrestricted, Prevalue::Bool(True))),
+                    ],
+                    heap: vec![None, None],
+                },
             ))
         );
     }
