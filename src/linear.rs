@@ -360,10 +360,7 @@ impl Term {
                 s1.move_top(x);
                 s1.move_top(y);
                 let (v2, mut s2) = t2.eval_store(s1)?;
-                s2.pop_times(2).expect(&format!(
-                    "eval_store: Split: unexpectedly small Store: {:?}",
-                    s2
-                ));
+                s2.pop_times_expect(2, "eval_store: Split");
                 Ok((v2, s2))
             }
             Abs(q, ty, t) => Ok((Value(q, Prevalue::Abs(ty, *t)), Store::new())),
@@ -373,7 +370,9 @@ impl Term {
                 let (v2, s2) = t2.eval()?;
                 let mut s0 = Store::new();
                 s0.push(v2);
-                t.eval_store(s0)
+                let (v, mut s) = t.eval_store(s0)?;
+                s.pop_times_expect(1, "eval_store: function application");
+                Ok((v, s))
             }
             Var(x, n) => {
                 let v = s.get(x).ok_or_else(|| Undefined(x, s.clone()))?;
@@ -477,6 +476,14 @@ impl Store {
             self.pop()?;
         }
         Some(())
+    }
+
+    fn pop_times_expect(&mut self, n: usize, msg: &str) {
+        self.pop_times(n).expect(&format!(
+            "{}: unexpectedly small Store: {:?}",
+            msg,
+            self
+        ));
     }
 
     fn add(&mut self, v: Value) -> usize {
@@ -865,6 +872,18 @@ mod tests {
                     heap: vec![None, None],
                 },
             ))
+        );
+
+        assert_eval!(
+            Term::app(
+                Term::abs(
+                    Linear,
+                    qual!(Linear, Pretype::Bool),
+                    Bool(Unrestricted, True),
+                ),
+                Bool(Linear, False),
+            ),
+            Ok((Value(Unrestricted, Prevalue::Bool(True)), Store::new()))
         );
     }
 }
