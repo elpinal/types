@@ -70,7 +70,7 @@ pub trait TypeCheck {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Error {
+pub enum TypeError {
     Undefined(usize, Context),
     TypeMismatch(Type, Type),
     PretypeMismatch(Pretype, Pretype),
@@ -82,7 +82,7 @@ pub enum Error {
     LinearInUnAbs(Context),
 }
 
-type Result<T> = result::Result<T, Error>;
+type Result<T> = result::Result<T, TypeError>;
 
 impl PartialOrd for Qual {
     fn partial_cmp(&self, q: &Self) -> Option<Ordering> {
@@ -166,7 +166,7 @@ impl Context {
             match *q {
                 Linear => {
                     if let Some(ty) = self.0.pop().expect("unexpected error") {
-                        return Err(Error::UnusedLinear(ty));
+                        return Err(TypeError::UnusedLinear(ty));
                     }
                 }
                 Unrestricted => {
@@ -219,7 +219,7 @@ impl TypeCheck for Term {
 impl Term {
     fn type_of_var(x: usize, ctx: &mut Context) -> Result<Type> {
         let Type(q, pt) = ctx.get(x).cloned().ok_or_else(
-            || Error::Undefined(x, ctx.clone()),
+            || TypeError::Undefined(x, ctx.clone()),
         )?;
         if q == Qual::Linear {
             ctx.remove(x);
@@ -229,9 +229,10 @@ impl Term {
 
     fn type_of_if(t1: &Term, t2: &Term, t3: &Term, ctx: &mut Context) -> Result<Type> {
         use self::Pretype::*;
+        use self::TypeError::*;
         let pt = t1.type_of(ctx)?.pretype();
         if pt != Bool {
-            return Err(Error::PretypeMismatch(pt, Bool));
+            return Err(PretypeMismatch(pt, Bool));
         }
         let mut ctx1 = ctx.clone();
         let ty2 = t2.type_of(ctx)?;
@@ -240,9 +241,9 @@ impl Term {
         // On Linear type system, since contexts have the exchange property, the
         // equality check for two contexts might need consider it. Need investigation.
         if *ctx != ctx1 {
-            Err(Error::ContextMismatch(ctx.clone(), ctx1))
+            Err(ContextMismatch(ctx.clone(), ctx1))
         } else if ty2 != ty3 {
-            Err(Error::TypeMismatch(ty3, ty2))
+            Err(TypeMismatch(ty3, ty2))
         } else {
             Ok(ty2)
         }
@@ -252,15 +253,15 @@ impl Term {
         let ty1 = t1.type_of(ctx)?;
         let ty2 = t2.type_of(ctx)?;
         if !(ty1.can_appear_in(q) && ty2.can_appear_in(q)) {
-            return Err(Error::Containment(q, ty1, ty2));
+            return Err(TypeError::Containment(q, ty1, ty2));
         }
         Ok(qual!(q, Pretype::Pair(ty1, ty2)))
     }
 
     fn type_of_split(t1: &Term, t2: &Term, ctx: &mut Context) -> Result<Type> {
-        let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair().map_err(
-            |pt| Error::ExpectPair(pt),
-        )?;
+        let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair().map_err(|pt| {
+            TypeError::ExpectPair(pt)
+        })?;
         let q1 = ty11.qual();
         let q2 = ty12.qual();
         ctx.push(ty11);
@@ -276,7 +277,7 @@ impl Term {
         let ty2 = t.type_of(ctx)?;
         ctx.trancate(&[ty1.qual()])?;
         if q == Qual::Unrestricted && ctx.0.iter().enumerate().any(|(x, ty)| v[x] != ty.is_some()) {
-            return Err(Error::LinearInUnAbs(ctx.clone()));
+            return Err(TypeError::LinearInUnAbs(ctx.clone()));
         }
         Ok(qual!(q, Pretype::Arr(ty1.clone(), ty2)))
     }
@@ -289,9 +290,9 @@ impl Term {
                 if ty11 == ty2 {
                     return Ok(ty12);
                 }
-                return Err(Error::TypeMismatch(ty2, ty11));
+                Err(TypeError::TypeMismatch(ty2, ty11))
             }
-            pt => Err(Error::ExpectArrow(pt)),
+            pt => Err(TypeError::ExpectArrow(pt)),
         }
     }
 
@@ -619,6 +620,7 @@ mod tests {
         use self::Bool::*;
         use self::Qual::*;
         use self::Term::*;
+        use self::TypeError::*;
 
         typable!(
             Bool(Unrestricted, True),
@@ -634,7 +636,7 @@ mod tests {
 
         typable!(Bool(Linear, True), [], qual!(Linear, Pretype::Bool));
 
-        not_typable!(Var(0, 1), [], Error::Undefined(0, context![]));
+        not_typable!(Var(0, 1), [], Undefined(0, context![]));
         typable!(
             Var(0, 1),
             [qual!(Linear, Pretype::Bool)],
@@ -644,12 +646,12 @@ mod tests {
         not_typable!(
             Term::app(Var(0, 1), Var(0, 1)),
             [qual!(Linear, Pretype::Bool)],
-            Error::Undefined(0, Context(vec![None]))
+            Undefined(0, Context(vec![None]))
         );
         not_typable!(
             Term::app(Var(0, 1), Var(0, 1)),
             [qual!(Unrestricted, Pretype::Bool)],
-            Error::ExpectArrow(Pretype::Bool)
+            ExpectArrow(Pretype::Bool)
         );
         typable!(
             Term::app(Var(0, 2), Var(1, 2)),
@@ -713,7 +715,7 @@ mod tests {
                 Bool(Linear, True),
             ),
             [],
-            Error::UnusedLinear(qual!(Linear, Pretype::Bool))
+            UnusedLinear(qual!(Linear, Pretype::Bool))
         );
 
         typable!(
