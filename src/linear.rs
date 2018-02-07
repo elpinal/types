@@ -327,7 +327,7 @@ impl Term {
         match self {
             Bool(q, b) => Some((Value(q, Prevalue::Bool(b)), s)),
             If(t1, t2, t3) => {
-                let (v1, _) = t1.eval()?;
+                let (v1, _) = t1.eval_store(s)?;
                 let (q, b) = v1.bool()?;
                 let (v, s) = match b {
                     True => t2.eval(),
@@ -715,6 +715,15 @@ mod tests {
             [],
             Error::UnusedLinear(qual!(Linear, Pretype::Bool))
         );
+
+        typable!(
+            Term::split(
+                Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
+                Term::conditional(Var(1, 2), Bool(Linear, False), Bool(Linear, True)),
+            ),
+            [],
+            qual!(Linear, Pretype::Bool)
+        );
     }
 
     macro_rules! assert_eval {
@@ -822,6 +831,20 @@ mod tests {
             ),
             Some((
                 Value(Linear, Prevalue::Bool(False)),
+                Store {
+                    stack: vec![],
+                    heap: vec![None, None],
+                },
+            ))
+        );
+
+        assert_eval!(
+            Term::split(
+                Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
+                Term::conditional(Var(1, 2), Bool(Linear, False), Bool(Linear, True)),
+            ),
+            Some((
+                Value(Linear, Prevalue::Bool(True)),
                 Store {
                     stack: vec![],
                     heap: vec![None, None],
