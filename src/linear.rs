@@ -367,30 +367,19 @@ impl Term {
         F: Fn(usize, usize, usize, &mut Self),
     {
         use self::Term::*;
+        let f = |ts: &mut [&mut Term]| ts.iter_mut().for_each(|t| t.map_ref(onvar, c));
         match *self {
             Var(x, n) => onvar(c, x, n, self),
             Bool(..) => (),
-            If(ref mut t1, ref mut t2, ref mut t3) => {
-                for t in &mut [t1, t2, t3] {
-                    t.map_ref(onvar, c);
-                }
-            }
-            Pair(_, ref mut t1, ref mut t2) => {
-                for t in &mut [t1, t2] {
-                    t.map_ref(onvar, c);
-                }
-            }
+            If(ref mut t1, ref mut t2, ref mut t3) => f(&mut [t1, t2, t3]),
+            Pair(_, ref mut t1, ref mut t2) => f(&mut [t1, t2]),
             Split(ref mut t1, ref mut t2) => {
-                for &mut (i, ref mut t) in &mut [(0, t1), (2, t2)] {
-                    t.map_ref(onvar, c + i);
-                }
+                [(0, t1), (2, t2)].iter_mut().for_each(|&mut (i, ref mut t)| {
+                    t.map_ref(onvar, c + i)
+                })
             }
             Abs(_, _, ref mut t) => t.map_ref(onvar, c + 1),
-            App(ref mut t1, ref mut t2) => {
-                for t in &mut [t1, t2] {
-                    t.map_ref(onvar, c);
-                }
-            }
+            App(ref mut t1, ref mut t2) => f(&mut [t1, t2]),
         }
     }
 }
