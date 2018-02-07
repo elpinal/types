@@ -361,7 +361,7 @@ impl Term {
             }
             Var(x, n) => {
                 let v = s.get(x)?;
-                Some((v, Store::new()))
+                Some((v, s))
             }
         }
     }
@@ -787,6 +787,37 @@ mod tests {
                         Some(Value(Unrestricted, Prevalue::Bool(False))),
                         Some(Value(Unrestricted, Prevalue::Bool(True))),
                     ],
+                    heap: vec![None, None],
+                },
+            ))
+        );
+
+        assert_eval!(
+            Term::split(
+                Term::pair(Linear, Bool(Unrestricted, False), Bool(Unrestricted, True)),
+                Var(0, 2),
+            ),
+            Some((
+                Value(Unrestricted, Prevalue::Bool(True)),
+                Store {
+                    stack: vec![
+                        Some(Value(Unrestricted, Prevalue::Bool(False))),
+                        Some(Value(Unrestricted, Prevalue::Bool(True))),
+                    ],
+                    heap: vec![None, None],
+                },
+            ))
+        );
+
+        assert_eval!(
+            Term::split(
+                Term::pair(Linear, Bool(Linear, False), Bool(Unrestricted, True)),
+                Var(1, 2),
+            ),
+            Some((
+                Value(Linear, Prevalue::Bool(False)),
+                Store {
+                    stack: vec![None, Some(Value(Unrestricted, Prevalue::Bool(True)))],
                     heap: vec![None, None],
                 },
             ))
