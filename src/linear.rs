@@ -1,5 +1,5 @@
 //! A linear type system.
-#![warn(dead_code)]
+#![allow(unused)]
 
 use std::cmp::Ordering;
 use std::iter::Iterator;
