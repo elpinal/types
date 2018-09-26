@@ -81,7 +81,7 @@ impl Type {
                         if n == 0 {
                             t1.whnf(s0)
                         } else {
-                            Var(n - 1).whnf(*s1)
+                            Type::closure(Var(n - 1), *s1).whnf(s0)
                         }
                     }
                     Comp(s1, s2) => Closure(t, *s1).whnf(Comp(s2, Box::new(s0))),
