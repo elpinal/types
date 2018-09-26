@@ -23,6 +23,26 @@ pub enum Subst {
 }
 
 impl Type {
+    fn forall(t: Type) -> Type {
+        Type::Forall(Box::new(t))
+    }
+
+    fn arr(t1: Type, t2: Type) -> Type {
+        Type::Arr(Box::new(t1), Box::new(t2))
+    }
+
+    fn nf(self, s0: Subst) -> Type {
+        use self::Subst::*;
+        use self::Type::*;
+        let (t, s1) = self.whnf(s0);
+        match t {
+            Var(_) => t,
+            Forall(t0) => Type::forall(t0.nf(Subst::cons(Closure(Box::new(Var(0)), Id), Subst::comp(s1, Shift)))),
+            Arr(t1, t2) => Type::arr(t1.nf(s1.clone()), t2.nf(s1)),
+            Closure(..) => panic!("weak head normal forms do not include closures"),
+        }
+    }
+
     fn whnf(self, s0: Subst) -> (Type, Subst) {
         use self::Subst::*;
         use self::Type::*;
@@ -68,6 +88,10 @@ impl Type {
 }
 
 impl Subst {
+    fn cons(t: Type, s: Subst) -> Subst {
+        Subst::Cons(Box::new(t), Box::new(s))
+    }
+
     fn comp(s1: Subst, s2: Subst) -> Subst {
         Subst::Comp(Box::new(s1), Box::new(s2))
     }
