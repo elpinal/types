@@ -127,4 +127,135 @@ pub enum Term {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_nf() {
+        use self::Subst::*;
+        use self::Type::*;
+
+        assert_eq!(Var(0).nf(Id), Var(0));
+        assert_eq!(Var(20).nf(Id), Var(20));
+
+        assert_eq!(Var(0).nf(Shift), Var(1));
+        assert_eq!(Var(1).nf(Shift), Var(2));
+
+        assert_eq!(
+            Var(0).nf(Subst::cons(Type::closure(Var(0), Id), Shift)),
+            Var(0)
+        );
+        assert_eq!(
+            Var(0).nf(Subst::cons(Type::closure(Var(1), Id), Shift)),
+            Var(1)
+        );
+        assert_eq!(
+            Var(0).nf(Subst::cons(Type::closure(Var(21), Id), Shift)),
+            Var(21)
+        );
+
+        assert_eq!(
+            Var(1).nf(Subst::cons(Type::closure(Var(21), Id), Shift)),
+            Var(1)
+        );
+        assert_eq!(
+            Var(1).nf(Subst::cons(Type::closure(Var(21), Id), Id)),
+            Var(0)
+        );
+
+        assert_eq!(Var(0).nf(Subst::comp(Id, Id)), Var(0));
+        assert_eq!(Var(0).nf(Subst::comp(Id, Shift)), Var(1));
+        assert_eq!(Var(0).nf(Subst::comp(Shift, Id)), Var(1));
+        assert_eq!(Var(0).nf(Subst::comp(Shift, Shift)), Var(2));
+
+        assert_eq!(Type::arr(Var(0), Var(0)).nf(Id), Type::arr(Var(0), Var(0)));
+        assert_eq!(
+            Type::arr(Var(0), Var(0)).nf(Shift),
+            Type::arr(Var(1), Var(1))
+        );
+
+        assert_eq!(Type::forall(Var(0)).nf(Id), Type::forall(Var(0)));
+        assert_eq!(Type::forall(Var(0)).nf(Shift), Type::forall(Var(0)));
+        assert_eq!(Type::forall(Var(1)).nf(Shift), Type::forall(Var(2)));
+
+        assert_eq!(
+            Type::forall(Var(0)).nf(Subst::cons(Type::closure(Var(77), Id), Id)),
+            Type::forall(Var(0))
+        );
+        assert_eq!(
+            Type::forall(Var(1)).nf(Subst::cons(Type::closure(Var(77), Id), Id)),
+            Type::forall(Var(78))
+        );
+
+        assert_eq!(
+            Type::forall(Type::forall(Var(2))).nf(Subst::cons(Type::closure(Var(0), Id), Shift)),
+            Type::forall(Type::forall(Var(2)))
+        );
+
+        assert_eq!(
+            Type::forall(Type::forall(Var(2))).nf(Subst::cons(Type::closure(Var(0), Id), Id)),
+            Type::forall(Type::forall(Var(2)))
+        );
+    }
+
+    #[test]
+    fn test_whnf() {
+        use self::Subst::*;
+        use self::Type::*;
+
+        assert_eq!(
+            Type::forall(Type::forall(Var(2))).whnf(Subst::cons(Type::closure(Var(0), Id), Shift)),
+            (
+                Type::forall(Type::forall(Var(2))),
+                Subst::cons(Type::closure(Var(0), Id), Shift)
+            )
+        );
+
+        assert_eq!(
+            Type::forall(Var(2)).whnf(Subst::cons(
+                Type::closure(Var(0), Id),
+                Subst::comp(Subst::cons(Type::closure(Var(0), Id), Shift), Shift)
+            )),
+            (
+                Type::forall(Var(2)),
+                Subst::cons(
+                    Type::closure(Var(0), Id),
+                    Subst::comp(Subst::cons(Type::closure(Var(0), Id), Shift), Shift)
+                )
+            )
+        );
+
+        assert_eq!(
+            Var(0).whnf(Subst::comp(
+                Subst::comp(Subst::cons(Type::closure(Var(0), Id), Shift), Shift),
+                Shift
+            )),
+            (Var(2), Id)
+        );
+
+        assert_eq!(
+            Var(1).whnf(Subst::comp(
+                Subst::cons(
+                    Type::closure(Var(0), Id),
+                    Subst::comp(Subst::cons(Type::closure(Var(0), Id), Shift), Shift)
+                ),
+                Shift
+            )),
+            (Var(2), Id)
+        );
+
+        assert_eq!(
+            Var(2).whnf(Subst::cons(
+                Type::closure(Var(0), Id),
+                Subst::comp(
+                    Subst::cons(
+                        Type::closure(Var(0), Id),
+                        Subst::comp(Subst::cons(Type::closure(Var(0), Id), Shift), Shift)
+                    ),
+                    Shift
+                )
+            )),
+            (Var(2), Id)
+        );
+    }
+}
