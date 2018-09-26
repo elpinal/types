@@ -31,6 +31,10 @@ impl Type {
         Type::Arr(Box::new(t1), Box::new(t2))
     }
 
+    fn closure(t: Type, s: Subst) -> Type {
+        Type::Closure(Box::new(t), s)
+    }
+
     /// Reduces to the normal form.
     fn nf(self, s0: Subst) -> Type {
         use self::Subst::*;
@@ -39,7 +43,7 @@ impl Type {
         match t {
             Var(_) => t,
             Forall(t0) => Type::forall(t0.nf(Subst::cons(
-                Closure(Box::new(Var(0)), Id),
+                Type::closure(Var(0), Id),
                 Subst::comp(s1, Shift),
             ))),
             Arr(t1, t2) => Type::arr(t1.nf(s1.clone()), t2.nf(s1)),
@@ -66,7 +70,7 @@ impl Type {
                         Var(n - 1).whnf(*s)
                     }
                 }
-                Comp(s1, s2) => Closure(Box::new(self), *s1).whnf(*s2),
+                Comp(s1, s2) => Type::closure(self, *s1).whnf(*s2),
             },
             Closure(t, s) => match *t {
                 Var(n) => match s {
