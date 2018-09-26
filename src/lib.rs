@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 mod algorithm_w;
+pub mod explicit_substitution;
 pub mod label_selective;
 pub mod linear;
 pub mod omega;
