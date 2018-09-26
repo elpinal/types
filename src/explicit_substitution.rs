@@ -129,6 +129,7 @@ pub enum Term {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
     #[test]
     fn test_nf() {
@@ -257,5 +258,12 @@ mod tests {
             )),
             (Var(2), Id)
         );
+    }
+
+    #[bench]
+    fn bench_nf(b: &mut Bencher) {
+        use self::Subst::*;
+        use self::Type::*;
+        b.iter(|| Var(0).nf(Subst::comp(Shift, Shift)));
     }
 }
