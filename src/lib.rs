@@ -12,6 +12,7 @@ pub mod rank2_intersection;
 pub mod rank2_intersection2;
 pub mod rank2_system_f;
 pub mod sub;
+pub mod substitution;
 pub mod system_f;
 pub mod system_fsub;
 
