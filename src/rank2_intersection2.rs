@@ -46,7 +46,11 @@ impl Inference {
                 let t1 = self.type_of(&*t1, ctx);
                 let t2 = self.type_of(&*t2, ctx);
                 match t1 {
-                    Rank2::Arr(t11, t12) => if t11 == t2 { Some(t12) } else { None },
+                    Rank2::Arr(t11, t12) => if t11 == t2 {
+                        Some(t12)
+                    } else {
+                        None
+                    },
                 }
             }
         }

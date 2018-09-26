@@ -22,13 +22,13 @@ pub enum Term {
 macro_rules! abs {
     ($t1:expr) => {
         Term::Abs(Box::new($t1))
-    }
+    };
 }
 
 macro_rules! app {
     ($t1:expr, $t2:expr) => {
         Term::App(Box::new($t1), Box::new($t2))
-    }
+    };
 }
 
 #[derive(Debug, PartialEq)]
@@ -134,10 +134,12 @@ impl Term {
         if m == 0 {
             return;
         }
-        let f = |j, x, n, t: &mut Term| if x == j + m {
-            *t = Var(0, n);
-        } else {
-            *t = app!(Var(j + 1, n), Var(j, n));
+        let f = |j, x, n, t: &mut Term| {
+            if x == j + m {
+                *t = Var(0, n);
+            } else {
+                *t = app!(Var(j + 1, n), Var(j, n));
+            }
         };
         self.map_ref(&f, 0);
     }
@@ -147,10 +149,12 @@ impl ShiftRef for Term {
     fn shift_above_ref(&mut self, c: usize, d: isize) {
         use self::Term::*;
         let var = |x, n| Var(x as usize, n as usize);
-        let f = |c: usize, x: usize, n, t: &mut Term| if x >= c {
-            *t = var(x as isize + d, n as isize + d);
-        } else {
-            *t = Var(x, (n as isize + d) as usize);
+        let f = |c: usize, x: usize, n, t: &mut Term| {
+            if x >= c {
+                *t = var(x as isize + d, n as isize + d);
+            } else {
+                *t = Var(x, (n as isize + d) as usize);
+            }
         };
         self.map_ref(&f, c);
     }
@@ -158,10 +162,12 @@ impl ShiftRef for Term {
 
 impl Subst for Term {
     fn subst(self, j: usize, t: &Self) -> Self {
-        let f = |j, x, n| if x == j {
-            t.clone().shift(j as isize)
-        } else {
-            Term::Var(x, n)
+        let f = |j, x, n| {
+            if x == j {
+                t.clone().shift(j as isize)
+            } else {
+                Term::Var(x, n)
+            }
         };
         self.map(&f, j)
     }
@@ -228,22 +234,22 @@ mod tests {
         use self::Term::*;
         let xs = Vec::new();
         let t = abs!(Var(0, 1));
-        assert_eq!(Theta::from_left(t, &xs, 0), (
-            Theta(0, vec![Var(0, 1)]),
-            vec![0],
-        ));
+        assert_eq!(
+            Theta::from_left(t, &xs, 0),
+            (Theta(0, vec![Var(0, 1)]), vec![0],)
+        );
 
         let t = abs!(Var(0, 2));
-        assert_eq!(Theta::from_left(t, &xs, 1), (
-            Theta(0, vec![Var(0, 2)]),
-            vec![0],
-        ));
+        assert_eq!(
+            Theta::from_left(t, &xs, 1),
+            (Theta(0, vec![Var(0, 2)]), vec![0],)
+        );
     }
 
     macro_rules! theta_from {
         ($t: expr, $th: expr) => {
             assert_eq!(Theta::from($t), $th);
-        }
+        };
     }
 
     #[test]
@@ -309,8 +315,8 @@ mod tests {
 
     #[test]
     fn test_inference() {
-        use self::Term::*;
         use self::asup::Type;
+        use self::Term::*;
         assert_eq!(Var(0, 1).infer_type(), Some((Type::Term(1), 0, 1)));
         assert_eq!(abs!(Var(0, 1)).infer_type(), Some((Type::Term(1), 1, 0)));
         assert_eq!(
@@ -339,10 +345,10 @@ mod tests {
 
     #[test]
     fn test_inference_at_all() {
-        use self::Term::*;
         use self::asup::Type;
-        use self::Type as T;
         use self::Restricted1;
+        use self::Term::*;
+        use self::Type as T;
         assert_eq!(
             Var(0, 1).infer_type_trivial(),
             Some(T {
@@ -464,17 +470,16 @@ impl Theta {
                 n += 1;
                 l += 1;
                 t.rotate_from(f(), n, l)
-            })
-            .collect()
+            }).collect()
     }
 
     fn app(v: &mut Vec<Term>, m: &mut Vec<usize>, r: &mut Vec<Term>) {
         if let Some(i) = m.pop() {
             let mut vv = v.split_off(i);
             r.iter_mut().for_each(|t| t.shift_above_ref(0, i as isize));
-            vv.iter_mut().enumerate().for_each(|(x, t)| {
-                t.shift_above_ref(1, (x + r.len() - 1) as isize)
-            });
+            vv.iter_mut()
+                .enumerate()
+                .for_each(|(x, t)| t.shift_above_ref(1, (x + r.len() - 1) as isize));
             v.append(r);
             v.append(&mut vv);
         }
@@ -489,13 +494,13 @@ impl Theta {
                 let mut m: Vec<usize> = m.into_iter().map(|i| i + 1).collect();
                 if xs.contains(&l) {
                     // Theta 2.
-                    let v = v.into_iter()
+                    let v = v
+                        .into_iter()
                         .enumerate()
                         .map(|(x, mut t)| {
                             t.theta_2(x);
                             abs!(t)
-                        })
-                        .collect();
+                        }).collect();
                     (v, m)
                 } else {
                     m.push(0);
@@ -521,10 +526,10 @@ impl Theta {
         }
         let l = v2.len() as isize;
         let mut v1: Vec<Term> = v1.into_iter().map(|t| t.shift_above(1, l - 1)).collect();
-        let t2 = v2.pop().expect("empty term").shift_above(
-            1,
-            (v1.len() - 1) as isize,
-        );
+        let t2 = v2
+            .pop()
+            .expect("empty term")
+            .shift_above(1, (v1.len() - 1) as isize);
         let t1 = v1.pop().expect("empty term");
         v2.extend(v1);
         v2.push(app!(t1, t2));
@@ -609,11 +614,9 @@ pub mod asup {
         macro_rules! update {
             ($ps:expr, $p0:expr) => {
                 $ps.into_iter()
-                    .map(|(t1, t2)| {
-                        (t1.replace(&$p0.0, &$p0.1), t2.replace(&$p0.0, &$p0.1))
-                    })
+                    .map(|(t1, t2)| (t1.replace(&$p0.0, &$p0.1), t2.replace(&$p0.0, &$p0.1)))
                     .collect();
-            }
+            };
         }
         loop {
             let p;
@@ -632,22 +635,20 @@ pub mod asup {
             } else {
                 match reduce2(&t1, &t2, &[]) {
                     Err(_) => return None,
-                    Ok(p0) => {
-                        match p0 {
-                            None => {
-                                if t1 != t2 {
-                                    ps1.push((*t1, *t2));
-                                }
-                            }
-                            Some(p0) => {
-                                ps.push((*t1, *t2));
-                                ps = update!(ps, p0);
-                                ps1 = update!(ps1, p0);
-                                v.push(p0);
-                                changed = true;
+                    Ok(p0) => match p0 {
+                        None => {
+                            if t1 != t2 {
+                                ps1.push((*t1, *t2));
                             }
                         }
-                    }
+                        Some(p0) => {
+                            ps.push((*t1, *t2));
+                            ps = update!(ps, p0);
+                            ps1 = update!(ps1, p0);
+                            v.push(p0);
+                            changed = true;
+                        }
+                    },
                 }
             }
         }
@@ -682,12 +683,10 @@ pub mod asup {
             }
             let t1 = Type::redo(t1, v)?;
             match **t1 {
-                Type::Arr(..) => {
-                    match **t2 {
-                        Type::Arr(..) => None,
-                        _ => Some((*t2.clone(), self.make_fresh(*t1.clone()))),
-                    }
-                }
+                Type::Arr(..) => match **t2 {
+                    Type::Arr(..) => None,
+                    _ => Some((*t2.clone(), self.make_fresh(*t1.clone()))),
+                },
                 _ => None,
             }
         }
@@ -861,7 +860,11 @@ pub mod asup {
             use self::Type::*;
             match self {
                 Arr(a, b) => Type::arr(a.replace(t1, t2), b.replace(t1, t2)),
-                _ => if self == *t1 { t2.clone() } else { self },
+                _ => if self == *t1 {
+                    t2.clone()
+                } else {
+                    self
+                },
             }
         }
     }
@@ -1031,14 +1034,14 @@ pub mod asup {
             ($th:expr, $ty:expr, $inst:expr, $ws:expr) => {
                 let mut c = Constructor::new();
                 assert_eq!(c.construct($th), ($ty, $inst, $ws));
-            }
+            };
         }
 
         #[test]
         fn test_construct() {
-            use self::Var::*;
-            use self::Type::*;
             use self::Term;
+            use self::Type::*;
+            use self::Var::*;
             assert_construct!(
                 Theta(0, vec![Term::Var(0, 1)]),
                 Term(1),
@@ -1067,10 +1070,7 @@ pub mod asup {
                         Type::arr(Term(5), Term(5)),
                         Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
                     ),
-                    (
-                        Type::arr(Term(3), Term(3)),
-                        Type::arr(Var(Z(1)), Term(2))
-                    ),
+                    (Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2))),
                     (
                         Type::arr(Term(6), Term(6)),
                         Type::arr(Var(Y(1, 0)), Term(4))
@@ -1123,10 +1123,7 @@ pub mod asup {
                         Type::arr(Term(5), Term(5)),
                         Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
                     ),
-                    (
-                        Type::arr(Term(3), Term(3)),
-                        Type::arr(Var(Z(1)), Term(2))
-                    ),
+                    (Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2))),
                     (
                         Type::arr(Term(6), Term(6)),
                         Type::arr(Var(Y(1, 0)), Term(4))
@@ -1161,10 +1158,7 @@ pub mod asup {
                         Type::arr(Term(5), Term(5)),
                         Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
                     ),
-                    (
-                        Type::arr(Term(3), Term(3)),
-                        Type::arr(Var(Z(1)), Term(2))
-                    ),
+                    (Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2))),
                     (
                         Type::arr(Term(6), Term(6)),
                         Type::arr(Var(Y(1, 0)), Term(4))
@@ -1205,10 +1199,7 @@ pub mod asup {
                         Type::arr(Term(5), Term(5)),
                         Type::arr(Type::arr(Var(Z(1)), Term(2)), Term(4))
                     ),
-                    (
-                        Type::arr(Term(3), Term(3)),
-                        Type::arr(Var(Z(1)), Term(2))
-                    ),
+                    (Type::arr(Term(3), Term(3)), Type::arr(Var(Z(1)), Term(2))),
                     (
                         Type::arr(Term(6), Term(6)),
                         Type::arr(Var(Y(1, 0)), Term(4))
@@ -1252,7 +1243,7 @@ pub mod asup {
                 let mut c = Constructor::new();
                 c.n = 100000; // Take care about conflict of numbers!
                 assert_eq!(reduce(&c, Instance($v)), $t);
-            }
+            };
         }
 
         #[test]
@@ -1320,12 +1311,10 @@ pub mod asup {
             );
 
             assert_reduce!(
-                vec![
-                    (
-                        Type::arr(Term(13), Term(13)),
-                        Type::arr(Type::arr(Var(Z(9)), Term(10)), Term(12))
-                    ),
-                ],
+                vec![(
+                    Type::arr(Term(13), Term(13)),
+                    Type::arr(Type::arr(Var(Z(9)), Term(10)), Term(12))
+                ),],
                 Some(vec![(Term(12), Type::arr(Var(Z(9)), Term(10)))])
             );
 
@@ -1361,10 +1350,7 @@ pub mod asup {
                 Some(vec![
                     (Var(Z(10)), Term(11)),
                     (Term(13), Type::arr(Term(11), Term(11))),
-                    (
-                        Term(9),
-                        Type::arr(Type::arr(Term(11), Term(11)), Term(15))
-                    ),
+                    (Term(9), Type::arr(Type::arr(Term(11), Term(11)), Term(15))),
                     (Term(7), Type::arr(Term(4), Term(0))),
                     (Var(Y(1, 0)), Term(4)),
                     (Var(Z(1)), Term(2)),
@@ -1378,7 +1364,7 @@ pub mod asup {
             ($t1:expr, $t2:expr, $t3:expr) => {
                 let mut r = Reducer { n: 0 };
                 assert_eq!(r.reduce1(&Box::new($t1), &Box::new($t2), &[]), $t3);
-            }
+            };
         }
 
         #[test]
@@ -1420,7 +1406,7 @@ pub mod asup {
         macro_rules! assert_reduce2 {
             ($t1:expr, $t2:expr, $t3:expr) => {
                 assert_eq!(reduce2(&Box::new($t1), &Box::new($t2), &[]), $t3);
-            }
+            };
         }
 
         #[test]
@@ -1454,8 +1440,8 @@ pub mod asup {
 }
 
 pub mod lambda2_restricted {
-    use Subst;
     use rank2_system_f::lambda2::*;
+    use Subst;
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum Restricted1 {
@@ -1488,22 +1474,24 @@ pub mod lambda2_restricted {
     macro_rules! abs {
         ($t1:expr, $t2:expr) => {
             Abs($t1, Box::new($t2))
-        }
+        };
     }
     macro_rules! app {
         ($t1:expr, $t2:expr) => {
             App(Box::new($t1), Box::new($t2))
-        }
+        };
     }
 
     impl Shift for Term {
         fn shift_above(self, c: usize, d: isize) -> Self {
             use self::Term::*;
             let var = |x, n| Var(x as usize, n as usize);
-            let f = |c: usize, x: usize, n| if x >= c {
-                var(x as isize + d, n as isize + d)
-            } else {
-                Var(x, (n as isize + d) as usize)
+            let f = |c: usize, x: usize, n| {
+                if x >= c {
+                    var(x as isize + d, n as isize + d)
+                } else {
+                    Var(x, (n as isize + d) as usize)
+                }
             };
             self.map(&f, c)
         }
@@ -1512,10 +1500,12 @@ pub mod lambda2_restricted {
     impl Subst for Term {
         fn subst(self, j: usize, t: &Term) -> Self {
             use self::Term::*;
-            let f = |j, x, n| if x == j {
-                t.clone().shift(j as isize)
-            } else {
-                Var(x, n)
+            let f = |j, x, n| {
+                if x == j {
+                    t.clone().shift(j as isize)
+                } else {
+                    Var(x, n)
+                }
             };
             self.map(&f, j)
         }
@@ -1601,18 +1591,14 @@ pub mod lambda2_restricted {
             use self::Restricted1::*;
             match t {
                 RankN::Var(x, n) => Forall(0, Rank0::Var(x, n)),
-                RankN::Arr(t1, t2) => {
-                    match Self::from(*t2) {
-                        Forall(n, t2) => {
-                            Forall(n, Rank0::Arr(Box::new(t1.shift(n as isize)), Box::new(t2)))
-                        }
+                RankN::Arr(t1, t2) => match Self::from(*t2) {
+                    Forall(n, t2) => {
+                        Forall(n, Rank0::Arr(Box::new(t1.shift(n as isize)), Box::new(t2)))
                     }
-                }
-                RankN::Forall(t) => {
-                    match Self::from(*t) {
-                        Forall(n, t) => Forall(n + 1, t),
-                    }
-                }
+                },
+                RankN::Forall(t) => match Self::from(*t) {
+                    Forall(n, t) => Forall(n + 1, t),
+                },
                 // TODO: Is this correct?
                 RankN::Sharp(t) => Self::from(*t),
             }
@@ -1674,12 +1660,10 @@ pub mod lambda2 {
                         Var(x, (n + d) as usize)
                     }
                 }
-                Arr(t1, t2) => {
-                    Arr(
-                        Box::new(t1.shift_above(c, d)),
-                        Box::new(t2.shift_above(c, d)),
-                    )
-                }
+                Arr(t1, t2) => Arr(
+                    Box::new(t1.shift_above(c, d)),
+                    Box::new(t2.shift_above(c, d)),
+                ),
             }
         }
     }

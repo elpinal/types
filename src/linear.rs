@@ -5,8 +5,8 @@ use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::result;
 
-use ::*;
 use context::Ctx;
+use *;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Qual {
@@ -96,15 +96,19 @@ type EvalResult<T> = result::Result<T, EvalError>;
 
 impl PartialOrd for Qual {
     fn partial_cmp(&self, q: &Self) -> Option<Ordering> {
-        use self::Qual::*;
         use self::Ordering::*;
+        use self::Qual::*;
         if *self == Unrestricted && *q == Linear {
             return Some(Greater);
         }
         if *self == Linear && *q == Unrestricted {
             return Some(Less);
         }
-        if self == q { Some(Equal) } else { None }
+        if self == q {
+            Some(Equal)
+        } else {
+            None
+        }
     }
 }
 
@@ -136,12 +140,10 @@ impl Context {
 
     fn get(&self, x: usize) -> Option<&Type> {
         match self.0.get(self.index_from_outermost(x)?) {
-            Some(x) => {
-                match x {
-                    &Some(ref ty) => Some(ty),
-                    _ => None,
-                }
-            }
+            Some(x) => match x {
+                &Some(ref ty) => Some(ty),
+                _ => None,
+            },
             None => None,
         }
     }
@@ -151,10 +153,9 @@ impl Context {
     }
 
     fn remove(&mut self, x: usize) {
-        let at = self.index_from_outermost(x).expect(&format!(
-            "index out of range: {}",
-            x
-        ));
+        let at = self
+            .index_from_outermost(x)
+            .expect(&format!("index out of range: {}", x));
         self.0[at] = None;
     }
 
@@ -205,7 +206,7 @@ impl<'a> Iterator for Iter<'a> {
 macro_rules! qual {
     ($q:expr, $t:expr) => {
         Type($q, Box::new($t))
-    }
+    };
 }
 
 impl TypeCheck for Term {
@@ -228,9 +229,10 @@ impl TypeCheck for Term {
 
 impl Term {
     fn type_of_var(x: usize, ctx: &mut Context) -> Result<Type> {
-        let Type(q, pt) = ctx.get(x).cloned().ok_or_else(
-            || TypeError::Undefined(x, ctx.clone()),
-        )?;
+        let Type(q, pt) = ctx
+            .get(x)
+            .cloned()
+            .ok_or_else(|| TypeError::Undefined(x, ctx.clone()))?;
         if q == Qual::Linear {
             ctx.remove(x);
         }
@@ -269,9 +271,11 @@ impl Term {
     }
 
     fn type_of_split(t1: &Term, t2: &Term, ctx: &mut Context) -> Result<Type> {
-        let (ty11, ty12) = t1.type_of(ctx)?.pretype().pair().map_err(|pt| {
-            TypeError::ExpectPair(pt)
-        })?;
+        let (ty11, ty12) = t1
+            .type_of(ctx)?
+            .pretype()
+            .pair()
+            .map_err(|pt| TypeError::ExpectPair(pt))?;
         let q1 = ty11.qual();
         let q2 = ty12.qual();
         ctx.push(ty11);
@@ -333,9 +337,9 @@ impl Term {
 
     /// Evaluates with an initial store.
     fn eval_store(self, mut s: Store) -> EvalResult<(Value, Store)> {
-        use self::Term::*;
         use self::Bool::*;
         use self::EvalError::*;
+        use self::Term::*;
         match self {
             Bool(q, b) => Ok((Value(q, Prevalue::Bool(b)), s)),
             If(t1, t2, t3) => {
@@ -392,13 +396,9 @@ impl Term {
             Bool(..) => (),
             If(ref mut t1, ref mut t2, ref mut t3) => f(&mut [t1, t2, t3]),
             Pair(_, ref mut t1, ref mut t2) => f(&mut [t1, t2]),
-            Split(ref mut t1, ref mut t2) => {
-                [(0, t1), (2, t2)].iter_mut().for_each(
-                    |&mut (i, ref mut t)| {
-                        t.map_ref(onvar, c + i)
-                    },
-                )
-            }
+            Split(ref mut t1, ref mut t2) => [(0, t1), (2, t2)]
+                .iter_mut()
+                .for_each(|&mut (i, ref mut t)| t.map_ref(onvar, c + i)),
             Abs(_, _, ref mut t) => t.map_ref(onvar, c + 1),
             App(ref mut t1, ref mut t2) => f(&mut [t1, t2]),
         }
@@ -409,10 +409,12 @@ impl ShiftRef for Term {
     fn shift_above_ref(&mut self, c: usize, d: isize) {
         use self::Term::*;
         let add_isize = |a, b| (a as isize + b) as usize;
-        let f = |c, x, n, t: &mut Term| if x >= c {
-            *t = Var(add_isize(x, d), add_isize(n, d));
-        } else {
-            *t = Var(x, add_isize(n, d))
+        let f = |c, x, n, t: &mut Term| {
+            if x >= c {
+                *t = Var(add_isize(x, d), add_isize(n, d));
+            } else {
+                *t = Var(x, add_isize(n, d))
+            }
         };
         self.map_ref(&f, c);
     }
@@ -421,8 +423,10 @@ impl ShiftRef for Term {
 impl SubstRef for Term {
     fn subst_ref(&mut self, j: usize, t: &Term) {
         use self::Term::*;
-        let f = |j, x, n, t0: &mut Term| if x == j {
-            *t0 = t.clone();
+        let f = |j, x, n, t0: &mut Term| {
+            if x == j {
+                *t0 = t.clone();
+            }
         };
         self.map_ref(&f, j);
     }
@@ -479,11 +483,8 @@ impl Store {
     }
 
     fn pop_times_expect(&mut self, n: usize, msg: &str) {
-        self.pop_times(n).expect(&format!(
-            "{}: unexpectedly small Store: {:?}",
-            msg,
-            self
-        ));
+        self.pop_times(n)
+            .expect(&format!("{}: unexpectedly small Store: {:?}", msg, self));
     }
 
     fn add(&mut self, v: Value) -> usize {
@@ -572,13 +573,15 @@ mod tests {
     }
 
     macro_rules! qual_some {
-        ($q:expr, $t:expr) => (Some(qual!($q, $t)))
+        ($q:expr, $t:expr) => {
+            Some(qual!($q, $t))
+        };
     }
 
     #[test]
     fn test_context_trancate() {
-        use self::Qual::*;
         use self::Pretype::*;
+        use self::Qual::*;
 
         let mut ctx = Context(vec![qual_some!(Linear, Bool), None]);
         assert!(ctx.trancate(&[Linear]).is_ok());
@@ -711,7 +714,10 @@ mod tests {
                         Pretype::Arr(
                             qual!(
                                 Linear,
-                                Pretype::Arr(qual!(Linear, Pretype::Bool), qual!(Linear, Pretype::Bool))
+                                Pretype::Arr(
+                                    qual!(Linear, Pretype::Bool),
+                                    qual!(Linear, Pretype::Bool)
+                                )
                             ),
                             qual!(Linear, Pretype::Bool),
                         )
@@ -751,7 +757,7 @@ mod tests {
     macro_rules! assert_eval {
         ($t:expr, $result:expr) => {
             assert_eq!($t.eval(), $result);
-        }
+        };
     }
 
     macro_rules! store {
@@ -766,9 +772,9 @@ mod tests {
 
     #[test]
     fn test_eval() {
-        use self::Term::*;
         use self::Bool::*;
         use self::Qual::*;
+        use self::Term::*;
 
         assert_eval!(
             Bool(Unrestricted, True),

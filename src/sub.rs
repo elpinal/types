@@ -28,12 +28,10 @@ impl Type {
         use self::Type::*;
         match *ty {
             Top => true,
-            Arr(ref ty1, ref ty2) => {
-                match *ty {
-                    Arr(ref ty3, ref ty4) => ty1.subtype_of(ty3) && ty4.subtype_of(ty2),
-                    _ => false,
-                }
-            }
+            Arr(ref ty1, ref ty2) => match *ty {
+                Arr(ref ty3, ref ty4) => ty1.subtype_of(ty3) && ty4.subtype_of(ty2),
+                _ => false,
+            },
         }
     }
 }

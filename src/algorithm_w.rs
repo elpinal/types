@@ -115,7 +115,8 @@ impl fmt::Display for Expr {
 type Subst = HashMap<String, Type>;
 
 fn compose_subst(s1: &Subst, s2: &Subst) -> Subst {
-    let mut m: Subst = s2.iter()
+    let mut m: Subst = s2
+        .iter()
         .map(|(k, v)| (k, v.apply(s1)))
         .map(|(k, box v)| (k.clone(), v))
         .collect();
@@ -242,8 +243,7 @@ impl TI {
                 let s2 = self.mgu(p, q);
                 compose_subst(&s1, &s2)
             }
-            (Type::Var(u), t) |
-            (t, Type::Var(u)) => self.var_bind(&u, t),
+            (Type::Var(u), t) | (t, Type::Var(u)) => self.var_bind(&u, t),
             (Type::Int, Type::Int) => HashMap::new(),
             (Type::Bool, Type::Bool) => HashMap::new(),
             (Type::List(t1), Type::List(t2)) => self.mgu(*t1, *t2),
@@ -355,10 +355,10 @@ mod tests {
 
     macro_rules! types {
         ( Fun, $e1:expr, $e2:expr ) => {
-            Type::Fun( Box::new($e1), Box::new($e2) )
+            Type::Fun(Box::new($e1), Box::new($e2))
         };
         ( Var, $name:ident ) => {
-            Type::Var( String::from(stringify!($name)) )
+            Type::Var(String::from(stringify!($name)))
         };
         ( Int ) => {
             Type::Int
@@ -367,7 +367,7 @@ mod tests {
             Type::Bool
         };
         ( List, $e:expr ) => {
-            Type::List( Box::new($e) )
+            Type::List(Box::new($e))
         };
     }
 
@@ -585,7 +585,7 @@ mod tests {
             let mut ti = TI::new();
             let m = TypeEnv(HashMap::new());
             assert_eq!(ti.type_inference(&m, &$e), $t);
-        }
+        };
     }
 
     #[test]
@@ -680,7 +680,7 @@ mod tests {
                 let m = TypeEnv(HashMap::new());
                 ti.type_inference(&m, $e);
             }
-        }
+        };
     }
 
     type_inference_panic!(

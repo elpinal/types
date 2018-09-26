@@ -70,8 +70,8 @@ impl From<KindError> for TypeError {
 impl Type {
     /// Obtains the kind of a type. Returns an error if the type does not hold its kind.
     pub fn kind_of(&self, ctx: &Context) -> Result<Kind, KindError> {
-        use self::Type::*;
         use self::KindError::*;
+        use self::Type::*;
         match *self {
             Var(x, _) => ctx.get_kind(x).ok_or_else(|| Unbound(x, ctx.clone())),
             Abs(ref i, ref k1, ref t) => {
@@ -94,17 +94,13 @@ impl Type {
                     _ => Err(NotArr(k1)),
                 }
             }
-            Arr(ref t1, ref t2) => {
-                match t1.kind_of(ctx)? {
-                    Kind::Star => {
-                        match t2.kind_of(ctx)? {
-                            Kind::Star => Ok(Kind::Star),
-                            k => Err(Unexpected(k, Kind::Star)),
-                        }
-                    }
+            Arr(ref t1, ref t2) => match t1.kind_of(ctx)? {
+                Kind::Star => match t2.kind_of(ctx)? {
+                    Kind::Star => Ok(Kind::Star),
                     k => Err(Unexpected(k, Kind::Star)),
-                }
-            }
+                },
+                k => Err(Unexpected(k, Kind::Star)),
+            },
         }
     }
 
@@ -113,12 +109,10 @@ impl Type {
         match self {
             Abs(..) => self,
             Var(..) => self,
-            App(t1, t2) => {
-                match t1.eval() {
-                    Abs(_, _, t) => t.subst_top(*t2),
-                    t1 => App(Box::new(t1), t2),
-                }
-            }
+            App(t1, t2) => match t1.eval() {
+                Abs(_, _, t) => t.subst_top(*t2),
+                t1 => App(Box::new(t1), t2),
+            },
             Arr(..) => self,
         }
     }
@@ -143,7 +137,9 @@ impl Type {
             Var(..) => unchanged(self),
             App(t1, t2) => {
                 macro_rules! app {
-                    ($t:expr) => {App(Box::new($t), t2)}
+                    ($t:expr) => {
+                        App(Box::new($t), t2)
+                    };
                 }
                 match t1.eval1() {
                     (t, true) => changed(app!(t)),
@@ -151,18 +147,16 @@ impl Type {
                     (t, false) => unchanged(app!(t)), // What should happen?
                 }
             }
-            Arr(t1, t2) => {
-                match t1.eval1() {
-                    (t, true) => changed(Arr(Box::new(t), t2)),
-                    (t1, false) => {
-                        let arr = |t| Arr(Box::new(t1), Box::new(t));
-                        match t2.eval1() {
-                            (t, true) => changed(arr(t)),
-                            (t, false) => unchanged(arr(t)),
-                        }
+            Arr(t1, t2) => match t1.eval1() {
+                (t, true) => changed(Arr(Box::new(t), t2)),
+                (t1, false) => {
+                    let arr = |t| Arr(Box::new(t1), Box::new(t));
+                    match t2.eval1() {
+                        (t, true) => changed(arr(t)),
+                        (t, false) => unchanged(arr(t)),
                     }
                 }
-            }
+            },
         }
     }
 
@@ -174,7 +168,7 @@ impl Type {
         macro_rules! map {
             ($t:expr, $c:expr) => {
                 Box::new($t.map(onvar, $c))
-            }
+            };
         }
         match self {
             Var(x, n) => onvar(c, x, n),
@@ -203,10 +197,12 @@ impl Type {
     }
 
     fn subst(self, j: usize, t: &Type) -> Type {
-        let f = |j, x, n| if x == j {
-            t.clone().shift(j as isize)
-        } else {
-            Type::Var(x, n)
+        let f = |j, x, n| {
+            if x == j {
+                t.clone().shift(j as isize)
+            } else {
+                Type::Var(x, n)
+            }
         };
         self.map(&f, j)
     }
@@ -217,12 +213,10 @@ impl Type {
 
     fn eq_without_names(&self, t: &Type) -> bool {
         match *self {
-            Type::Abs(_, ref k1, ref t1) => {
-                match *t {
-                    Type::Abs(_, ref k2, ref t2) => k1 == k2 && t1.eq_without_names(t2),
-                    _ => false,
-                }
-            }
+            Type::Abs(_, ref k1, ref t1) => match *t {
+                Type::Abs(_, ref k2, ref t2) => k1 == k2 && t1.eq_without_names(t2),
+                _ => false,
+            },
             _ => self == t,
         }
     }
@@ -230,9 +224,9 @@ impl Type {
 
 impl Term {
     pub fn type_of(&self, ctx: &Context) -> Result<Type, TypeError> {
+        use self::Kind;
         use self::Term::*;
         use self::TypeError::*;
-        use self::Kind;
         match *self {
             Var(x, _) => ctx.get_type(x).ok_or_else(|| Unbound(x, ctx.clone())),
             Abs(ref i, ref ty1, ref t) => {
@@ -299,7 +293,7 @@ mod tests {
     macro_rules! assert_kind_of {
         ( $t:expr , $ctx:expr, $k:expr ) => {
             assert_eq!($t.kind_of(&$ctx), $k)
-        }
+        };
     }
 
     macro_rules! context {

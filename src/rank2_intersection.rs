@@ -86,26 +86,32 @@ impl Rank1 {
 
 impl PartialOrd for Rank2 {
     fn partial_cmp(&self, t: &Rank2) -> Option<Ordering> {
-        use std::cmp::Ordering::*;
         use self::Rank2::*;
+        use std::cmp::Ordering::*;
         match *self {
             Simple(..) if self == t => Some(Equal),
             Simple(..) => None,
-            Arr(ref t1, ref t2) => {
-                match *t {
-                    Simple(SimpleType::Var(..)) => None,
-                    Simple(SimpleType::Arr(ref s1, ref s2)) => {
-                        let o1 = Rank1::Simple(*s1.clone()).partial_cmp(t1);
-                        let o2 = t2.partial_cmp(&Box::new(Rank2::Simple(*s2.clone())));
-                        if o1 == o2 { o1 } else { None }
-                    }
-                    Arr(ref s1, ref s2) => {
-                        let o1 = s1.partial_cmp(t1);
-                        let o2 = t2.partial_cmp(s2);
-                        if o1 == o2 { o1 } else { None }
+            Arr(ref t1, ref t2) => match *t {
+                Simple(SimpleType::Var(..)) => None,
+                Simple(SimpleType::Arr(ref s1, ref s2)) => {
+                    let o1 = Rank1::Simple(*s1.clone()).partial_cmp(t1);
+                    let o2 = t2.partial_cmp(&Box::new(Rank2::Simple(*s2.clone())));
+                    if o1 == o2 {
+                        o1
+                    } else {
+                        None
                     }
                 }
-            }
+                Arr(ref s1, ref s2) => {
+                    let o1 = s1.partial_cmp(t1);
+                    let o2 = t2.partial_cmp(s2);
+                    if o1 == o2 {
+                        o1
+                    } else {
+                        None
+                    }
+                }
+            },
         }
     }
 }
@@ -144,7 +150,11 @@ impl PartialOrd for Pair {
     fn partial_cmp(&self, p: &Pair) -> Option<Ordering> {
         let o1 = p.0.partial_cmp(&self.0);
         let o2 = self.1.partial_cmp(&p.1);
-        if o1 == o2 { o1 } else { None }
+        if o1 == o2 {
+            o1
+        } else {
+            None
+        }
     }
 }
 
@@ -167,52 +177,32 @@ impl Relation {
                 match $t2 {
                     Rank1::Simple(SimpleType::Var(..)) => unimplemented!(),
                     Rank1::Simple(SimpleType::Arr(t21, t22)) => {
-                        set!(
-                            Ne(Rank2::Simple(*t21), $t11),
-                            Ne($t12, Rank1::Simple(*t22))
-                        )
+                        set!(Ne(Rank2::Simple(*t21), $t11), Ne($t12, Rank1::Simple(*t22)))
                     }
-                    Rank1::Intersection(t21, t22) => {
-                        set!(
-                            Ne($s.clone(), *t21),
-                            Ne($s, *t22)
-                        )
-                    }
+                    Rank1::Intersection(t21, t22) => set!(Ne($s.clone(), *t21), Ne($s, *t22)),
                 }
-            }
+            };
         }
         match self {
             Eq(..) => set!(self),
-            Ne(t1, t2) => {
-                match t1 {
-                    Rank2::Simple(s) => {
-                        match s {
-                            SimpleType::Var(..) => {
-                                match t2 {
-                                    Rank1::Simple(st) => set!(Eq(s, st)),
-                                    Rank1::Intersection(t21, t22) => {
-                                        set!(
-                                            Ne(Rank2::Simple(s.clone()), *t21),
-                                            Ne(Rank2::Simple(s), *t22)
-                                        )
-                                    }
-                                }
-                            }
-                            SimpleType::Arr(t11, t12) => {
-                                arr!(
-                                    Rank1::Simple(*t11),
-                                    Rank2::Simple(*t12),
-                                    t2,
-                                    Rank2::Simple(SimpleType::Arr(t11.clone(), t12.clone()))
-                                )
-                            }
-                        }
-                    }
-                    Rank2::Arr(t11, t12) => {
-                        arr!(t11, *t12, t2, Rank2::Arr(t11.clone(), t12.clone()))
-                    }
-                }
-            }
+            Ne(t1, t2) => match t1 {
+                Rank2::Simple(s) => match s {
+                    SimpleType::Var(..) => match t2 {
+                        Rank1::Simple(st) => set!(Eq(s, st)),
+                        Rank1::Intersection(t21, t22) => set!(
+                            Ne(Rank2::Simple(s.clone()), *t21),
+                            Ne(Rank2::Simple(s), *t22)
+                        ),
+                    },
+                    SimpleType::Arr(t11, t12) => arr!(
+                        Rank1::Simple(*t11),
+                        Rank2::Simple(*t12),
+                        t2,
+                        Rank2::Simple(SimpleType::Arr(t11.clone(), t12.clone()))
+                    ),
+                },
+                Rank2::Arr(t11, t12) => arr!(t11, *t12, t2, Rank2::Arr(t11.clone(), t12.clone())),
+            },
         }
     }
 }

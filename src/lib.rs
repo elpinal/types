@@ -1,15 +1,15 @@
 #![allow(dead_code)]
 
 mod algorithm_w;
-pub mod system_f;
-pub mod system_fsub;
-pub mod sub;
+pub mod label_selective;
+pub mod linear;
 pub mod omega;
 pub mod rank2_intersection;
 pub mod rank2_intersection2;
 pub mod rank2_system_f;
-pub mod linear;
-pub mod label_selective;
+pub mod sub;
+pub mod system_f;
+pub mod system_fsub;
 
 pub mod context;
 

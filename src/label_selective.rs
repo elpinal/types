@@ -33,19 +33,21 @@ pub mod symbolic {
             match *self {
                 Var(..) => false,
                 Abs(..) => false,
-                App(ref l, ref t1, ref t2) => {
-                    match *t1 {
-                        Var(..) => t2.eval1(),
-                        Abs(ref m, ref t) => {
-                            if l == m {
-                                t.subst_top(&t2);
-                                return true;
-                            }
-                            t1.lift(l)
+                App(ref l, ref t1, ref t2) => match *t1 {
+                    Var(..) => t2.eval1(),
+                    Abs(ref m, ref t) => {
+                        if l == m {
+                            t.subst_top(&t2);
+                            return true;
                         }
-                        App(ref m, ref u1, ref u2) => if !t1.eval1() { t2.eval1() } else { true },
+                        t1.lift(l)
                     }
-                }
+                    App(ref m, ref u1, ref u2) => if !t1.eval1() {
+                        t2.eval1()
+                    } else {
+                        true
+                    },
+                },
             }
         }
 
@@ -94,10 +96,12 @@ pub mod symbolic {
 
         fn swap(&mut self, i: usize, j: usize) {
             use self::Term::*;
-            let f = |c: usize, x: usize, n, t: &mut Term| if x == i + c {
-                *t = Var(j + c, n);
-            } else if x == j + c {
-                *t = Var(i + c, n);
+            let f = |c: usize, x: usize, n, t: &mut Term| {
+                if x == i + c {
+                    *t = Var(j + c, n);
+                } else if x == j + c {
+                    *t = Var(i + c, n);
+                }
             };
             self.map_ref(&f, 0);
         }
@@ -107,10 +111,12 @@ pub mod symbolic {
         fn shift_above_ref(&mut self, c: usize, d: isize) {
             use self::Term::*;
             let var = |x, n| Var(x as usize, n as usize);
-            let f = |c: usize, x: usize, n, t: &mut Term| if x >= c {
-                *t = var(x as isize + d, n as isize + d);
-            } else {
-                *t = Var(x, (n as isize + d) as usize);
+            let f = |c: usize, x: usize, n, t: &mut Term| {
+                if x >= c {
+                    *t = var(x as isize + d, n as isize + d);
+                } else {
+                    *t = Var(x, (n as isize + d) as usize);
+                }
             };
             self.map_ref(&f, c);
         }
@@ -118,10 +124,12 @@ pub mod symbolic {
 
     impl SubstRef for Term {
         fn subst_ref(&mut self, j: usize, t: &Self) {
-            let f = |j, x, n, t0: &mut Self| if x == j {
-                *t0 = t.clone().shift(j as isize);
-            } else {
-                *t0 = Term::Var(x, n);
+            let f = |j, x, n, t0: &mut Self| {
+                if x == j {
+                    *t0 = t.clone().shift(j as isize);
+                } else {
+                    *t0 = Term::Var(x, n);
+                }
             };
             self.map_ref(&f, j)
         }

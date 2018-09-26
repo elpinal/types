@@ -27,5 +27,4 @@ enum Term {
     TApp(Box<Term>, Type),
 }
 
-enum TypeError {
-}
+enum TypeError {}

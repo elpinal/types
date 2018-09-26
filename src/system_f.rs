@@ -24,27 +24,27 @@ impl Type {
     {
         match self {
             Type::Var(x, n) => onvar(c, x, n),
-            Type::Arr(ty1, ty2) => {
-                Ok(Type::Arr(
-                    Box::new(ty1.map(onvar, c)?),
-                    Box::new(ty2.map(onvar, c)?),
-                ))
-            }
+            Type::Arr(ty1, ty2) => Ok(Type::Arr(
+                Box::new(ty1.map(onvar, c)?),
+                Box::new(ty2.map(onvar, c)?),
+            )),
             Type::All(i, ty) => Ok(Type::All(i, Box::new(ty.map(onvar, c + 1)?))),
             Type::Some(i, ty) => Ok(Type::Some(i, Box::new(ty.map(onvar, c + 1)?))),
         }
     }
 
     fn shift_above(self, d: isize, c: isize) -> Result<Type> {
-        let f = |c, x, n| if x >= c {
-            let x1 = x + d;
-            if x1 < 0 {
-                Err(TypeError::NegativeIndex(x1))
+        let f = |c, x, n| {
+            if x >= c {
+                let x1 = x + d;
+                if x1 < 0 {
+                    Err(TypeError::NegativeIndex(x1))
+                } else {
+                    Ok(Type::Var(x1, n + d))
+                }
             } else {
-                Ok(Type::Var(x1, n + d))
+                Ok(Type::Var(x, n + d))
             }
-        } else {
-            Ok(Type::Var(x, n + d))
         };
         self.map(&f, c)
     }
@@ -54,10 +54,12 @@ impl Type {
     }
 
     fn subst(self, ty: &Type, j: isize) -> Result<Type> {
-        let f = |j, x, n| if x == j {
-            ty.clone().shift(j)
-        } else {
-            Ok(Type::Var(x, n))
+        let f = |j, x, n| {
+            if x == j {
+                ty.clone().shift(j)
+            } else {
+                Ok(Type::Var(x, n))
+            }
         };
         self.map(&f, j)
     }
@@ -86,47 +88,41 @@ impl Term {
     {
         match self {
             Term::Var(x, n) => onvar(c, x, n),
-            Term::Abs(x, ty, t) => {
-                Ok(Term::Abs(
-                    x,
-                    ontype(c, ty)?,
-                    Box::new(t.map(onvar, ontype, c + 1)?),
-                ))
-            }
-            Term::App(t1, t2) => {
-                Ok(Term::App(
-                    Box::new(t1.map(onvar, ontype, c)?),
-                    Box::new(t2.map(onvar, ontype, c)?),
-                ))
-            }
+            Term::Abs(x, ty, t) => Ok(Term::Abs(
+                x,
+                ontype(c, ty)?,
+                Box::new(t.map(onvar, ontype, c + 1)?),
+            )),
+            Term::App(t1, t2) => Ok(Term::App(
+                Box::new(t1.map(onvar, ontype, c)?),
+                Box::new(t2.map(onvar, ontype, c)?),
+            )),
             Term::TAbs(i, t) => Ok(Term::TAbs(i, Box::new(t.map(onvar, ontype, c + 1)?))),
             Term::TApp(t, ty) => Ok(Term::TApp(
                 Box::new(t.map(onvar, ontype, c)?),
                 ontype(c, ty)?,
             )),
-            Term::Pack(ty1, t, ty2) => {
-                Ok(Term::Pack(
-                    ontype(c, ty1)?,
-                    Box::new(t.map(onvar, ontype, c)?),
-                    ontype(c, ty2)?,
-                ))
-            }
-            Term::Unpack(tyi, ti, t1, t2) => {
-                Ok(Term::Unpack(
-                    tyi,
-                    ti,
-                    Box::new(t1.map(onvar, ontype, c)?),
-                    Box::new(t2.map(onvar, ontype, c + 2)?),
-                ))
-            }
+            Term::Pack(ty1, t, ty2) => Ok(Term::Pack(
+                ontype(c, ty1)?,
+                Box::new(t.map(onvar, ontype, c)?),
+                ontype(c, ty2)?,
+            )),
+            Term::Unpack(tyi, ti, t1, t2) => Ok(Term::Unpack(
+                tyi,
+                ti,
+                Box::new(t1.map(onvar, ontype, c)?),
+                Box::new(t2.map(onvar, ontype, c + 2)?),
+            )),
         }
     }
 
     fn shift_above(self, d: isize, c: isize) -> Result<Term> {
-        let f = |c, x, n| if x >= c {
-            Ok(Term::Var(x + d, n + d))
-        } else {
-            Ok(Term::Var(x, n + d))
+        let f = |c, x, n| {
+            if x >= c {
+                Ok(Term::Var(x + d, n + d))
+            } else {
+                Ok(Term::Var(x, n + d))
+            }
         };
         let g = |c, ty: Type| ty.shift_above(d, c);
         self.map(&f, &g, c)
@@ -137,10 +133,12 @@ impl Term {
     }
 
     fn subst(self, t: &Term, j: isize) -> Result<Term> {
-        let f = |j, x, n| if x == j {
-            t.clone().shift(j)
-        } else {
-            Ok(Term::Var(x, n))
+        let f = |j, x, n| {
+            if x == j {
+                t.clone().shift(j)
+            } else {
+                Ok(Term::Var(x, n))
+            }
         };
         let g = |_, t| Ok(t);
         self.map(&f, &g, j)
@@ -175,36 +173,30 @@ impl Term {
                 i.clone(),
                 Box::new(t.type_of(ctx.add(i, Binding::Type))?),
             )),
-            Term::TApp(t, ty1) => {
-                match t.type_of(ctx)? {
-                    Type::All(_, ty2) => ty2.subst_top(ty1),
-                    ty => Err(TypeError::Universal(ty)),
-                }
-            }
-            Term::Pack(ty1, t, ty2) => {
-                match ty2 {
-                    Type::Some(i, ty21) => {
-                        let ty_u1 = t.type_of(ctx)?;
-                        let ty_u2 = ty21.clone().subst_top(ty1)?;
-                        if ty_u1 == ty_u2 {
-                            Ok(Type::Some(i, ty21))
-                        } else {
-                            Err(TypeError::Unexpected(ty_u1, ty_u2))
-                        }
+            Term::TApp(t, ty1) => match t.type_of(ctx)? {
+                Type::All(_, ty2) => ty2.subst_top(ty1),
+                ty => Err(TypeError::Universal(ty)),
+            },
+            Term::Pack(ty1, t, ty2) => match ty2 {
+                Type::Some(i, ty21) => {
+                    let ty_u1 = t.type_of(ctx)?;
+                    let ty_u2 = ty21.clone().subst_top(ty1)?;
+                    if ty_u1 == ty_u2 {
+                        Ok(Type::Some(i, ty21))
+                    } else {
+                        Err(TypeError::Unexpected(ty_u1, ty_u2))
                     }
-                    ty => Err(TypeError::Existential(ty)),
                 }
-            }
-            Term::Unpack(tyi, ti, t1, t2) => {
-                match t1.type_of(ctx.clone())? {
-                    Type::Some(_, ty) => {
-                        let ctx = ctx.add(tyi, Binding::Type);
-                        let ctx = ctx.add(ti, Binding::Term(*ty));
-                        t2.type_of(ctx)?.shift(-2)
-                    }
-                    ty => Err(TypeError::Existential(ty)),
+                ty => Err(TypeError::Existential(ty)),
+            },
+            Term::Unpack(tyi, ti, t1, t2) => match t1.type_of(ctx.clone())? {
+                Type::Some(_, ty) => {
+                    let ctx = ctx.add(tyi, Binding::Type);
+                    let ctx = ctx.add(ti, Binding::Term(*ty));
+                    t2.type_of(ctx)?.shift(-2)
                 }
-            }
+                ty => Err(TypeError::Existential(ty)),
+            },
         }
     }
 }
@@ -241,9 +233,10 @@ impl Context {
     }
 
     fn get(&self, i: isize) -> Result<Type> {
-        let x: &(String, Binding) = self.0.get(i as usize).ok_or_else(
-            || TypeError::Unbound(i, self.clone()),
-        )?;
+        let x: &(String, Binding) = self
+            .0
+            .get(i as usize)
+            .ok_or_else(|| TypeError::Unbound(i, self.clone()))?;
         let b: Binding = x.1.clone();
         match b {
             Binding::Term(ty) => Ok(ty),
@@ -270,52 +263,36 @@ fn eval(t: Term) -> Result<Term> {
 // TODO: not readable.
 fn eval1(tm: Term) -> Result<Eval> {
     Ok(match tm {
-        Term::App(t1, t2) => {
-            match eval1(*t1)? {
-                Eval::Next(t11) => Eval::Next(Term::App(Box::new(t11), t2)),
-                Eval::Stuck(t1) => {
-                    match eval1(*t2)? {
-                        Eval::Next(t21) => Eval::Next(Term::App(Box::new(t1), Box::new(t21))),
-                        Eval::Stuck(t2) => {
-                            match t1 {
-                                Term::Abs(_, _, t) => Eval::Next(t.subst_top(t2)?),
-                                _ => Eval::Stuck(Term::App(Box::new(t1), Box::new(t2))),
-                            }
-                        }
-                    }
+        Term::App(t1, t2) => match eval1(*t1)? {
+            Eval::Next(t11) => Eval::Next(Term::App(Box::new(t11), t2)),
+            Eval::Stuck(t1) => match eval1(*t2)? {
+                Eval::Next(t21) => Eval::Next(Term::App(Box::new(t1), Box::new(t21))),
+                Eval::Stuck(t2) => match t1 {
+                    Term::Abs(_, _, t) => Eval::Next(t.subst_top(t2)?),
+                    _ => Eval::Stuck(Term::App(Box::new(t1), Box::new(t2))),
+                },
+            },
+        },
+        Term::TApp(t, ty) => match eval1(*t)? {
+            Eval::Next(t1) => Eval::Next(Term::TApp(Box::new(t1), ty)),
+            Eval::Stuck(t) => match t {
+                Term::TAbs(_, t2) => Eval::Next(t2.subst_type_top(ty)?),
+                _ => Eval::Stuck(Term::TApp(Box::new(t), ty)),
+            },
+        },
+        Term::Pack(ty1, t, ty2) => match eval1(*t)? {
+            Eval::Next(t1) => Eval::Next(Term::Pack(ty1, Box::new(t1), ty2)),
+            Eval::Stuck(t1) => Eval::Stuck(Term::Pack(ty1, Box::new(t1), ty2)),
+        },
+        Term::Unpack(tyi, ti, t1, t2) => match eval1(*t1)? {
+            Eval::Next(t11) => Eval::Next(Term::Unpack(tyi, ti, Box::new(t11), t2)),
+            Eval::Stuck(t11) => match t11 {
+                Term::Pack(ty1, t, _) => {
+                    Eval::Next(t2.subst_top(t.shift(1)?)?.subst_type_top(ty1)?)
                 }
-            }
-        }
-        Term::TApp(t, ty) => {
-            match eval1(*t)? {
-                Eval::Next(t1) => Eval::Next(Term::TApp(Box::new(t1), ty)),
-                Eval::Stuck(t) => {
-                    match t {
-                        Term::TAbs(_, t2) => Eval::Next(t2.subst_type_top(ty)?),
-                        _ => Eval::Stuck(Term::TApp(Box::new(t), ty)),
-                    }
-                }
-            }
-        }
-        Term::Pack(ty1, t, ty2) => {
-            match eval1(*t)? {
-                Eval::Next(t1) => Eval::Next(Term::Pack(ty1, Box::new(t1), ty2)),
-                Eval::Stuck(t1) => Eval::Stuck(Term::Pack(ty1, Box::new(t1), ty2)),
-            }
-        }
-        Term::Unpack(tyi, ti, t1, t2) => {
-            match eval1(*t1)? {
-                Eval::Next(t11) => Eval::Next(Term::Unpack(tyi, ti, Box::new(t11), t2)),
-                Eval::Stuck(t11) => {
-                    match t11 {
-                        Term::Pack(ty1, t, _) => Eval::Next(
-                            t2.subst_top(t.shift(1)?)?.subst_type_top(ty1)?,
-                        ),
-                        _ => Eval::Stuck(Term::Unpack(tyi, ti, Box::new(t11), t2)),
-                    }
-                }
-            }
-        }
+                _ => Eval::Stuck(Term::Unpack(tyi, ti, Box::new(t11), t2)),
+            },
+        },
         _ => Eval::Stuck(tm),
     })
 }
@@ -327,7 +304,10 @@ mod tests {
 
     macro_rules! subst_test {
         ( $t1:expr, $t2:expr, $t3:expr ) => {
-            assert_eq!($t2.clone().subst_top($t1.clone()).ok(), Option::Some($t3.clone()));
+            assert_eq!(
+                $t2.clone().subst_top($t1.clone()).ok(),
+                Option::Some($t3.clone())
+            );
         };
     }
 
