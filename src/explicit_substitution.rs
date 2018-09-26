@@ -31,6 +31,7 @@ impl Type {
         Type::Arr(Box::new(t1), Box::new(t2))
     }
 
+    /// Reduces to the normal form.
     fn nf(self, s0: Subst) -> Type {
         use self::Subst::*;
         use self::Type::*;
@@ -43,6 +44,7 @@ impl Type {
         }
     }
 
+    /// Reduces to the weak head normal form.
     fn whnf(self, s0: Subst) -> (Type, Subst) {
         use self::Subst::*;
         use self::Type::*;
