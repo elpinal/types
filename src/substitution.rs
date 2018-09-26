@@ -81,8 +81,22 @@ mod tests {
     }
 
     #[bench]
-    fn bench_subst_top(b: &mut Bencher) {
+    fn bench_subst_top_1(b: &mut Bencher) {
         use self::Type::*;
         b.iter(|| Var(0).subst_top(&Var(0)));
+    }
+
+    #[bench]
+    fn bench_subst_top_2(b: &mut Bencher) {
+        use self::Type::*;
+        fn f(n: usize) -> Type {
+            let mut t = Var(0);
+            for _ in 0..n {
+                t = Type::arr(Var(0), t)
+            }
+            t
+        }
+        let big = f(100);
+        b.iter(|| Var(0).subst_top(&big));
     }
 }
