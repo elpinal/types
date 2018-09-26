@@ -47,6 +47,22 @@ impl Type {
     fn shift(self, d: usize) -> Type {
         self.shift_above(0, d)
     }
+
+    fn subst(self, j: usize, t: &Type) -> Type {
+        use self::Type::*;
+        let f = |c: usize, n: usize| {
+            if j + c == n {
+                t.clone()
+            } else {
+                Var(n)
+            }
+        };
+        self.map(&f, 0)
+    }
+
+    fn subst_top(self, t: &Type) -> Type {
+        self.subst(0, t)
+    }
 }
 
 #[cfg(test)]
@@ -62,5 +78,11 @@ mod tests {
     #[bench]
     fn bench_shift_2(b: &mut Bencher) {
         b.iter(|| Type::Var(0).shift(2));
+    }
+
+    #[bench]
+    fn bench_subst_top(b: &mut Bencher) {
+        use self::Type::*;
+        b.iter(|| Var(0).subst_top(&Var(0)));
     }
 }
