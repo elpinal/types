@@ -1,5 +1,7 @@
 //! Explicit substitution.
 
+use std::rc::Rc;
+
 /// A type.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
@@ -18,7 +20,7 @@ pub enum Type {
 pub enum Subst {
     Id,
     Shift,
-    Cons(Box<Type>, Box<Subst>),
+    Cons(Rc<Type>, Box<Subst>),
     Comp(Box<Subst>, Box<Subst>),
 }
 
@@ -62,8 +64,7 @@ impl Type {
                 Shift => (Var(n + 1), Id),
                 Cons(t, s) => {
                     if n == 0 {
-                        let t = *t;
-                        match t {
+                        match (*t).clone() {
                             Closure(t, s) => t.whnf(s),
                             _ => panic!("unexpected error"),
                         }
@@ -79,7 +80,7 @@ impl Type {
                     Shift => Var(n + 1).whnf(s0),
                     Cons(t1, s1) => {
                         if n == 0 {
-                            t1.whnf(s0)
+                            (*t1).clone().whnf(s0)
                         } else {
                             Type::closure(Var(n - 1), *s1).whnf(s0)
                         }
@@ -95,7 +96,7 @@ impl Type {
 
 impl Subst {
     fn cons(t: Type, s: Subst) -> Subst {
-        Subst::Cons(Box::new(t), Box::new(s))
+        Subst::Cons(Rc::new(t), Box::new(s))
     }
 
     fn comp(s1: Subst, s2: Subst) -> Subst {
@@ -286,6 +287,7 @@ mod tests {
             t
         }
         let big = f(100);
-        b.iter(|| Var(0).nf(Subst::cons(Type::closure(big.clone(), Id), Id)));
+        let s = Subst::cons(Type::closure(big, Id), Id);
+        b.iter(|| Var(0).nf(s.clone()));
     }
 }
