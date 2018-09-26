@@ -38,7 +38,10 @@ impl Type {
         let (t, s1) = self.whnf(s0);
         match t {
             Var(_) => t,
-            Forall(t0) => Type::forall(t0.nf(Subst::cons(Closure(Box::new(Var(0)), Id), Subst::comp(s1, Shift)))),
+            Forall(t0) => Type::forall(t0.nf(Subst::cons(
+                Closure(Box::new(Var(0)), Id),
+                Subst::comp(s1, Shift),
+            ))),
             Arr(t1, t2) => Type::arr(t1.nf(s1.clone()), t2.nf(s1)),
             Closure(..) => panic!("weak head normal forms do not include closures"),
         }
@@ -65,25 +68,21 @@ impl Type {
                 }
                 Comp(s1, s2) => Closure(Box::new(self), *s1).whnf(*s2),
             },
-            Closure(t, s) => {
-                match *t {
-                    Var(n) => {
-                        match s {
-                            Id => Var(n).whnf(s0),
-                            Shift => Var(n + 1).whnf(s0),
-                            Cons(t1, s1) => {
-                                if n == 0 {
-                                    t1.whnf(s0)
-                                } else {
-                                    Var(n - 1).whnf(*s1)
-                                }
-                            }
-                            Comp(s1, s2) => Closure(t, *s1).whnf(Comp(s2, Box::new(s0))),
+            Closure(t, s) => match *t {
+                Var(n) => match s {
+                    Id => Var(n).whnf(s0),
+                    Shift => Var(n + 1).whnf(s0),
+                    Cons(t1, s1) => {
+                        if n == 0 {
+                            t1.whnf(s0)
+                        } else {
+                            Var(n - 1).whnf(*s1)
                         }
                     }
-                    _ => t.whnf(Subst::comp(s, s0)),
-                }
-            }
+                    Comp(s1, s2) => Closure(t, *s1).whnf(Comp(s2, Box::new(s0))),
+                },
+                _ => t.whnf(Subst::comp(s, s0)),
+            },
             _ => (self, s0),
         }
     }
