@@ -48,3 +48,19 @@ impl Type {
         self.shift_above(0, d)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn bench_shift_1(b: &mut Bencher) {
+        b.iter(|| Type::Var(0).shift(1).shift(1));
+    }
+
+    #[bench]
+    fn bench_shift_2(b: &mut Bencher) {
+        b.iter(|| Type::Var(0).shift(2));
+    }
+}
