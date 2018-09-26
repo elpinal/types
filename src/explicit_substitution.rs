@@ -36,6 +36,7 @@ impl Type {
     }
 
     /// Reduces to the normal form.
+    /// All conses must have the form `Subst::Cons(Type::Closure(..), _)`.
     fn nf(self, s0: Subst) -> Type {
         use self::Subst::*;
         use self::Type::*;
