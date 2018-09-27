@@ -2,8 +2,8 @@
 //!
 //! ## Reference
 //!
-//! Jacques, Garrigue and Hassan Aït-Kaci, _"The typed polymorphic label-selective
-//! lambda-calculus"_, ACM Symposium on Principles of Programming Languages (POPL), Portland,
+//! Jacques Garrigue and Hassan Aït-Kaci. The typed polymorphic label-selective
+//! lambda-calculus. ACM Symposium on Principles of Programming Languages (POPL), Portland,
 //! Oregon, pages 35-47, 1994.
 
 #[cfg(ignore)]
