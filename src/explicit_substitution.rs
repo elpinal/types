@@ -290,4 +290,20 @@ mod tests {
         let s = Subst::cons(Type::closure(big, Id), Id);
         b.iter(|| Var(0).nf(s.clone()));
     }
+
+    #[bench]
+    fn bench_subst_top_3(b: &mut Bencher) {
+        use self::Subst::*;
+        use self::Type::*;
+        fn f(n: usize) -> Type {
+            let mut t = Var(0);
+            for _ in 0..n {
+                t = Type::arr(Var(0), t)
+            }
+            t
+        }
+        let big = f(100);
+        let s = Subst::cons(Type::closure(big.clone(), Id), Id);
+        b.iter(|| big.clone().nf(s.clone()));
+    }
 }
