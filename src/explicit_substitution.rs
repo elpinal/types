@@ -129,6 +129,8 @@ pub enum Term {
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+
     use super::*;
     use test::Bencher;
 

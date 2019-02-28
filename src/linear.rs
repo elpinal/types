@@ -130,7 +130,7 @@ impl Containment for Context {
 }
 
 impl Context {
-    fn iter(&self) -> Iter {
+    fn iter(&self) -> Iter<'_> {
         Iter(&self.0, self.0.len())
     }
 

@@ -67,6 +67,8 @@ impl Type {
 
 #[cfg(test)]
 mod tests {
+    extern crate test;
+
     use super::*;
     use test::Bencher;
 

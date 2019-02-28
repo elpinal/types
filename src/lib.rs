@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![feature(test)]
 
-extern crate test;
+
 
 mod algorithm_w;
 pub mod explicit_substitution;
