@@ -35,7 +35,7 @@ enum Term {
 struct Env<T>(HashMap<String, T>);
 
 trait Types {
-    fn ftv(&Self) -> HashSet<String>;
+    fn ftv(_: &Self) -> HashSet<String>;
 }
 
 #[derive(Clone, PartialEq)]

@@ -10,7 +10,7 @@ use self::lambda2_restricted::Restricted1;
 
 use std::iter;
 
-use {Shift, ShiftRef, Subst};
+use crate::{Shift, ShiftRef, Subst};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Term {
@@ -539,7 +539,7 @@ impl Theta {
 
 /// Acyclic Semi-Unification Problem.
 pub mod asup {
-    use rank2_system_f::{Term, Theta};
+    use crate::rank2_system_f::{Term, Theta};
 
     use std::collections::HashMap;
 
@@ -1440,8 +1440,8 @@ pub mod asup {
 }
 
 pub mod lambda2_restricted {
-    use rank2_system_f::lambda2::*;
-    use Subst;
+    use crate::rank2_system_f::lambda2::*;
+    use crate::Subst;
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum Restricted1 {
@@ -1629,7 +1629,7 @@ pub mod lambda2_restricted {
 }
 
 pub mod lambda2 {
-    pub use Shift;
+    pub use crate::Shift;
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum Rank0 {

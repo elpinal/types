@@ -5,8 +5,8 @@ use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::result;
 
-use context::Ctx;
-use *;
+use crate::context::Ctx;
+use crate::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Qual {
