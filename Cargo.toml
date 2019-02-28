@@ -2,5 +2,6 @@
 name = "types"
 version = "0.1.0"
 authors = ["elpinal <elpinal@users.noreply.github.com>"]
+edition = "2018"
 
 [dependencies]
