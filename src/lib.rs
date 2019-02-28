@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 #![feature(test)]
 
-
-
 mod algorithm_w;
 pub mod explicit_substitution;
 pub mod label_selective;

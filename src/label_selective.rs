@@ -42,11 +42,13 @@ pub mod symbolic {
                         }
                         t1.lift(l)
                     }
-                    App(ref m, ref u1, ref u2) => if !t1.eval1() {
-                        t2.eval1()
-                    } else {
-                        true
-                    },
+                    App(ref m, ref u1, ref u2) => {
+                        if !t1.eval1() {
+                            t2.eval1()
+                        } else {
+                            true
+                        }
+                    }
                 },
             }
         }

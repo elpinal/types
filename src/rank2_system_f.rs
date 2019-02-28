@@ -470,7 +470,8 @@ impl Theta {
                 n += 1;
                 l += 1;
                 t.rotate_from(f(), n, l)
-            }).collect()
+            })
+            .collect()
     }
 
     fn app(v: &mut Vec<Term>, m: &mut Vec<usize>, r: &mut Vec<Term>) {
@@ -500,7 +501,8 @@ impl Theta {
                         .map(|(x, mut t)| {
                             t.theta_2(x);
                             abs!(t)
-                        }).collect();
+                        })
+                        .collect();
                     (v, m)
                 } else {
                     m.push(0);
@@ -860,11 +862,13 @@ pub mod asup {
             use self::Type::*;
             match self {
                 Arr(a, b) => Type::arr(a.replace(t1, t2), b.replace(t1, t2)),
-                _ => if self == *t1 {
-                    t2.clone()
-                } else {
-                    self
-                },
+                _ => {
+                    if self == *t1 {
+                        t2.clone()
+                    } else {
+                        self
+                    }
+                }
             }
         }
     }
