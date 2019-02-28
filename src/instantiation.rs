@@ -7,6 +7,7 @@ enum Type {
     Arr(Box<Type>, Box<Type>),
 }
 
+#[derive(Clone)]
 struct Scheme {
     qs: usize,
     body: Type,
@@ -105,8 +106,53 @@ mod tests {
 
     use super::*;
 
+    use quickcheck::empty_shrinker;
+    use quickcheck::single_shrinker;
+    use quickcheck::Arbitrary;
+    use quickcheck::Gen;
+    use rand::Rng;
+
     fn arr(ty1: Type, ty2: Type) -> Type {
         Type::Arr(Box::new(ty1), Box::new(ty2))
+    }
+
+    impl Arbitrary for Type {
+        fn arbitrary<G: Gen>(g: &mut G) -> Self {
+            use Type::*;
+            if g.gen() {
+                Int
+            } else if g.gen() {
+                Var(Arbitrary::arbitrary(g))
+            } else {
+                arr(Arbitrary::arbitrary(g), Arbitrary::arbitrary(g))
+            }
+        }
+
+        fn shrink(&self) -> Box<Iterator<Item = Self>> {
+            use Type::*;
+            match *self {
+                Int => empty_shrinker(),
+                Var(n) => Box::new(single_shrinker(Int).chain(n.shrink().map(Var))),
+                Arr(ref ty1, ref ty2) => Box::new(
+                    single_shrinker(Int)
+                        .chain((ty1.clone(), ty2.clone()).shrink().map(|(x, y)| Arr(x, y))),
+                ),
+            }
+        }
+    }
+
+    impl Arbitrary for Scheme {
+        fn arbitrary<G: Gen>(g: &mut G) -> Self {
+            Scheme::new(Arbitrary::arbitrary(g), Arbitrary::arbitrary(g))
+        }
+
+        fn shrink(&self) -> Box<Iterator<Item = Self>> {
+            Box::new(
+                (self.qs, self.body.clone())
+                    .shrink()
+                    .map(|(qs, ty)| Scheme::new(qs, ty)),
+            )
+        }
     }
 
     #[test]
