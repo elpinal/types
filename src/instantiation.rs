@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Type {
     Int,
     Var(usize),
     Arr(Box<Type>, Box<Type>),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Scheme {
     qs: usize,
     body: Type,
@@ -76,10 +76,10 @@ impl General<Type> for Scheme {
 
 impl General<Scheme> for Scheme {
     fn is_general(&mut self, scheme: &mut Scheme) -> bool {
-        self.body.shift(self.qs);
+        scheme.body.shift(self.qs);
         self.shift(scheme.qs);
         self.body
-            .is_general_aux(self.qs, &mut Subst::default(), &self.body)
+            .is_general_aux(self.qs, &mut Subst::default(), &scheme.body)
     }
 }
 
@@ -89,26 +89,34 @@ impl From<Type> for Scheme {
     }
 }
 
+fn arr(ty1: Type, ty2: Type) -> Type {
+    Type::Arr(Box::new(ty1), Box::new(ty2))
+}
+
 trait Shift {
-    fn shift_above(&mut self, c: usize, d: usize);
+    fn shift_above(&mut self, c: usize, d: usize, minus: bool);
 
     fn shift(&mut self, d: usize) {
-        self.shift_above(0, d);
+        self.shift_above(0, d, false);
+    }
+
+    fn shift_minus(&mut self, d: usize) {
+        self.shift_above(0, d, true);
     }
 }
 
 impl Shift for Type {
-    fn shift_above(&mut self, c: usize, d: usize) {
+    fn shift_above(&mut self, c: usize, d: usize, minus: bool) {
         use Type::*;
         match *self {
             Int => (),
             Arr(ref mut ty1, ref mut ty2) => {
-                ty1.shift_above(c, d);
-                ty2.shift_above(c, d);
+                ty1.shift_above(c, d, minus);
+                ty2.shift_above(c, d, minus);
             }
             Var(n) => {
                 if c <= n {
-                    *self = Var(n + d);
+                    *self = Var(if minus { n - d } else { n + d });
                 }
             }
         }
@@ -116,8 +124,38 @@ impl Shift for Type {
 }
 
 impl Shift for Scheme {
-    fn shift_above(&mut self, c: usize, d: usize) {
-        self.body.shift_above(c + self.qs, d);
+    fn shift_above(&mut self, c: usize, d: usize, minus: bool) {
+        self.body.shift_above(c + self.qs, d, minus);
+    }
+}
+
+trait Substitution {
+    fn apply(self, s: &mut Subst) -> Type;
+}
+
+impl Substitution for Type {
+    fn apply(self, s: &mut Subst) -> Type {
+        use Type::*;
+        match self {
+            Int => Int,
+            Arr(ty1, ty2) => arr(ty1.apply(s), ty2.apply(s)),
+            Var(n) => {
+                if let Some(ty) = s.get(n) {
+                    ty.clone()
+                } else {
+                    self
+                }
+            }
+        }
+    }
+}
+
+impl Substitution for Scheme {
+    fn apply(self, s: &mut Subst) -> Type {
+        s.0.values_mut().for_each(|ty| ty.shift(self.qs));
+        let mut ty = self.body.apply(s);
+        ty.shift_minus(self.qs);
+        ty
     }
 }
 
@@ -128,14 +166,11 @@ mod tests {
     use super::*;
 
     use quickcheck::empty_shrinker;
+    // use quickcheck::quickcheck;
     use quickcheck::single_shrinker;
     use quickcheck::Arbitrary;
     use quickcheck::Gen;
     use rand::Rng;
-
-    fn arr(ty1: Type, ty2: Type) -> Type {
-        Type::Arr(Box::new(ty1), Box::new(ty2))
-    }
 
     impl Arbitrary for Type {
         fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -205,5 +240,30 @@ mod tests {
         assert!(Scheme::new(2, arr(Var(0), Var(1))).is_general(&mut arr(Var(0), Int)));
         assert!(Scheme::new(2, arr(Var(1), Var(0))).is_general(&mut arr(Var(0), Int)));
         assert!(!(Scheme::new(2, arr(Var(0), Var(0))).is_general(&mut arr(Var(0), Int))));
+
+        assert!(Scheme::from(arr(Int, Int)).is_general(&mut Scheme::from(arr(Int, Int))));
     }
+
+    #[test]
+    fn test_generalization() {
+        use Type::*;
+
+        assert!(Scheme::from(Int).is_general(&mut Scheme::from(Int)));
+        assert!(!(Scheme::from(Int).is_general(&mut Scheme::from(Var(0)))));
+
+        assert!(!(Scheme::from(Int).is_general(&mut Scheme::from(arr(Int, Int)))));
+    }
+
+    // quickcheck! {
+    //     fn generalization(scheme1: Scheme, scheme2: Scheme, v: Vec<Type>, ty: Type) -> bool {
+    //         use Type::*;
+    //         let mut scheme1 = scheme1;
+    //         let scheme2 = scheme2;
+    //         let b1 = scheme1.clone().is_general(&mut scheme2.clone());
+    //         let mut s = Subst((0..scheme2.qs).zip(v.into_iter().chain(vec![ty, Int, arr(Int, Int)]).cycle()).collect::<HashMap<_,_>>());
+    //         let mut ty = scheme2.apply(&mut s);
+    //         let b2 = scheme1.is_general(&mut ty);
+    //         b1 == b2
+    //     }
+    // }
 }
