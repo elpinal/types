@@ -61,10 +61,25 @@ impl Scheme {
         ty.shift(self.qs);
         self.body.is_general_aux(self.qs, s, ty)
     }
+}
 
+trait General<RHS> {
+    fn is_general(&mut self, other: &mut RHS) -> bool;
+}
+
+impl General<Type> for Scheme {
     // Assumes well-kindness.
-    fn is_general(&self, ty: &mut Type) -> bool {
+    fn is_general(&mut self, ty: &mut Type) -> bool {
         self.is_general_aux(&mut Subst::default(), ty)
+    }
+}
+
+impl General<Scheme> for Scheme {
+    fn is_general(&mut self, scheme: &mut Scheme) -> bool {
+        self.body.shift(self.qs);
+        self.shift(scheme.qs);
+        self.body
+            .is_general_aux(self.qs, &mut Subst::default(), &self.body)
     }
 }
 
@@ -97,6 +112,12 @@ impl Shift for Type {
                 }
             }
         }
+    }
+}
+
+impl Shift for Scheme {
+    fn shift_above(&mut self, c: usize, d: usize) {
+        self.body.shift_above(c + self.qs, d);
     }
 }
 
