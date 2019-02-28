@@ -1,6 +1,5 @@
 #![cfg(nightly)]
 #![feature(box_patterns)]
-
 #![allow(unused)]
 
 use std::collections::HashMap;
@@ -324,7 +323,7 @@ trait Singleton {
     type Collection;
     type Item;
 
-    fn singleton(Self::Item) -> Self::Collection;
+    fn singleton(_: Self::Item) -> Self::Collection;
 }
 
 impl<Q: Eq + Hash> Singleton for HashSet<Q> {
